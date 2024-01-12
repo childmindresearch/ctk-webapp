@@ -12,9 +12,9 @@
   import { Button, Input, Label, Listgroup, ListgroupItem, Modal } from "flowbite-svelte"
   import { ArrowDownSolid, ArrowUpSolid, CopySolid, TrashBinSolid } from "flowbite-svelte-icons"
   import Toast from "../Toast.svelte"
-  import type { Diagnosis } from "./utils"
+  import type { DiagnosisNode } from "./utils"
 
-  export let diagnoses: Diagnosis[]
+  export let diagnoses: DiagnosisNode[]
   export let open = false
 
   let templateNames: string[]
@@ -26,15 +26,15 @@
   const iconClass =
     "cursor-pointer hover:bg-gray-100 md:hover:bg-transparent md:border-0 md:hover:text-primary-700 dark:text-gray-400 md:dark:text-white md:dark:hover:text-primary-700 dark:hover:bg-gray-700 dark:hover:text-white md:dark:hover:bg-transparent"
 
-  function removeDiagnosis(diagnosis: Diagnosis): void {
+  function removeDiagnosis(diagnosis: DiagnosisNode): void {
     diagnoses = diagnoses.filter(d => d.text !== diagnosis.text)
   }
 
-  function getDiagnosisPath(diagnosis: Diagnosis): string {
+  function getDiagnosisPath(diagnosis: DiagnosisNode): string {
     return diagnosis.pathString().replace(/^root > /, "")
   }
 
-  function shiftDiagnosis(diagnosis: Diagnosis, shift: number): void {
+  function shiftDiagnosis(diagnosis: DiagnosisNode, shift: number): void {
     const index = diagnoses.findIndex(d => d.text === diagnosis.text)
     if (index === -1) return
     const newIndex = index + shift
@@ -65,7 +65,7 @@
     return Array.from(templates)
   }
 
-  function copyDiagnosesToClipboard(diagnoses: Diagnosis[]): void {
+  function copyDiagnosesToClipboard(diagnoses: DiagnosisNode[]): void {
     if (templateValues.some(value => value === "")) {
       toastTemplatesNotFilled = true
       return
@@ -95,28 +95,32 @@
 </script>
 
 <Modal title="Diagnoses" bind:open size="xl">
-  <Listgroup title="Selections" items={diagnoses} let:item on:click()>
-    <ListgroupItem>
-      <div class="flex gap-3 items-center">
-        <TrashBinSolid on:click={() => removeDiagnosis(item)} class={iconClass} />
-        <ArrowDownSolid on:click={() => shiftDiagnosis(item, 1)} class={iconClass} />
-        <ArrowUpSolid on:click={() => shiftDiagnosis(item, -1)} class={iconClass} />
-        <span>{getDiagnosisPath(item)}</span>
+  {#if diagnoses.length === 0}
+    <p>No diagnoses selected.</p>
+  {:else}
+    <Listgroup title="Selections" items={diagnoses} let:item on:click()>
+      <ListgroupItem>
+        <div class="flex gap-3 items-center">
+          <TrashBinSolid on:click={() => removeDiagnosis(item)} class={iconClass} />
+          <ArrowDownSolid on:click={() => shiftDiagnosis(item, 1)} class={iconClass} />
+          <ArrowUpSolid on:click={() => shiftDiagnosis(item, -1)} class={iconClass} />
+          <span>{getDiagnosisPath(item)}</span>
+        </div>
+      </ListgroupItem>
+    </Listgroup>
+
+    {#each templateNames as name, index}
+      <div>
+        <Label>{allUpperCaseUnderscoreToCapitalizedSpace(name)}</Label>
+        <Input type="text" on:input={e => handleInput(index, e)} />
       </div>
-    </ListgroupItem>
-  </Listgroup>
+    {/each}
 
-  {#each templateNames as name, index}
-    <div>
-      <Label>{allUpperCaseUnderscoreToCapitalizedSpace(name)}</Label>
-      <Input type="text" on:input={e => handleInput(index, e)} />
-    </div>
-  {/each}
-
-  <Button class="mt-5" on:click={() => copyDiagnosesToClipboard(diagnoses)}>
-    <CopySolid class="mr-2" />
-    Copy to clipboard
-  </Button>
+    <Button class="mt-5" on:click={() => copyDiagnosesToClipboard(diagnoses)}>
+      <CopySolid class="mr-2" />
+      Copy to clipboard
+    </Button>
+  {/if}
 </Modal>
 
 <Toast type="success" bind:open={toastCopyDiagnosis} message="Templates copied to clipboard." />

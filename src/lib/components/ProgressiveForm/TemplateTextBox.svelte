@@ -1,7 +1,7 @@
 <script lang="ts">
   import Toast from "$lib/components/Toast.svelte"
   import { Textarea, Toolbar, ToolbarButton, ToolbarGroup } from "flowbite-svelte"
-  import { CopySolid, FileCheckSolid } from "flowbite-svelte-icons"
+  import { CopySolid, FileCheckSolid, FileEditSolid, TrashBinSolid } from "flowbite-svelte-icons"
   import { createEventDispatcher } from "svelte"
 
   export let text = ""
@@ -16,6 +16,14 @@
     return () => {
       navigator.clipboard.writeText(text)
     }
+  }
+
+  function onEditButtonClick() {
+    dispatch("edit")
+  }
+
+  function onDeleteButtonClick() {
+    dispatch("delete")
   }
 
   function onSaveButtonClick() {
@@ -34,6 +42,12 @@
       <ToolbarButton name="copy" on:click={onCopyButtonClick(text)}
         ><div class="flex align-middle"><CopySolid disabled class="pointer-events-none" />Copy</div></ToolbarButton
       >
+      <ToolbarButton name="edit" on:click={onEditButtonClick}>
+        <div class="flex align-middle"><FileEditSolid disabled class="pointer-events-none" />Edit</div>
+      </ToolbarButton>
+      <ToolbarButton name="delete" on:click={onDeleteButtonClick}>
+        <div class="flex align-middle"><TrashBinSolid disabled class="pointer-events-none" />Delete</div>
+      </ToolbarButton>
     </ToolbarGroup>
   </Toolbar>
 </Textarea>

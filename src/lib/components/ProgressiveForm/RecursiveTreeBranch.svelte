@@ -22,34 +22,42 @@
   let child: DecisionTree | undefined = undefined
   let toggles: { [key: string]: boolean } = node.getSelectedInChildren()
   let labels: string[]
-  let open: boolean = true
+  let open: boolean = node.selected
   let selectedLabel: string | undefined = undefined
+  let selectedChild: DecisionTree | undefined = undefined
 
   const dispatch = createEventDispatcher()
 
   function shouldRenderChild(childNode: DecisionTree | undefined): boolean {
     if (!childNode) return false
-    return childNode.children.length > 1 || childNode.children[0].header
+    if (childNode.children.length === 0) return false
+    return childNode.children.length > 1 || !childNode.children[0].isLeaf()
   }
 
-  function onToggleChange(checked: boolean, label: string | undefined): void {
-    if (!label) return
-    const selectedChild = node.children.find(child => child.text === label)
-    if (!selectedChild || !checked) {
-      selectedLabel = undefined
-      return
-    }
+  function onToggleChange(event: CustomEvent): void {
+    selectedChild = event.detail.node
+    if (!selectedChild) return
+
     node.setAllSelected(false)
     node.selected = true
-    selectedChild.selected = toggles[label]
-    selectedLabel = selectedChild.text
-    open = false
-    toggles = node.getSelectedInChildren()
+    selectedChild.selected = event.detail.checked
+
+    if (selectedChild.selected) {
+      selectedLabel = selectedChild.text
+    } else {
+      selectedLabel = undefined
+    }
+
+    open = !event.detail.checked
     dispatch("change")
   }
 
   function onChildToggleChange(): void {
     dispatch("change")
+  }
+
+  function onDelete(event: CustomEvent): void {
+    dispatch("delete", { id: event.detail.id })
   }
 
   onMount(() => {
@@ -63,25 +71,27 @@
   $: selectedLabel, (open = !selectedLabel)
 </script>
 
-{#if node.header}
+{#if !node.isLeaf()}
   <AccordionItem bind:open>
-    <span slot="header">
-      {#if selectedLabel}
+    <span slot="header" class="w-full">
+      {#if selectedChild && selectedLabel}
         <RecursiveTreeToggle
           bind:checked={toggles[selectedLabel]}
-          value={selectedLabel}
-          on:change={event => onToggleChange(event.detail.checked, event.detail.value)}
+          bind:node={selectedChild}
+          on:change={onToggleChange}
+          on:delete={onDelete}
         />
       {:else}
         Current Selection
       {/if}
     </span>
     <div class="columns-2xs">
-      {#each labels as label}
+      {#each node.children as child}
         <RecursiveTreeToggle
-          bind:checked={toggles[label]}
-          value={label}
-          on:change={event => onToggleChange(event.detail.checked, event.detail.value)}
+          bind:checked={toggles[child.text]}
+          bind:node={child}
+          on:change={onToggleChange}
+          on:delete={onDelete}
         />
       {/each}
     </div>
@@ -89,5 +99,5 @@
 {/if}
 
 {#if shouldRenderChild(child)}
-  <svelte:self bind:node={child} on:change={() => onChildToggleChange()} />
+  <svelte:self bind:node={child} on:change={() => onChildToggleChange()} on:delete={onDelete} />
 {/if}

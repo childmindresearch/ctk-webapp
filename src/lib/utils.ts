@@ -1,18 +1,18 @@
 interface ApiTreeNodeResponse {
+  id: number
   text: string
   children: ApiTreeNodeResponse[]
-  header: boolean
 }
 
 export class DecisionTree {
+  id: number
   text: string
   children: DecisionTree[]
-  header: boolean
   selected = false
 
   constructor(tree: ApiTreeNodeResponse) {
+    this.id = tree.id
     this.text = tree.text
-    this.header = tree.header
     this.children = tree.children.map(child => new DecisionTree(child))
   }
 
@@ -73,6 +73,12 @@ export class DecisionTree {
     if (selected) {
       return selected
     }
+    return this
+  }
+
+  deleteNodeById(id: number): DecisionTree {
+    this.children = this.children.filter(child => child.id !== id)
+    this.children.forEach(child => child.deleteNodeById(id))
     return this
   }
 }

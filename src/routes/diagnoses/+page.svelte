@@ -27,5 +27,5 @@
 {#if !$diagnosesTree}
   <Spinner />
 {:else}
-  <ProgressiveForm tree={$diagnosesTree} />
+  <ProgressiveForm tree={diagnosesTree} />
 {/if}

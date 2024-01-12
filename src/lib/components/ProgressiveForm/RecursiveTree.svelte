@@ -13,7 +13,7 @@
   import type { DecisionTree } from "$lib/utils"
   import { Accordion } from "flowbite-svelte"
   import { createEventDispatcher } from "svelte"
-  import RecursiveTree from "./RecursiveTreeBranch.svelte"
+  import RecursiveTreeBranch from "./RecursiveTreeBranch.svelte"
 
   export let node: DecisionTree
 
@@ -22,8 +22,11 @@
   function onChange(): void {
     dispatch("change")
   }
+  function onDelete(event: CustomEvent): void {
+    dispatch("delete", { id: event.detail.id })
+  }
 </script>
 
 <Accordion>
-  <RecursiveTree bind:node on:change={onChange} />
+  <RecursiveTreeBranch bind:node on:change={onChange} on:delete={onDelete} />
 </Accordion>
