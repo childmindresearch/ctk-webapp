@@ -8,7 +8,7 @@ To get started, clone this repository and run `npm install` to install the depen
 
 ## Deployment
 
-The deployment of this application is handled by the [CTK-Orchestrator repository](https://github.com/cmi-dair/ctk-orchestrator). On each push to main, this repository will be built and deployed to the Github Container Registry.
+The deployment of this application is handled by the [CTK-Orchestrator repository](https://github.com/childmindresearch/ctk-orchestrator). On each push to main, this repository will be built and deployed to the Github Container Registry.
 
 ## Settings
 
