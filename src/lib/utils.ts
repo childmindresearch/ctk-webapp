@@ -7,6 +7,7 @@ interface ApiTreeNodeResponse {
 export class DecisionTree {
   id: number
   text: string
+  parent?: DecisionTree
   children: DecisionTree[]
   selected = false
 
@@ -14,6 +15,9 @@ export class DecisionTree {
     this.id = tree.id
     this.text = tree.text
     this.children = tree.children.map(child => new DecisionTree(child))
+    this.children.forEach(child => {
+      child.parent = this
+    })
   }
 
   isLeaf(): boolean {
@@ -74,6 +78,19 @@ export class DecisionTree {
       return selected
     }
     return this
+  }
+
+  getNodeById(id: number | string): DecisionTree | null {
+    if (this.id === id) {
+      return this
+    }
+    for (const child of this.children) {
+      const node = child.getNodeById(id)
+      if (node) {
+        return node
+      }
+    }
+    return null
   }
 
   deleteNodeById(id: number): DecisionTree {

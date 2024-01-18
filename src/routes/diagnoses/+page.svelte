@@ -5,7 +5,7 @@
 
 <script lang="ts">
   import { API_ROUTE } from "$lib/api"
-  import ProgressiveForm from "$lib/components/ProgressiveForm/ProgressiveForm.svelte"
+  import Tree from "$lib/components/SortableNested/SortableNested.svelte"
   import { diagnosesTree } from "$lib/stores"
   import { DecisionTree } from "$lib/utils"
   import { P, Spinner } from "flowbite-svelte"
@@ -25,7 +25,10 @@
   button to fill in the requisite information and generate the report text.
 </P>
 {#if !$diagnosesTree}
-  <Spinner />
+  <div class="text-center">
+    <p class="pb-3">Loading, please wait a moment...</p>
+    <Spinner />
+  </div>
 {:else}
-  <ProgressiveForm tree={diagnosesTree} />
+  <Tree node={$diagnosesTree[0]} />
 {/if}
