@@ -1,5 +1,9 @@
 export const API_ROUTE = import.meta.env.VITE_API_URL || "http://localhost:8000/api/v1"
 
+export async function readDiagnoses(): Promise<Response> {
+  return await fetch(`${API_ROUTE}/diagnoses`)
+}
+
 export async function createDiagnosis(text: string, parent_id: number | string | undefined): Promise<Response | void> {
   return await fetch(`${API_ROUTE}/diagnoses`, {
     method: "POST",

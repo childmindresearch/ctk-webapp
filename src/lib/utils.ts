@@ -1,4 +1,4 @@
-interface ApiTreeNodeResponse {
+export interface ApiTreeNodeResponse {
   id: number
   text: string
   children: ApiTreeNodeResponse[]
@@ -99,3 +99,14 @@ export class DecisionTree {
     return this
   }
 }
+export type skeletonThemes =
+  | "skeleton"
+  | "wintry"
+  | "modern"
+  | "rocket"
+  | "seafoam"
+  | "vintage"
+  | "sahara"
+  | "hamlindigo"
+  | "gold-nouveau"
+  | "crimson"

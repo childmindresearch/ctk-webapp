@@ -6,8 +6,7 @@
 -->
 
 <script lang="ts">
-  import Toast from "$lib/components/Toast.svelte"
-  import { anonymizedReport } from "$lib/stores"
+  import { anonymizedReport } from "$lib/store"
   import { Button, Checkbox, Label, P, Spinner, Textarea } from "flowbite-svelte"
   import { handleAnonymization, handleSummarization } from "./requests"
 
@@ -63,8 +62,6 @@
     >
     <Button on:click={() => summarize(correctedAnonymizedDocument)} disabled={!verified}>Submit</Button>
   {/if}
-{:catch error}
-  <Toast open={true} type="error" message={"The following error occurred: " + error.message} />
 {/await}
 
 {#await summarizedPromise}

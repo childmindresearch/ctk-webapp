@@ -1,12 +1,14 @@
 <script lang="ts">
   import { createDiagnosis, deleteDiagnosis, patchDiagnosis } from "$lib/api"
-  import { diagnosesTree } from "$lib/stores"
   import { DecisionTree } from "$lib/utils"
   import { getModalStore, type ModalSettings } from "@skeletonlabs/skeleton"
   import { FilePlusSolid, PenSolid, TrashBinSolid } from "flowbite-svelte-icons"
   import { shortenText } from "./utils"
 
   export let node: DecisionTree
+  export let showCreate = true
+  export let showEdit = true
+  export let showDelete = true
 
   const modalStore = getModalStore()
 
@@ -48,7 +50,8 @@
       response: async value => {
         if (!value) return
         await deleteDiagnosis(node.id).then(() => {
-          $diagnosesTree = [$diagnosesTree[0].deleteNodeById(node.id)]
+          if (!node.parent) return
+          node.parent = node.parent?.deleteNodeById(node.id)
         })
       }
     }
@@ -57,13 +60,21 @@
 </script>
 
 <span class="m-3 space-x-3">
-  <button on:click={onCreate}>
-    <FilePlusSolid class="text-success-600" />
-  </button>
-  <button on:click={onEdit}>
-    <PenSolid class="text-warning-600" />
-  </button>
-  <button on:click={onDelete}>
-    <TrashBinSolid class="text-error-600" />
-  </button>
+  {#if showCreate}
+    <button on:click={onCreate}>
+      <FilePlusSolid class="text-success-600" />
+    </button>
+  {/if}
+
+  {#if showEdit}
+    <button on:click={onEdit}>
+      <PenSolid class="text-warning-600" />
+    </button>
+  {/if}
+
+  {#if showDelete}
+    <button on:click={onDelete}>
+      <TrashBinSolid class="text-error-600" />
+    </button>
+  {/if}
 </span>
