@@ -1,6 +1,6 @@
 name: "Bug Report"
 description: "This is a template for a bug report"
-projects: ["cmi-dair/3"]
+projects: ["childmindresearch/3"]
 title: "Bug: "
 labels: ["bug"]
 assignees: ["ReinderVosDeWael"]
