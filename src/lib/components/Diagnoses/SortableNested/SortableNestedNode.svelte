@@ -6,6 +6,7 @@
   import { slide } from "svelte/transition"
   import AdminButtons from "./AdminButtons.svelte"
   import { shortenText } from "./utils"
+  import { getToastStore } from "@skeletonlabs/skeleton"
 
   export let node: DecisionTree
   export let editable = false
@@ -15,10 +16,18 @@
   let sorter: Sortable
 
   const dispatch = createEventDispatcher()
+  const toastStore = getToastStore()
 
   function fold() {
     if (isRoot) return
     isFolded = !isFolded
+  }
+
+  function onSave() {
+    dispatch("save", { id: node.id })
+    toastStore.trigger({
+      message: `The diagnosis "${shortenText(node.text, 20)}" has been saved.`
+    })
   }
 
   onMount(() => {
@@ -53,7 +62,7 @@
     <!-- Inner div is necessary because otherwise the child elements are individually draggable.-->
     <button class="center-button" disabled={isRoot}>
       {#if node.children.length === 0}
-        <CartPlusOutline class="text-tertiary-500" on:click={() => dispatch("save", { id: node.id })} />
+        <CartPlusOutline class="text-tertiary-500" on:click={onSave} />
       {:else if isFolded}
         <FolderSolid class="text-primary-500" on:click={fold} />
       {:else}

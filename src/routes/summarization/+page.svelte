@@ -40,16 +40,16 @@
   being sent for summarization.
 </p>
 <div>
-  <button class="btn variant-outline-primary" on:click={handleAnonymization}>Upload</button>
+  <button class="btn variant-filled-primary" on:click={handleAnonymization}>Upload</button>
 </div>
-<!--
+
 {#await $anonymizedReport}
   <LoadingBar />
 {:then _}
   {#if correctedAnonymizedDocument}
     <h3 class="h3">Anonymized Report:</h3>
-    <Textarea
-      label="Summary"
+    <textarea
+      class="textarea"
       rows="10"
       id="summary-id"
       name="summary"
@@ -57,15 +57,24 @@
       on:change={handleAnonymizedTextChange}
       disabled={correctedAnonymizedDocument === ""}
     />
-    <Checkbox bind:verified on:click={() => (verified = !verified)} disabled={correctedAnonymizedDocument === ""}>
-      I have verified that the anonymization process was successful.</Checkbox
+    <label class="flex items-center space-x-2 my-2">
+      <input
+        class="checkbox"
+        type="checkbox"
+        bind:checked={verified}
+        on:click={() => (verified = !verified)}
+        disabled={correctedAnonymizedDocument === ""}
+      />
+      <span>I have verified that the anonymization process was successful.</span>
+    </label>
+    <button
+      class="btn variant-filled-primary"
+      on:click={() => summarize(correctedAnonymizedDocument)}
+      disabled={!verified}>Submit</button
     >
-    <Button on:click={() => summarize(correctedAnonymizedDocument)} disabled={!verified}>Submit</Button>
   {/if}
 {/await}
 
 {#await summarizedPromise}
   <LoadingBar />
 {/await}
-
--->
