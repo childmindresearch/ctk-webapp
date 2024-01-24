@@ -14,8 +14,8 @@
   })
 </script>
 
-<Modal />
-<Toast />
+<Modal zIndex="z-998" />
+<Toast zIndex="z-999" />
 
 <AppShell>
   <svelte:fragment slot="header">

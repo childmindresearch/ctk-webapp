@@ -54,12 +54,11 @@ export class DecisionTree {
   }
 
   getPath(): string[] {
-    const path: string[] = [this.text]
-    for (const child of this.children) {
-      if (child.selected) {
-        path.push(...child.getPath())
-        break
-      }
+    const path: string[] = []
+    let current: DecisionTree | undefined = this.parent
+    while (current) {
+      path.unshift(current.text)
+      current = current.parent
     }
     return path
   }
