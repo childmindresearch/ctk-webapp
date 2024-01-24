@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { DecisionTree } from "$lib/utils"
-  import { ArrowDownSolid, FolderOpenSolid, FolderSolid } from "flowbite-svelte-icons"
+  import { CartPlusOutline, FolderOpenSolid, FolderSolid } from "flowbite-svelte-icons"
   import Sortable, { type SortableEvent } from "sortablejs"
   import { createEventDispatcher, onMount } from "svelte"
   import { slide } from "svelte/transition"
@@ -53,7 +53,7 @@
     <!-- Inner div is necessary because otherwise the child elements are individually draggable.-->
     <button class="center-button" disabled={isRoot}>
       {#if node.children.length === 0}
-        <ArrowDownSolid class="text-tertiary-500" on:click={() => dispatch("save", { id: node.id })} />
+        <CartPlusOutline class="text-tertiary-500" on:click={() => dispatch("save", { id: node.id })} />
       {:else if isFolded}
         <FolderSolid class="text-primary-500" on:click={fold} />
       {:else}

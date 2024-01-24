@@ -6,8 +6,8 @@
 -->
 
 <script lang="ts">
+  import LoadingBar from "$lib/components/LoadingBar.svelte"
   import { anonymizedReport } from "$lib/store"
-  import { Button, Checkbox, Label, P, Spinner, Textarea } from "flowbite-svelte"
   import { handleAnonymization, handleSummarization } from "./requests"
 
   let verified = false
@@ -40,14 +40,14 @@
   being sent for summarization.
 </p>
 <div>
-  <Button on:click={handleAnonymization}>Upload</Button>
+  <button class="btn variant-outline-primary" on:click={handleAnonymization}>Upload</button>
 </div>
-
+<!--
 {#await $anonymizedReport}
-  <Spinner />
+  <LoadingBar />
 {:then _}
   {#if correctedAnonymizedDocument}
-    <Label for="summary-id">Anonymized Report:</Label>
+    <h3 class="h3">Anonymized Report:</h3>
     <Textarea
       label="Summary"
       rows="10"
@@ -65,5 +65,7 @@
 {/await}
 
 {#await summarizedPromise}
-  <Spinner />
+  <LoadingBar />
 {/await}
+
+-->
