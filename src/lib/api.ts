@@ -42,3 +42,24 @@ export async function deleteDiagnosis(id: number): Promise<Response | void> {
     console.error("Error deleting diagnosis:", error)
   })
 }
+
+export async function postMarkdownToDocx(text: string): Promise<Response | void> {
+  const formData = new FormData()
+  formData.append("markdown_text", text)
+  return await fetch(`${API_ROUTE}/file_conversion/md2docx`, {
+    method: "POST",
+    body: formData
+  })
+    .then(async res => await res.blob())
+    .then(blob => {
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement("a")
+      link.href = url
+      link.download = "report.docx"
+      link.click()
+      URL.revokeObjectURL(url)
+    })
+    .catch(error => {
+      console.error("Error converting markdown to docx:", error)
+    })
+}

@@ -1,12 +1,12 @@
 <script lang="ts">
   import type { DecisionTree } from "$lib/utils"
+  import { getToastStore } from "@skeletonlabs/skeleton"
   import { CartPlusOutline, FolderOpenSolid, FolderSolid } from "flowbite-svelte-icons"
   import Sortable, { type SortableEvent } from "sortablejs"
   import { createEventDispatcher, onMount } from "svelte"
   import { slide } from "svelte/transition"
   import AdminButtons from "./AdminButtons.svelte"
   import { shortenText } from "./utils"
-  import { getToastStore } from "@skeletonlabs/skeleton"
 
   export let node: DecisionTree
   export let editable = false

@@ -1,31 +1,18 @@
 <script script lang="ts">
   import { readDiagnoses } from "$lib/api"
   import DiagnosesCheckout from "$lib/components/Diagnoses/DiagnosesCheckout.svelte"
+  import DiagnosesErrorHandler from "$lib/components/Diagnoses/DiagnosesErrorHandler.svelte"
+  import DiagnosesListTab from "$lib/components/Diagnoses/DiagnosesListTab.svelte"
   import SelectedNodes from "$lib/components/Diagnoses/SelectedNodes.svelte"
-  import SortableNested from "$lib/components/Diagnoses/SortableNested/SortableNested.svelte"
   import LoadingBar from "$lib/components/LoadingBar.svelte"
-  import { diagnosesTree } from "$lib/store"
-  import { DecisionTree } from "$lib/utils"
+  import type { DecisionTree } from "$lib/utils"
   import { Tab, TabGroup } from "@skeletonlabs/skeleton"
-  import { onMount } from "svelte"
 
-  let nodes: DecisionTree[] = []
-
+  let selectedNodes: DecisionTree[] = []
   let tabSet: number = 0
 
-  onMount(async () => {
-    const response = await readDiagnoses()
-    const diagnoses = await response.json()
-    const tree = diagnoses.map((diagnosis: any) => new DecisionTree(diagnosis))
-    diagnosesTree.set(tree)
-  })
-
   function onSave(event: CustomEvent) {
-    const nodeId = event.detail.id
-    const node = $diagnosesTree[0].getNodeById(nodeId)
-    if (!node) return
-    if (nodes.find(savedNode => savedNode.id === node.id)) return
-    nodes = [...nodes, node]
+    selectedNodes = event.detail.selectedNodes
   }
 </script>
 
@@ -35,22 +22,28 @@
   button to fill in the requisite information and generate the report text.
 </p>
 
-<TabGroup>
-  <Tab bind:group={tabSet} name="Diagnoses" value={0}>Diagnoses List</Tab>
-  <Tab bind:group={tabSet} name="Selection" value={1}>{nodes.length} Selections</Tab>
-  <Tab bind:group={tabSet} name="Report" value={2}>Report Generation</Tab>
+{#await readDiagnoses()}
+  <LoadingBar label="Loading diagnoses..." />
+{:then response}
+  <TabGroup>
+    <Tab bind:group={tabSet} name="Diagnoses" value={0}>Diagnoses List</Tab>
+    <Tab bind:group={tabSet} name="Selection" value={1}>{selectedNodes.length} Selections</Tab>
+    <Tab bind:group={tabSet} name="Report" value={2}>Report Generation</Tab>
 
-  <svelte:fragment slot="panel">
-    {#if tabSet === 0}
-      {#if !$diagnosesTree}
-        <LoadingBar label="Loading diagnoses..." />
-      {:else}
-        <SortableNested node={$diagnosesTree[0]} on:save={onSave} />
-      {/if}
-    {:else if tabSet === 1}
-      <SelectedNodes bind:nodes />
-    {:else if tabSet === 2}
-      <DiagnosesCheckout {nodes} />
-    {/if}
-  </svelte:fragment>
-</TabGroup>
+    <svelte:fragment slot="panel">
+      <div hidden={tabSet !== 0}>
+        <DiagnosesListTab readDiagnosesResponse={response} on:save={onSave} bind:selectedNodes />
+      </div>
+      <div hidden={tabSet !== 1}>
+        <SelectedNodes bind:nodes={selectedNodes} />
+      </div>
+      <div hidden={tabSet !== 2}>
+        {#key selectedNodes}
+          <DiagnosesCheckout nodes={selectedNodes} />
+        {/key}
+      </div>
+    </svelte:fragment>
+  </TabGroup>
+{:catch error}
+  <DiagnosesErrorHandler {error} />
+{/await}

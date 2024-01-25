@@ -1,7 +1,19 @@
-export interface ApiTreeNodeResponse {
+export type skeletonThemes =
+  | "skeleton"
+  | "wintry"
+  | "modern"
+  | "rocket"
+  | "seafoam"
+  | "vintage"
+  | "sahara"
+  | "hamlindigo"
+  | "gold-nouveau"
+  | "crimson"
+
+export interface ApiNodeResponse {
   id: number
   text: string
-  children: ApiTreeNodeResponse[]
+  children: ApiNodeResponse[]
 }
 
 export class DecisionTree {
@@ -9,9 +21,8 @@ export class DecisionTree {
   text: string
   parent?: DecisionTree
   children: DecisionTree[]
-  selected = false
 
-  constructor(tree: ApiTreeNodeResponse) {
+  constructor(tree: ApiNodeResponse) {
     this.id = tree.id
     this.text = tree.text
     this.children = tree.children.map(child => new DecisionTree(child))
@@ -38,21 +49,6 @@ export class DecisionTree {
     return maxDepth + 1
   }
 
-  getSelectedInChildren(): { [key: string]: boolean } {
-    const refObject: { [key: string]: boolean } = {}
-    this.children.forEach(child => {
-      refObject[child.text] = child.selected
-    })
-    return refObject
-  }
-
-  setAllSelected(selected: boolean): void {
-    this.selected = selected
-    this.children.forEach(child => {
-      child.setAllSelected(selected)
-    })
-  }
-
   getPath(): string[] {
     const path: string[] = []
     let current: DecisionTree | undefined = this.parent
@@ -61,22 +57,6 @@ export class DecisionTree {
       current = current.parent
     }
     return path
-  }
-
-  getSelection(): DecisionTree {
-    let selected: DecisionTree | null = null
-    for (const child of this.children) {
-      if (child.selected) {
-        if (selected) {
-          throw new Error("Multiple branches selected")
-        }
-        selected = child.getSelection()
-      }
-    }
-    if (selected) {
-      return selected
-    }
-    return this
   }
 
   getNodeById(id: number | string): DecisionTree | null {
@@ -98,14 +78,3 @@ export class DecisionTree {
     return this
   }
 }
-export type skeletonThemes =
-  | "skeleton"
-  | "wintry"
-  | "modern"
-  | "rocket"
-  | "seafoam"
-  | "vintage"
-  | "sahara"
-  | "hamlindigo"
-  | "gold-nouveau"
-  | "crimson"

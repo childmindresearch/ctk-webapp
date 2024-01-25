@@ -5,14 +5,21 @@
   import "../app.postcss"
   import { onMount } from "svelte"
 
-  initializeStores()
-
-  storePopup.set({ computePosition, autoUpdate, flip, shift, offset, arrow })
-
   onMount(() => {
     autoModeWatcher()
   })
+
+  initializeStores()
+
+  storePopup.set({ computePosition, autoUpdate, flip, shift, offset, arrow })
 </script>
+
+<svelte:head>
+  <title>Clinician Toolkit</title>
+  <meta name="description" content="The Clinician Toolkit developed by Child Mind Institute" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" type="image/png" href="/favicon.png" />
+</svelte:head>
 
 <Modal zIndex="z-998" />
 <Toast zIndex="z-999" />

@@ -32,7 +32,6 @@
   }
 
   function removeNode(node: DecisionTree): void {
-    console.log("called remove node")
     nodes = nodes.filter(n => n.id !== node.id)
     const oldTemplates = templates
     const oldValues = values
@@ -41,11 +40,9 @@
       const index = oldTemplates.findIndex(oldTemplate => oldTemplate === template)
       return index === -1 ? "" : oldValues[index]
     })
-    console.log(nodes, templates, values)
   }
 
   function shiftNode(node: DecisionTree, shift: number): void {
-    console.log("called shiftnode")
     const index = nodes.findIndex(n => n.id === node.id)
     const newIndex = index + shift
     if (newIndex < 0 || newIndex >= nodes.length) return

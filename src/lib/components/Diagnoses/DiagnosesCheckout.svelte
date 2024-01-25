@@ -1,15 +1,14 @@
 <script lang="ts">
-  import { createEventDispatcher } from "svelte"
   import { getToastStore } from "@skeletonlabs/skeleton"
   import type { DecisionTree } from "$lib/utils"
+  import { postMarkdownToDocx } from "$lib/api"
 
   export let nodes: DecisionTree[]
 
-  const templates = getTemplateText(nodes)
-  const userTemplates = templates.map(template => allUpperCaseUnderscoreToCapitalizedSpace(template))
+  let templates = getTemplateText(nodes)
+  let userTemplates = templates.map(template => allUpperCaseUnderscoreToCapitalizedSpace(template))
   let values = Array(templates.length).fill("")
 
-  const dispatch = createEventDispatcher()
   const toastStore = getToastStore()
 
   function onSubmit(event: Event) {
@@ -23,8 +22,7 @@
     templates.forEach((template, index) => {
       text = text.replace(new RegExp(`\{\{${template}\}\}`, "g"), values[index])
     })
-    console.log(text)
-    dispatch("submit", values)
+    postMarkdownToDocx(text)
   }
 
   function allUpperCaseUnderscoreToCapitalizedSpace(input: string): string {
