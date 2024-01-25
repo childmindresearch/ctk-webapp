@@ -1,44 +1,88 @@
 <script lang="ts">
-  import { DarkMode, NavBrand, NavHamburger, NavLi, NavUl, Navbar } from "flowbite-svelte"
+  import { browser } from "$app/environment"
+  import type { skeletonThemes } from "$lib/utils"
+  import { currentTheme } from "$lib/store"
+  import { AppBar, LightSwitch, popup } from "@skeletonlabs/skeleton"
 
-  export let brandText: string
+  interface Theme {
+    type: skeletonThemes
+    name: string
+    icon: string
+  }
+  const themes: Theme[] = [
+    { type: "skeleton", name: "Skeleton", icon: "💀" },
+    { type: "wintry", name: "Wintry", icon: "🌨️" },
+    { type: "modern", name: "Modern", icon: "🤖" },
+    { type: "rocket", name: "Rocket", icon: "🚀" },
+    { type: "seafoam", name: "Seafoam", icon: "🧜‍♀️" },
+    { type: "vintage", name: "Vintage", icon: "📺" },
+    { type: "sahara", name: "Sahara", icon: "🏜️" },
+    { type: "hamlindigo", name: "Hamlindigo", icon: "👔" },
+    { type: "gold-nouveau", name: "Gold Nouveau", icon: "💫" },
+    { type: "crimson", name: "Crimson", icon: "⭕" }
+  ]
 
-  let divClass = "w-full ml-auto md:block md:w-auto order-1 md:order-none"
-  let ulClass = "flex flex-col my-4 md:flex-row md:my-0 text-sm font-medium text-gray-900 dark:text-gray-300 gap-4"
+  $: if (browser) {
+    document.body.setAttribute("data-theme", $currentTheme)
+  }
 </script>
 
-<header
-  class="sticky top-0 z-40 flex-none w-full mx-auto bg-white border-b border-gray-200 dark:border-gray-600 dark:bg-gray-800"
->
-  <Navbar
-    color="default"
-    fluid
-    navClass="flex items-center justify-between w-full mx-auto py-1.5 px-4"
-    let:toggle
-    let:hidden
-  >
-    <NavBrand href="/">
-      <span class="self-center whitespace-nowrap text-2xl font-semibold text-gray-900 dark:text-white">
-        {brandText}
-      </span>
-    </NavBrand>
-
-    <NavUl
-      {divClass}
-      {ulClass}
-      {hidden}
-      on:click={() => setTimeout(toggle, 1)}
-      nonActiveClass="md:!pl-3 md:!py-2 md:!pl-0 text-gray-700 hover:bg-gray-100 md:hover:bg-transparent md:border-0 md:hover:text-primary-700 dark:text-gray-400 md:dark:text-white md:dark:hover:text-primary-700 dark:hover:bg-gray-700 dark:hover:text-white md:dark:hover:bg-transparent"
-      activeClass="md:!pl-3 md:!py-2 md:!pl-0 text-white bg-primary-700 md:bg-transparent md:text-primary-700 md:dark:text-primary-700 dark:bg-primary-600 md:dark:bg-transparent cursor-default"
-    >
-      <NavLi href="/">Home</NavLi>
-      <NavLi href="/diagnoses">Diagnoses</NavLi>
-      <NavLi href="/summarization">Summarization</NavLi>
-    </NavUl>
-
-    <div class="flex items-center ml-auto">
-      <DarkMode size="lg" class="inline-block dark:hover:text-white hover:text-gray-900" />
-      <NavHamburger on:click={toggle} />
+<AppBar shadow="shadow-2xl" slotTrail="!space-x-2">
+  <svelte:fragment slot="lead">
+    <a href="/">
+      <strong class="text-xl">Clinician Toolkit</strong>
+    </a>
+  </svelte:fragment>
+  <nav class="nav">
+    <a href="/diagnoses">
+      <button class="btn hover:variant-soft-primary">
+        <span>Diagnoses</span>
+      </button>
+    </a>
+    <a href="/summarization">
+      <button class="btn hover:variant-soft-primary">
+        <span>Summarization</span>
+      </button>
+    </a>
+  </nav>
+  <svelte:fragment slot="trail">
+    <div>
+      <button
+        class="btn hover:variant-soft-primary"
+        use:popup={{ event: "click", target: "theme", closeQuery: "a[href]" }}
+      >
+        <i class="fa-solid fa-palette text-lg md:!hidden" />
+        <span class="font-semibold">Theme</span>
+        <i class="fa-solid fa-caret-down opacity-50" />
+      </button>
+      <div class="card p-4 w-60 shadow-xl" data-popup="theme">
+        <div class="space-y-4">
+          <section class="flex justify-between items-center">
+            <h6 class="h6">Mode</h6>
+            <LightSwitch />
+          </section>
+          <hr />
+          <nav class="list-nav pl-4 pr-4 -m-4 max-h-64 lg:max-h-[500px] overflow-y-auto">
+            <ul>
+              {#each themes as { icon, name, type }}
+                <li>
+                  <button
+                    class="option w-full h-full"
+                    type="submit"
+                    on:click={() => currentTheme.set(type)}
+                    name="theme"
+                    value={type}
+                    class:bg-primary-active-token={$currentTheme === type}
+                  >
+                    <span>{icon}</span>
+                    <span class="flex-auto text-left">{name}</span>
+                  </button>
+                </li>
+              {/each}
+            </ul>
+          </nav>
+        </div>
+      </div>
     </div>
-  </Navbar>
-</header>
+  </svelte:fragment>
+</AppBar>

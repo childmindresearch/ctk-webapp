@@ -1,30 +1,28 @@
-<!--
-The layout component for the application.
-
-@slot - The content to be displayed in the main section of the layout.
--->
-<script>
+<script lang="ts">
   import NavBar from "$lib/components/NavBar.svelte"
+  import { arrow, autoUpdate, computePosition, flip, offset, shift } from "@floating-ui/dom"
+  import { AppShell, Modal, Toast, initializeStores, storePopup } from "@skeletonlabs/skeleton"
   import "../app.postcss"
+
+  initializeStores()
+  storePopup.set({ computePosition, autoUpdate, flip, shift, offset, arrow })
 </script>
 
-<div class="app bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-400 antialiased">
-  <NavBar brandText="Clinician Toolkit" />
-  <main class="pt-5 w-full">
+<svelte:head>
+  <title>Clinician Toolkit</title>
+  <meta name="description" content="The Clinician Toolkit developed by Child Mind Institute" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" type="image/png" href="/favicon.png" />
+</svelte:head>
+
+<Modal zIndex="z-998" />
+<Toast zIndex="z-999" />
+
+<AppShell>
+  <svelte:fragment slot="header">
+    <NavBar />
+  </svelte:fragment>
+  <div class="overflow-y-hidden px-10 pt-5">
     <slot />
-  </main>
-</div>
-
-<style>
-  .app {
-    display: flex;
-    flex-direction: column;
-    min-height: 100vh;
-  }
-
-  main {
-    flex-grow: 1;
-    max-width: 85%;
-    margin: 0 auto;
-  }
-</style>
+  </div>
+</AppShell>

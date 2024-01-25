@@ -1,5 +1,5 @@
 import { API_ROUTE } from "$lib/api"
-import { anonymizedReport } from "$lib/stores"
+import { anonymizedReport } from "$lib/store"
 
 export async function handleAnonymization() {
   const input = document.createElement("input")

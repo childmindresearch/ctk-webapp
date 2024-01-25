@@ -1,19 +1,34 @@
-interface ApiTreeNodeResponse {
+export type skeletonThemes =
+  | "skeleton"
+  | "wintry"
+  | "modern"
+  | "rocket"
+  | "seafoam"
+  | "vintage"
+  | "sahara"
+  | "hamlindigo"
+  | "gold-nouveau"
+  | "crimson"
+
+export interface ApiNodeResponse {
+  id: number
   text: string
-  children: ApiTreeNodeResponse[]
-  header: boolean
+  children: ApiNodeResponse[]
 }
 
 export class DecisionTree {
+  id: number
   text: string
+  parent?: DecisionTree
   children: DecisionTree[]
-  header: boolean
-  selected = false
 
-  constructor(tree: ApiTreeNodeResponse) {
+  constructor(tree: ApiNodeResponse) {
+    this.id = tree.id
     this.text = tree.text
-    this.header = tree.header
     this.children = tree.children.map(child => new DecisionTree(child))
+    this.children.forEach(child => {
+      child.parent = this
+    })
   }
 
   isLeaf(): boolean {
@@ -34,45 +49,32 @@ export class DecisionTree {
     return maxDepth + 1
   }
 
-  getSelectedInChildren(): { [key: string]: boolean } {
-    const refObject: { [key: string]: boolean } = {}
-    this.children.forEach(child => {
-      refObject[child.text] = child.selected
-    })
-    return refObject
-  }
-
-  setAllSelected(selected: boolean): void {
-    this.selected = selected
-    this.children.forEach(child => {
-      child.setAllSelected(selected)
-    })
-  }
-
   getPath(): string[] {
-    const path: string[] = [this.text]
-    for (const child of this.children) {
-      if (child.selected) {
-        path.push(...child.getPath())
-        break
-      }
+    const path: string[] = []
+    let current: DecisionTree | undefined = this.parent
+    while (current) {
+      path.unshift(current.text)
+      current = current.parent
     }
     return path
   }
 
-  getSelection(): DecisionTree {
-    let selected: DecisionTree | null = null
+  getNodeById(id: number | string): DecisionTree | null {
+    if (this.id === id) {
+      return this
+    }
     for (const child of this.children) {
-      if (child.selected) {
-        if (selected) {
-          throw new Error("Multiple branches selected")
-        }
-        selected = child.getSelection()
+      const node = child.getNodeById(id)
+      if (node) {
+        return node
       }
     }
-    if (selected) {
-      return selected
-    }
+    return null
+  }
+
+  deleteNodeById(id: number): DecisionTree {
+    this.children = this.children.filter(child => child.id !== id)
+    this.children.forEach(child => child.deleteNodeById(id))
     return this
   }
 }

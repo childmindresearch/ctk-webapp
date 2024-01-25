@@ -6,9 +6,8 @@
 -->
 
 <script lang="ts">
-  import Toast from "$lib/components/Toast.svelte"
-  import { anonymizedReport } from "$lib/stores"
-  import { Button, Checkbox, Label, P, Spinner, Textarea } from "flowbite-svelte"
+  import LoadingBar from "$lib/components/LoadingBar.svelte"
+  import { anonymizedReport } from "$lib/store"
   import { handleAnonymization, handleSummarization } from "./requests"
 
   let verified = false
@@ -41,16 +40,16 @@
   being sent for summarization.
 </p>
 <div>
-  <Button on:click={handleAnonymization}>Upload</Button>
+  <button class="btn variant-filled-primary" on:click={handleAnonymization}>Upload</button>
 </div>
 
 {#await $anonymizedReport}
-  <Spinner />
+  <LoadingBar />
 {:then _}
   {#if correctedAnonymizedDocument}
-    <Label for="summary-id">Anonymized Report:</Label>
-    <Textarea
-      label="Summary"
+    <h4 class="h4">Anonymized Report:</h4>
+    <textarea
+      class="textarea"
       rows="10"
       id="summary-id"
       name="summary"
@@ -58,15 +57,24 @@
       on:change={handleAnonymizedTextChange}
       disabled={correctedAnonymizedDocument === ""}
     />
-    <Checkbox bind:verified on:click={() => (verified = !verified)} disabled={correctedAnonymizedDocument === ""}>
-      I have verified that the anonymization process was successful.</Checkbox
+    <label class="flex items-center space-x-2 my-2">
+      <input
+        class="checkbox"
+        type="checkbox"
+        bind:checked={verified}
+        on:click={() => (verified = !verified)}
+        disabled={correctedAnonymizedDocument === ""}
+      />
+      <span>I have verified that the anonymization process was successful.</span>
+    </label>
+    <button
+      class="btn variant-filled-primary"
+      on:click={() => summarize(correctedAnonymizedDocument)}
+      disabled={!verified}>Submit</button
     >
-    <Button on:click={() => summarize(correctedAnonymizedDocument)} disabled={!verified}>Submit</Button>
   {/if}
-{:catch error}
-  <Toast open={true} type="error" message={"The following error occurred: " + error.message} />
 {/await}
 
 {#await summarizedPromise}
-  <Spinner />
+  <LoadingBar />
 {/await}

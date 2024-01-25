@@ -1,31 +1,49 @@
-<!--
-  The page for selecting diagnoses. It contains a form that allows the user to select a diagnosis from a tree of
-  diagnoses. Once a diagnosis is selected, a text will appear that can be copied and pasted into the report.
--->
+<script script lang="ts">
+  import { readDiagnoses } from "$lib/api"
+  import DiagnosesCheckout from "$lib/components/Diagnoses/DiagnosesCheckout.svelte"
+  import DiagnosesErrorHandler from "$lib/components/Diagnoses/DiagnosesErrorHandler.svelte"
+  import DiagnosesListTab from "$lib/components/Diagnoses/DiagnosesListTab.svelte"
+  import SelectedNodes from "$lib/components/Diagnoses/SelectedNodes.svelte"
+  import LoadingBar from "$lib/components/LoadingBar.svelte"
+  import type { DecisionTree } from "$lib/utils"
+  import { Tab, TabGroup } from "@skeletonlabs/skeleton"
 
-<script lang="ts">
-  import { API_ROUTE } from "$lib/api"
-  import ProgressiveForm from "$lib/components/ProgressiveForm/ProgressiveForm.svelte"
-  import { diagnosesTree } from "$lib/stores"
-  import { DecisionTree } from "$lib/utils"
-  import { P, Spinner } from "flowbite-svelte"
-  import { onMount } from "svelte"
+  let selectedNodes: DecisionTree[] = []
+  let tabSet: number = 0
 
-  onMount(async () => {
-    const response = await fetch(`${API_ROUTE}/diagnoses`)
-    const diagnoses = await response.json()
-    const tree = diagnoses.map((diagnosis: any) => new DecisionTree(diagnosis))
-    diagnosesTree.set(tree)
-  })
+  function onSave(event: CustomEvent) {
+    selectedNodes = event.detail.selectedNodes
+  }
 </script>
 
-<P class="mb-5">
+<p class="mb-5">
   Please select a diagnosis that applies to your patient. Once you have selected a diagnosis, a text will appear that
   allows you to save this text. Once you've saved all texts you're interested in, you can click the "Show Diagnosis"
   button to fill in the requisite information and generate the report text.
-</P>
-{#if !$diagnosesTree}
-  <Spinner />
-{:else}
-  <ProgressiveForm tree={$diagnosesTree} />
-{/if}
+</p>
+
+{#await readDiagnoses()}
+  <LoadingBar label="Loading diagnoses..." />
+{:then response}
+  <TabGroup>
+    <Tab bind:group={tabSet} name="Diagnoses" value={0}>Diagnoses List</Tab>
+    <Tab bind:group={tabSet} name="Selection" value={1}>{selectedNodes.length} Selections</Tab>
+    <Tab bind:group={tabSet} name="Report" value={2}>Report Generation</Tab>
+
+    <svelte:fragment slot="panel">
+      <div hidden={tabSet !== 0}>
+        <DiagnosesListTab readDiagnosesResponse={response} on:save={onSave} bind:selectedNodes />
+      </div>
+      <div hidden={tabSet !== 1}>
+        <SelectedNodes bind:nodes={selectedNodes} />
+      </div>
+      <div hidden={tabSet !== 2}>
+        {#key selectedNodes}
+          <DiagnosesCheckout nodes={selectedNodes} />
+        {/key}
+      </div>
+    </svelte:fragment>
+  </TabGroup>
+{:catch error}
+  <DiagnosesErrorHandler {error} />
+{/await}
