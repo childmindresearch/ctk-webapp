@@ -1,16 +1,10 @@
 <script lang="ts">
   import NavBar from "$lib/components/NavBar.svelte"
   import { arrow, autoUpdate, computePosition, flip, offset, shift } from "@floating-ui/dom"
-  import { AppShell, autoModeWatcher, Modal, Toast, initializeStores, storePopup } from "@skeletonlabs/skeleton"
+  import { AppShell, Modal, Toast, initializeStores, storePopup } from "@skeletonlabs/skeleton"
   import "../app.postcss"
-  import { onMount } from "svelte"
-
-  onMount(() => {
-    autoModeWatcher()
-  })
 
   initializeStores()
-
   storePopup.set({ computePosition, autoUpdate, flip, shift, offset, arrow })
 </script>
 

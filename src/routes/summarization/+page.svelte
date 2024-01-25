@@ -47,7 +47,7 @@
   <LoadingBar />
 {:then _}
   {#if correctedAnonymizedDocument}
-    <h3 class="h3">Anonymized Report:</h3>
+    <h4 class="h4">Anonymized Report:</h4>
     <textarea
       class="textarea"
       rows="10"
