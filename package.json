@@ -46,7 +46,8 @@
     "@floating-ui/dom": "^1.5.4",
     "@sveltejs/adapter-static": "^3.0.1",
     "flowbite-svelte-icons": "^1.0.2",
-    "sortablejs": "^1.15.2"
+    "sortablejs": "^1.15.2",
+    "vditor": "^3.9.8"
   },
   "prettier": {
     "semi": false,

@@ -13,6 +13,9 @@
   const modalStore = getModalStore()
   const toastStore = getToastStore()
 
+  const instructions =
+    "To add a template value, write it in all caps with underscores for spaces between two curly brackets. For example: {{CHILD_NAME}} could be used as a template for a child's name."
+
   const adminButtons = [
     {
       icon: FilePlusSolid,
@@ -53,12 +56,12 @@
 
   async function onEdit() {
     const modal: ModalSettings = {
-      type: "prompt",
-      title: "Edit the diagnosis text.",
-      value: node.text,
-      response: async value => {
-        if (!value) return
-        await patchDiagnosis(node.id, value, undefined).then(() => (node.text = value))
+      type: "component",
+      component: "markdown",
+      meta: { instructions: instructions, value: node.text },
+      response: async response => {
+        if (!response) return
+        await patchDiagnosis(node.id, response.value, undefined).then(() => (node.text = response.value))
       }
     }
     modalStore.trigger(modal)

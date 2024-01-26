@@ -7,13 +7,20 @@
   import LoadingBar from "$lib/components/LoadingBar.svelte"
   import type { DecisionTree } from "$lib/utils"
   import { Tab, TabGroup } from "@skeletonlabs/skeleton"
+  import { onMount } from "svelte"
 
   let selectedNodes: DecisionTree[] = []
   let tabSet: number = 0
 
+  let diagnosesPromise: Promise<any> = new Promise(() => {})
+
   function onSave(event: CustomEvent) {
     selectedNodes = event.detail.selectedNodes
   }
+
+  onMount(() => {
+    diagnosesPromise = readDiagnoses()
+  })
 </script>
 
 <p class="mb-5">
@@ -22,7 +29,7 @@
   button to fill in the requisite information and generate the report text.
 </p>
 
-{#await readDiagnoses()}
+{#await diagnosesPromise}
   <LoadingBar label="Loading diagnoses..." />
 {:then response}
   <TabGroup>
