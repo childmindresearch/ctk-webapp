@@ -52,11 +52,10 @@
   {:else}
     <p class="text-center">Please fill in the following fields:</p>
   {/if}
-  {#each userTemplates as template, index}
-    <div>
-      <span>{template}</span>
-      <input class="input" type="text" placeholder={template} bind:value={values[index]} />
-    </div>
-  {/each}
+  <div class="space-x-2">
+    {#each userTemplates as template, index}
+      <input class="input max-w-60" type="text" placeholder={template} bind:value={values[index]} />
+    {/each}
+  </div>
   <button class="btn variant-filled-primary" on:click={onSubmit}>Download</button>
 </div>

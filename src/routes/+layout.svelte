@@ -1,11 +1,16 @@
 <script lang="ts">
   import NavBar from "$lib/components/NavBar.svelte"
   import { arrow, autoUpdate, computePosition, flip, offset, shift } from "@floating-ui/dom"
-  import { AppShell, Modal, Toast, initializeStores, storePopup } from "@skeletonlabs/skeleton"
+  import { AppShell, Modal, Toast, initializeStores, storePopup, type ModalComponent } from "@skeletonlabs/skeleton"
   import "../app.postcss"
+  import ModalMarkdown from "$lib/components/ModalMarkdown.svelte"
 
   initializeStores()
   storePopup.set({ computePosition, autoUpdate, flip, shift, offset, arrow })
+
+  const modalRegistry: Record<string, ModalComponent> = {
+    markdown: { ref: ModalMarkdown }
+  }
 </script>
 
 <svelte:head>
@@ -15,7 +20,7 @@
   <link rel="icon" type="image/png" href="/favicon.png" />
 </svelte:head>
 
-<Modal zIndex="z-998" />
+<Modal zIndex="z-998" components={modalRegistry} />
 <Toast zIndex="z-999" />
 
 <AppShell>
