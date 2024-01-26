@@ -22,6 +22,8 @@ jobs:
       - name: Install dependencies
         run: |
           npm install
+          # Temporary fix due to bug on Github Actions runner
+          rm package-lock.json
           npx playwright install --with-deps
       - name: Run tests
         run: |

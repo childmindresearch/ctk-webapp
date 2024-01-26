@@ -47,9 +47,6 @@
     "vditor": "^3.9.8"
   },
   "type": "module",
-  "resolutions": {
-    "rollup": "npm:@rollup/wasm-node"
-  },
   "prettier": {
     "semi": false,
     "trailingComma": "none",
