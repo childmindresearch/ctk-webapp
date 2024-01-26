@@ -5,13 +5,12 @@
   export let value = ""
 
   let elem: HTMLElement
-  let editor: Vditor
 
   const dispatch = createEventDispatcher()
   const uuid = Math.random().toString(36).substring(2, 15)
 
   onMount(() => {
-    editor = new Vditor(elem.id, {
+    new Vditor(elem.id, {
       theme: "classic",
       minHeight: 300,
       lang: "en_US",
@@ -20,7 +19,10 @@
         dispatch("input", text)
       },
       value: value,
-      toolbar: ["headings", "bold", "italic", "strike", "|", "line", "quote", "list", "ordered-list"]
+      toolbar: ["headings", "bold", "italic", "strike", "|", "line", "quote", "list", "ordered-list"],
+      cache: {
+        enable: false
+      }
     })
   })
 </script>
