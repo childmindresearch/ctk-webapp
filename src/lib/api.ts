@@ -21,12 +21,16 @@ export async function patchDiagnosis(
   text: string | undefined,
   parent_id: number | string | undefined
 ): Promise<Response | void> {
+  const payload = {
+    ...(text && { text }),
+    ...(parent_id && { parent_id })
+  }
   return await fetch(`${API_ROUTE}/diagnoses/${id}`, {
     method: "PATCH",
     headers: {
       "Content-Type": "application/json"
     },
-    body: JSON.stringify({ body: { text, parent_id } })
+    body: JSON.stringify(payload)
   }).catch(error => {
     console.error("Error patching diagnosis:", error)
   })
