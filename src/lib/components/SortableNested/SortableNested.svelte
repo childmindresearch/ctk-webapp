@@ -1,9 +1,9 @@
 <script lang="ts">
-  import type { DecisionTree } from "$lib/utils"
-  import { SlideToggle, type ModalSettings, getModalStore } from "@skeletonlabs/skeleton"
-  import SortableNestedNode from "./SortableNestedNode.svelte"
-  import { shortenText } from "./utils"
   import { patchDiagnosis } from "$lib/api"
+  import type { DecisionTree } from "$lib/utils"
+  import { shortenText } from "$lib/utils"
+  import { getModalStore, type ModalSettings } from "@skeletonlabs/skeleton"
+  import SortableNestedNode from "./SortableNestedNode.svelte"
 
   export let node: DecisionTree
   export let editable = true
@@ -41,7 +41,4 @@
   }
 </script>
 
-<div>
-  <SlideToggle name="slider-editable" size="sm" bind:checked={editable}>Editable</SlideToggle>
-</div>
 <SortableNestedNode {node} bind:editable isRoot={true} on:save on:drag={onDrag} />

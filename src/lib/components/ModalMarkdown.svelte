@@ -3,7 +3,7 @@
   import MarkdownEditor from "./MarkdownEditor.svelte"
 
   const modalStore = getModalStore()
-  let text = ""
+  let text = $modalStore[0].meta.value
 
   function onSubmit(event: Event) {
     event.preventDefault()
@@ -17,7 +17,7 @@
 {#if $modalStore[0]}
   <div class="card p-4 w-modal shadow-xl space-y-4">
     {#if $modalStore[0].title}
-      <header class="text-2xl font-bold">{$modalStore[0].title}</header>
+      <header class="text-2xl">{$modalStore[0].title}</header>
     {/if}
     {#if $modalStore[0].meta.instructions}
       <strong>{$modalStore[0].meta.instructions}</strong>
