@@ -1,12 +1,16 @@
 <script lang="ts">
-  import SortableNested from "$lib/components/Diagnoses/SortableNested/SortableNested.svelte"
+  import SortableNested from "$lib/components/SortableNested/SortableNested.svelte"
   import LoadingBar from "$lib/components/LoadingBar.svelte"
   import { DecisionTree, type ApiNodeResponse } from "$lib/utils"
+  import { getToastStore } from "@skeletonlabs/skeleton"
 
   export let readDiagnosesResponse: Response
   export let selectedNodes: DecisionTree[] = []
+  export let editable: boolean = false
 
   let nodes: DecisionTree
+
+  const toastStore = getToastStore()
 
   async function processDiagnoses() {
     const diagnoses = await readDiagnosesResponse.json()
@@ -16,9 +20,21 @@
   function onSave(event: CustomEvent) {
     const nodeId = event.detail.id
     const node = nodes.getNodeById(nodeId)
+
     if (!node) return
-    if (selectedNodes.find(savedNode => savedNode.id === node.id)) return
+    if (selectedNodes.find(savedNode => savedNode.id === node.id)) {
+      toastStore.trigger({
+        background: "variant-filled-warning",
+        message: "This diagnosis is already selected."
+      })
+      return
+    }
+
     selectedNodes = [...selectedNodes, node]
+    toastStore.trigger({
+      background: "variant-filled-success",
+      message: "Diagnosis added to selection."
+    })
   }
 
   processDiagnoses()
@@ -27,5 +43,5 @@
 {#if !nodes}
   <LoadingBar label="Processing diagnoses..." />
 {:else}
-  <SortableNested node={nodes} on:save={onSave} />
+  <SortableNested node={nodes} on:save={onSave} {editable} />
 {/if}

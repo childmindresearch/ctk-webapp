@@ -1,12 +1,11 @@
 <script lang="ts">
   import type { DecisionTree } from "$lib/utils"
-  import { getToastStore } from "@skeletonlabs/skeleton"
   import { CartPlusOutline, FolderOpenSolid, FolderSolid } from "flowbite-svelte-icons"
   import Sortable, { type SortableEvent } from "sortablejs"
   import { createEventDispatcher, onMount } from "svelte"
   import { slide } from "svelte/transition"
   import AdminButtons from "./AdminButtons.svelte"
-  import { shortenText } from "./utils"
+  import { shortenText } from "$lib/utils"
 
   export let node: DecisionTree
   export let editable = false
@@ -16,7 +15,6 @@
   let sorter: Sortable
 
   const dispatch = createEventDispatcher()
-  const toastStore = getToastStore()
 
   function fold() {
     if (isRoot) return
@@ -25,9 +23,6 @@
 
   function onSave() {
     dispatch("save", { id: node.id })
-    toastStore.trigger({
-      message: `The diagnosis "${shortenText(node.text, 20)}" has been saved.`
-    })
   }
 
   onMount(() => {
@@ -60,7 +55,7 @@
 <div id={`node-${node.id}`}>
   <div>
     <!-- Inner div is necessary because otherwise the child elements are individually draggable.-->
-    <button class="center-button" disabled={isRoot}>
+    <button class="hover-highlight" disabled={isRoot}>
       {#if node.children.length === 0}
         <CartPlusOutline class="text-tertiary-500" on:click={onSave} />
       {:else if isFolded}
@@ -76,7 +71,7 @@
       <AdminButtons bind:node showDelete={!isRoot} showEdit={!isRoot} />
     {/if}
     {#if !isFolded}
-      <div class="border-secondary-500 border-l-2 pl-3 mb-3" transition:slide>
+      <div class="border-secondary-500 border-l-2 pl-3 mb-4" transition:slide>
         {#each node.children as child}
           <svelte:self bind:node={child} bind:editable isRoot={false} on:drag on:save on:create />
         {/each}

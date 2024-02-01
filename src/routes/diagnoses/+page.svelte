@@ -1,33 +1,23 @@
 <script script lang="ts">
   import { readDiagnoses } from "$lib/api"
-  import DiagnosesCheckout from "$lib/components/Diagnoses/DiagnosesCheckout.svelte"
-  import DiagnosesErrorHandler from "$lib/components/Diagnoses/DiagnosesErrorHandler.svelte"
-  import DiagnosesListTab from "$lib/components/Diagnoses/DiagnosesListTab.svelte"
-  import SelectedNodes from "$lib/components/Diagnoses/SelectedNodes.svelte"
   import LoadingBar from "$lib/components/LoadingBar.svelte"
   import type { DecisionTree } from "$lib/utils"
-  import { Tab, TabGroup } from "@skeletonlabs/skeleton"
+  import { SlideToggle, Tab, TabGroup } from "@skeletonlabs/skeleton"
   import { onMount } from "svelte"
+  import Checkout from "./Checkout.svelte"
+  import ListTab from "./ListTab.svelte"
+  import SelectedNodes from "./SelectedNodes.svelte"
 
   let selectedNodes: DecisionTree[] = []
   let tabSet: number = 0
+  let editable: boolean = false
 
   let diagnosesPromise: Promise<any> = new Promise(() => {})
-
-  function onSave(event: CustomEvent) {
-    selectedNodes = event.detail.selectedNodes
-  }
 
   onMount(() => {
     diagnosesPromise = readDiagnoses()
   })
 </script>
-
-<p class="mb-5">
-  Please select a diagnosis that applies to your patient. Once you have selected a diagnosis, a text will appear that
-  allows you to save this text. Once you've saved all texts you're interested in, you can click the "Show Diagnosis"
-  button to fill in the requisite information and generate the report text.
-</p>
 
 {#await diagnosesPromise}
   <LoadingBar label="Loading diagnoses..." />
@@ -39,18 +29,26 @@
 
     <svelte:fragment slot="panel">
       <div hidden={tabSet !== 0}>
-        <DiagnosesListTab readDiagnosesResponse={response} on:save={onSave} bind:selectedNodes />
+        <div class="right-0">
+          <SlideToggle name="slider-editable" size="sm" bind:checked={editable}>Editable</SlideToggle>
+        </div>
+        <ListTab readDiagnosesResponse={response} bind:selectedNodes {editable} />
       </div>
       <div hidden={tabSet !== 1}>
         <SelectedNodes bind:nodes={selectedNodes} />
       </div>
       <div hidden={tabSet !== 2}>
         {#key selectedNodes}
-          <DiagnosesCheckout nodes={selectedNodes} />
+          <Checkout nodes={selectedNodes} />
         {/key}
       </div>
     </svelte:fragment>
   </TabGroup>
 {:catch error}
-  <DiagnosesErrorHandler {error} />
+  <div class="text-center text-error-500">
+    <div><strong>Error: {error.message}</strong></div>
+    <div>
+      <strong>Contact a system administrator.</strong>
+    </div>
+  </div>
 {/await}

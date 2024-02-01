@@ -1,6 +1,7 @@
 <script lang="ts">
   import { createEventDispatcher, onMount } from "svelte"
   import Vditor from "vditor"
+  import LoadingBar from "./LoadingBar.svelte"
 
   export let value = ""
 
@@ -8,6 +9,7 @@
 
   const dispatch = createEventDispatcher()
   const uuid = Math.random().toString(36).substring(2, 15)
+  let mounted = false
 
   onMount(() => {
     new Vditor(elem.id, {
@@ -25,6 +27,20 @@
       }
     })
   })
+
+  function isMounted(elem: HTMLDivElement) {
+    // Vditor is instantly initalized, but rendering takes a while.
+    while (elem.children.length == 0) {
+      setTimeout(() => {
+        isMounted(elem)
+      }, 10)
+      return
+    }
+    mounted = true
+  }
 </script>
 
-<div bind:this={elem} id={`vditor-div-${uuid}`} />
+{#if !mounted}
+  <LoadingBar label="Loading editor..." />
+{/if}
+<div bind:this={elem} id={`vditor-div-${uuid}`} data-testid="vditor-div" use:isMounted />
