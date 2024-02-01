@@ -1,73 +1,79 @@
 <script lang="ts">
   import type { DecisionTree } from "$lib/utils"
-  import { ArrowDownSolid, ArrowUpSolid, TrashBinSolid } from "flowbite-svelte-icons"
-  import { getNodePath, getTemplateText } from "./utils"
+  import { getModalStore, getToastStore } from "@skeletonlabs/skeleton"
+  import { TrashBinSolid } from "flowbite-svelte-icons"
+  import Sortable, { type SortableEvent } from "sortablejs"
+  import { onMount } from "svelte"
 
   export let nodes: DecisionTree[]
 
-  let templates = getTemplateText(nodes)
-  let values = Array(templates.length).fill("")
+  let elem: HTMLDivElement
+  let sorter: Sortable
 
-  const buttons = [
-    {
-      icon: TrashBinSolid,
-      class: "text-secondary-600",
-      onClick: (node: DecisionTree) => removeNode(node)
-    },
-    {
-      icon: ArrowDownSolid,
-      class: "text-primary-600",
-      onClick: (node: DecisionTree) => shiftNode(node, 1)
-    },
-    {
-      icon: ArrowUpSolid,
-      class: "text-primary-600",
-      onClick: (node: DecisionTree) => shiftNode(node, -1)
-    }
-  ]
+  const toastStore = getToastStore()
+  const modalStore = getModalStore()
 
   function removeNode(node: DecisionTree): void {
     nodes = nodes.filter(n => n.id !== node.id)
-    const oldTemplates = templates
-    const oldValues = values
-    templates = getTemplateText(nodes)
-    values = templates.map(template => {
-      const index = oldTemplates.findIndex(oldTemplate => oldTemplate === template)
-      return index === -1 ? "" : oldValues[index]
+    toastStore.trigger({
+      background: "variant-filled-success",
+      message: "Diagnosis removed from selection."
     })
   }
 
-  function shiftNode(node: DecisionTree, shift: number): void {
-    const index = nodes.findIndex(n => n.id === node.id)
-    const newIndex = index + shift
-    if (newIndex < 0 || newIndex >= nodes.length) return
-    const result = [...nodes]
-    const [removed] = result.splice(index, 1)
-    result.splice(newIndex, 0, removed)
-    nodes = result
+  function getNodePath(node: DecisionTree): string[] {
+    return node.getPath().slice(1)
   }
+
+  function openDiagnosis(node: DecisionTree): void {
+    modalStore.trigger({
+      type: "alert",
+      title: "Full text",
+      body: node.text
+    })
+  }
+
+  onMount(() => {
+    sorter = Sortable.create(elem, {
+      animation: 100,
+      onEnd(event: SortableEvent) {
+        if (event.oldIndex === event.newIndex) return
+        if (event.oldIndex === undefined || event.newIndex === undefined) return
+        const [removed] = nodes.splice(event.oldIndex, 1)
+        nodes.splice(event.newIndex, 0, removed)
+      }
+    })
+  })
 </script>
 
 {#if nodes.length === 0}
   <p class="text-center">No diagnoses selected.</p>
 {/if}
 
-<div class="space-y-2">
-  {#each nodes as node}
-    <span class="flex gap-3 items-center">
-      {#each buttons as button}
-        <button on:click={() => button.onClick(node)} class="hover-highlight">
-          <svelte:component this={button.icon} class={button.class} />
-        </button>
-      {/each}
-      <ol class="breadcrumb">
-        {#each getNodePath(node) as path, index}
-          {#if index !== 0}
-            <li class="crumb-separator" aria-hidden>&rsaquo;</li>
-          {/if}
-          <li class="crumb">{path}</li>
+<div class="table-container">
+  <table class="table table-hover table-compact">
+    <tbody>
+      <div bind:this={elem}>
+        {#each nodes as node}
+          <tr on:dblclick={() => openDiagnosis(node)}>
+            <td>
+              <button on:click={() => removeNode(node)} class="hover-highlight">
+                <TrashBinSolid class="text-error-600" />
+              </button>
+            </td>
+            <td width="99%">
+              <ol class="breadcrumb mt-1">
+                {#each getNodePath(node) as path, index}
+                  {#if index !== 0}
+                    <li class="crumb-separator" aria-hidden>&rsaquo;</li>
+                  {/if}
+                  <li class="crumb">{path}</li>
+                {/each}
+              </ol>
+            </td>
+          </tr>
         {/each}
-      </ol>
-    </span>
-  {/each}
+      </div>
+    </tbody>
+  </table>
 </div>
