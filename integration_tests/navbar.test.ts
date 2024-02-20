@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test"
 
 test("navbar redirects to diagnoses", async ({ page }) => {
   await page.goto("/summarization")
-  const homeLink = page.getByText("Clinician Toolkit")
+  const homeLink = page.getByAltText("Clinician Toolkit")
   expect(homeLink).toBeTruthy()
 
   await homeLink.click()

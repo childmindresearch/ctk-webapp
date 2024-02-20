@@ -62,6 +62,7 @@ export async function postMarkdownToDocx(text: string): Promise<Response | void>
       link.download = "report.docx"
       link.click()
       URL.revokeObjectURL(url)
+      link.remove()
     })
     .catch(error => {
       console.error("Error converting markdown to docx:", error)
