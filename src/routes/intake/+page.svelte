@@ -1,15 +1,28 @@
 <script lang="ts">
-  import { FileDropzone, getToastStore } from "@skeletonlabs/skeleton"
+  import { getModalStore, getToastStore, type ModalSettings } from "@skeletonlabs/skeleton"
   import { API_ROUTE } from "$lib/api"
+  import QuestionMarkIcon from "$lib/components/QuestionMarkIcon.svelte"
+  import LoadingBar from "$lib/components/LoadingBar.svelte"
 
-  let firstName = ""
-  let lastName = ""
+  let redcapSurveyId = ""
   let files: FileList
+  let isLoading = false
 
   const toastStore = getToastStore()
+  const modalStore = getModalStore()
+
+  function explainRedcapIdentifier() {
+    const modal: ModalSettings = {
+      type: "alert",
+      title: "Redcap Identifier",
+      body: "The redcap identifier can be found in the top right corner of the intake form.",
+      image: "redcap_identifier.png"
+    }
+    modalStore.trigger(modal)
+  }
 
   function onSubmit() {
-    if (!firstName || !lastName || !files.length) {
+    if (!redcapSurveyId || !files.length) {
       toastStore.trigger({
         background: "variant-filled-error",
         message: "Please fill out all fields."
@@ -17,10 +30,10 @@
       return
     }
 
+    isLoading = true
     const formData = new FormData()
     formData.append("csv_file", files[0])
-    formData.append("first_name", firstName)
-    formData.append("last_name", lastName)
+    formData.append("redcap_survery_identifier", redcapSurveyId)
 
     fetch(`${API_ROUTE}/file_conversion/intake2docx`, {
       method: "POST",
@@ -31,7 +44,7 @@
         const url = window.URL.createObjectURL(blob)
         const link = document.createElement("a")
         link.href = url
-        link.download = "intake.docx"
+        link.download = `${redcapSurveyId}_V0_CTK.docx`
         document.body.appendChild(link)
         link.click()
         window.URL.revokeObjectURL(url)
@@ -43,18 +56,25 @@
           message: "Error submitting intake."
         })
       })
+      .finally(() => {
+        isLoading = false
+      })
   }
 </script>
 
-{#if files}
-  <p>File: {files[0].name}</p>
-{:else}
-  <FileDropzone name="file" multiple={false} accept=".csv" bind:files>
-    <svelte:fragment slot="message">Drop the intake .csv file here.</svelte:fragment>
-  </FileDropzone>
+<form class="space-y-2">
+  <label for="files">Redcap .csv file</label>
+  <input type="file" bind:files accept=".csv" />
+  <div class="flex space-x-1">
+    <label for="redcapSurveyId">Redcap survey ID</label>
+    <button class="hover-highlight" on:click={explainRedcapIdentifier}>
+      <QuestionMarkIcon />
+    </button>
+  </div>
+  <input class="input" type="text" placeholder="Redcap survey ID" bind:value={redcapSurveyId} />
+  <button class="btn variant-filled-primary" on:click={onSubmit} disabled={isLoading}> Submit </button>
+</form>
+
+{#if isLoading}
+  <LoadingBar />
 {/if}
-
-<input class="input" type="text" placeholder="First Name" bind:value={firstName} />
-<input class="input" type="text" placeholder="Last Name" bind:value={lastName} />
-
-<button class="btn variant-filled-primary" on:click={onSubmit}> Submit </button>
