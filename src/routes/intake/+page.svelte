@@ -3,6 +3,7 @@
   import { API_ROUTE } from "$lib/api"
   import QuestionMarkIcon from "$lib/components/QuestionMarkIcon.svelte"
   import LoadingBar from "$lib/components/LoadingBar.svelte"
+  import { downloadBlob } from "$lib/utils"
 
   let redcapSurveyId = ""
   let files: FileList
@@ -10,6 +11,7 @@
 
   const toastStore = getToastStore()
   const modalStore = getModalStore()
+  let modalOpen = false
 
   function explainRedcapIdentifier() {
     const modal: ModalSettings = {
@@ -30,25 +32,19 @@
       return
     }
 
-    isLoading = true
     const formData = new FormData()
     formData.append("csv_file", files[0])
     formData.append("redcap_survery_identifier", redcapSurveyId)
 
+    isLoading = true
     fetch(`${API_ROUTE}/file_conversion/intake2docx`, {
       method: "POST",
       body: formData
     })
       .then(async res => await res.blob())
       .then(blob => {
-        const url = window.URL.createObjectURL(blob)
-        const link = document.createElement("a")
-        link.href = url
-        link.download = `${redcapSurveyId}_V0_CTK.docx`
-        document.body.appendChild(link)
-        link.click()
-        window.URL.revokeObjectURL(url)
-        link.remove()
+        const filename = `${redcapSurveyId}_V0_CTK.docx`
+        downloadBlob(blob, filename)
       })
       .catch(() => {
         toastStore.trigger({
@@ -60,6 +56,8 @@
         isLoading = false
       })
   }
+
+  $: modalOpen = $modalStore.length > 0
 </script>
 
 <form class="space-y-2">
@@ -67,7 +65,7 @@
   <input type="file" bind:files accept=".csv" />
   <div class="flex space-x-1">
     <label for="redcapSurveyId">Redcap survey ID</label>
-    <button class="hover-highlight" on:click={explainRedcapIdentifier}>
+    <button class="hover-highlight" on:click={explainRedcapIdentifier} disabled={modalOpen}>
       <QuestionMarkIcon />
     </button>
   </div>
