@@ -57,11 +57,11 @@
     <!-- Inner div is necessary because otherwise the child elements are individually draggable.-->
     <button class="hover-highlight" disabled={isRoot}>
       {#if node.children.length === 0}
-        <CartPlusOutline class="text-tertiary-500" on:click={onSave} />
+        <CartPlusOutline class="text-secondary-400" on:click={onSave} />
       {:else if isFolded}
-        <FolderSolid class="text-primary-500" on:click={fold} />
+        <FolderSolid class="text-secondary-900" on:click={fold} />
       {:else}
-        <FolderOpenSolid class="text-secondary-500" on:click={fold} />
+        <FolderOpenSolid class="text-secondary-600" on:click={fold} />
       {/if}
     </button>
     <span tabindex="0" role="textbox" aria-multiline="true">

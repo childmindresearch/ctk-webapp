@@ -9,6 +9,11 @@
     </a>
   </svelte:fragment>
   <nav class="nav">
+    <a href="/intake">
+      <button class="btn hover:variant-soft-primary">
+        <span>Intake</span>
+      </button>
+    </a>
     <a href="/diagnoses">
       <button class="btn hover:variant-soft-primary">
         <span>Diagnoses</span>
