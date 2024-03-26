@@ -6,7 +6,6 @@
 -->
 
 <script lang="ts">
-  import DevelopmentPage from "$lib/components/DevelopmentPage.svelte"
   import LoadingBar from "$lib/components/LoadingBar.svelte"
   import { anonymizedReport } from "$lib/store"
   import { handleAnonymization, handleSummarization } from "./requests"
@@ -44,40 +43,38 @@
   <button class="btn variant-filled-primary" on:click={handleAnonymization}>Upload</button>
 </div>
 
-<DevelopmentPage>
-  {#await $anonymizedReport}
-    <LoadingBar />
-  {:then _}
-    {#if correctedAnonymizedDocument}
-      <h4 class="h4">Anonymized Report:</h4>
-      <textarea
-        class="textarea"
-        rows="10"
-        id="summary-id"
-        name="summary"
-        value={correctedAnonymizedDocument}
-        on:change={handleAnonymizedTextChange}
+{#await $anonymizedReport}
+  <LoadingBar />
+{:then _}
+  {#if correctedAnonymizedDocument}
+    <h4 class="h4">Anonymized Report:</h4>
+    <textarea
+      class="textarea"
+      rows="10"
+      id="summary-id"
+      name="summary"
+      value={correctedAnonymizedDocument}
+      on:change={handleAnonymizedTextChange}
+      disabled={correctedAnonymizedDocument === ""}
+    />
+    <label class="flex items-center space-x-2 my-2">
+      <input
+        class="checkbox"
+        type="checkbox"
+        bind:checked={verified}
+        on:click={() => (verified = !verified)}
         disabled={correctedAnonymizedDocument === ""}
       />
-      <label class="flex items-center space-x-2 my-2">
-        <input
-          class="checkbox"
-          type="checkbox"
-          bind:checked={verified}
-          on:click={() => (verified = !verified)}
-          disabled={correctedAnonymizedDocument === ""}
-        />
-        <span>I have verified that the anonymization process was successful.</span>
-      </label>
-      <button
-        class="btn variant-filled-primary"
-        on:click={() => summarize(correctedAnonymizedDocument)}
-        disabled={!verified}>Submit</button
-      >
-    {/if}
-  {/await}
+      <span>I have verified that the anonymization process was successful.</span>
+    </label>
+    <button
+      class="btn variant-filled-primary"
+      on:click={() => summarize(correctedAnonymizedDocument)}
+      disabled={!verified}>Submit</button
+    >
+  {/if}
+{/await}
 
-  {#await summarizedPromise}
-    <LoadingBar />
-  {/await}
-</DevelopmentPage>
+{#await summarizedPromise}
+  <LoadingBar />
+{/await}
