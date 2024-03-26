@@ -1,17 +1,10 @@
 <script lang="ts">
   import NavBar from "$lib/components/NavBar.svelte"
   import { arrow, autoUpdate, computePosition, flip, offset, shift } from "@floating-ui/dom"
-  import {
-    AppShell,
-    Modal,
-    Toast,
-    initializeStores,
-    storePopup,
-    type ModalComponent,
-    modeCurrent
-  } from "@skeletonlabs/skeleton"
-  import "../app.postcss"
+  import { AppShell, Modal, Toast, initializeStores, storePopup, type ModalComponent } from "@skeletonlabs/skeleton"
   import ModalMarkdown from "$lib/components/ModalMarkdown.svelte"
+  import "../app.postcss"
+  import "@cmi-dair/skeleton-themes/cmi.postcss"
 
   initializeStores()
   storePopup.set({ computePosition, autoUpdate, flip, shift, offset, arrow })
@@ -19,9 +12,6 @@
   const modalRegistry: Record<string, ModalComponent> = {
     markdown: { ref: ModalMarkdown }
   }
-
-  // Enforce light mode until CMI-Dark is completed.
-  $modeCurrent = true
 </script>
 
 <svelte:head>

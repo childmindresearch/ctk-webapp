@@ -2,7 +2,7 @@
   import { createDiagnosis, deleteDiagnosis, patchDiagnosis } from "$lib/api"
   import { DecisionTree, shortenText } from "$lib/utils"
   import { getModalStore, getToastStore, type ModalSettings } from "@skeletonlabs/skeleton"
-  import { FilePlusSolid, PenSolid, TrashBinSolid } from "flowbite-svelte-icons"
+  import { PenSolid, TrashBinSolid, FileSolid } from "flowbite-svelte-icons"
 
   export let node: DecisionTree
   export let showCreate = true
@@ -17,7 +17,7 @@
 
   const adminButtons = [
     {
-      icon: FilePlusSolid,
+      icon: FileSolid,
       class: "text-success-600",
       onClick: onCreate,
       show: showCreate
@@ -86,7 +86,7 @@
   }
 </script>
 
-<span class={"m-3 space-x-3"}>
+<span class={"space-x-1"}>
   {#each adminButtons as adminButton}
     <button on:click={adminButton.onClick} hidden={!adminButton.show} class="hover-highlight">
       <svelte:component this={adminButton.icon} class={adminButton.class} />

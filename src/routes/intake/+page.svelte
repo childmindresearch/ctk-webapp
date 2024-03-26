@@ -4,6 +4,8 @@
   import QuestionMarkIcon from "$lib/components/QuestionMarkIcon.svelte"
   import LoadingBar from "$lib/components/LoadingBar.svelte"
   import { downloadBlob } from "$lib/utils"
+  import { dev } from "$app/environment"
+  import DevelopmentPage from "$lib/components/DevelopmentPage.svelte"
 
   let redcapSurveyId = ""
   let files: FileList
@@ -60,19 +62,21 @@
   $: modalOpen = $modalStore.length > 0
 </script>
 
-<form class="space-y-2">
-  <label for="files">Redcap .csv file</label>
-  <input type="file" bind:files accept=".csv" />
-  <div class="flex space-x-1">
-    <label for="redcapSurveyId">Redcap survey ID</label>
-    <button class="hover-highlight" on:click={explainRedcapIdentifier} disabled={modalOpen}>
-      <QuestionMarkIcon />
-    </button>
-  </div>
-  <input class="input" type="text" placeholder="Redcap survey ID" bind:value={redcapSurveyId} />
-  <button class="btn variant-filled-primary" on:click={onSubmit} disabled={isLoading}> Submit </button>
-</form>
+<DevelopmentPage>
+  <form class="space-y-2">
+    <label for="files">Redcap .csv file</label>
+    <input type="file" bind:files accept=".csv" />
+    <div class="flex space-x-1">
+      <label for="redcapSurveyId">Redcap survey ID</label>
+      <button class="hover-highlight" on:click={explainRedcapIdentifier} disabled={modalOpen}>
+        <QuestionMarkIcon />
+      </button>
+    </div>
+    <input class="input" type="text" placeholder="Redcap survey ID" bind:value={redcapSurveyId} />
+    <button class="btn variant-filled-primary" on:click={onSubmit} disabled={isLoading}> Submit </button>
+  </form>
 
-{#if isLoading}
-  <LoadingBar />
-{/if}
+  {#if isLoading}
+    <LoadingBar />
+  {/if}
+</DevelopmentPage>

@@ -1,21 +1,14 @@
 <script lang="ts">
   import SortableNested from "$lib/components/SortableNested/SortableNested.svelte"
   import LoadingBar from "$lib/components/LoadingBar.svelte"
-  import { DecisionTree, type ApiNodeResponse } from "$lib/utils"
+  import { DecisionTree } from "$lib/utils"
   import { getToastStore } from "@skeletonlabs/skeleton"
 
-  export let readDiagnosesResponse: Response
+  export let nodes: DecisionTree
   export let selectedNodes: DecisionTree[] = []
   export let editable: boolean = false
 
-  let nodes: DecisionTree
-
   const toastStore = getToastStore()
-
-  async function processDiagnoses() {
-    const diagnoses = await readDiagnosesResponse.json()
-    nodes = diagnoses.map((diagnosis: ApiNodeResponse) => new DecisionTree(diagnosis))[0]
-  }
 
   function onSave(event: CustomEvent) {
     const nodeId = event.detail.id
@@ -36,8 +29,6 @@
       message: "Diagnosis added to selection."
     })
   }
-
-  processDiagnoses()
 </script>
 
 {#if !nodes}
