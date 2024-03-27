@@ -1,0 +1,36 @@
+services:
+  node:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    develop:
+      watch:
+        - action: sync
+          path: ./
+          target: /app/
+          ignore:
+            - node_modules/
+            - postgresql
+        - action: rebuild
+          path: package.json
+    ports:
+      - 3000:3000
+    env_file:
+      - .env
+    networks:
+      - default
+
+  postgres:
+    image: postgres:16
+    ports:
+      - 5432:5432
+    env_file:
+      - .env
+    volumes:
+      - ./postgresql:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - default
+
+networks:
+  default:

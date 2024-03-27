@@ -25,6 +25,13 @@
       </button>
     </a>
   </nav>
+  <svelte:fragment slot="trail">
+    <a href="mailto:dair@childmind.org">
+      <button class="btn hover:variant-soft-primary">
+        <span>Contact</span>
+      </button>
+    </a>
+  </svelte:fragment>
 </AppBar>
 
 <style>

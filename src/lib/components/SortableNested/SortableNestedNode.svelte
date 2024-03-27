@@ -55,23 +55,25 @@
 <div id={`node-${node.id}`}>
   <div>
     <!-- Inner div is necessary because otherwise the child elements are individually draggable.-->
-    <button class="hover-highlight" disabled={isRoot}>
-      {#if node.children.length === 0}
-        <CartPlusOutline class="text-secondary-400" on:click={onSave} />
-      {:else if isFolded}
-        <FolderSolid class="text-secondary-900" on:click={fold} />
-      {:else}
-        <FolderOpenSolid class="text-secondary-600" on:click={fold} />
+    <div class="flex items-center" transition:slide>
+      <button class="hover-highlight" disabled={isRoot}>
+        {#if node.children.length === 0}
+          <CartPlusOutline class="text-secondary-400" size="lg" on:click={onSave} />
+        {:else if isFolded}
+          <FolderSolid class="text-secondary-900" size="lg" on:click={fold} />
+        {:else}
+          <FolderOpenSolid class="text-secondary-600" size="lg" on:click={fold} />
+        {/if}
+      </button>
+      <span tabindex="0" role="textbox" aria-multiline="true">
+        {shortenText(node.text)}
+      </span>
+      {#if editable}
+        <AdminButtons bind:node showDelete={!isRoot} showEdit={!isRoot} />
       {/if}
-    </button>
-    <span tabindex="0" role="textbox" aria-multiline="true">
-      {shortenText(node.text)}
-    </span>
-    {#if editable}
-      <AdminButtons bind:node showDelete={!isRoot} showEdit={!isRoot} />
-    {/if}
+    </div>
     {#if !isFolded}
-      <div class="border-secondary-500 border-l-2 pl-3 mb-4" transition:slide>
+      <div class="border-secondary-500 border-l-2 pl-3 mb-2" transition:slide>
         {#each node.children as child}
           <svelte:self bind:node={child} bind:editable isRoot={false} on:drag on:save on:create />
         {/each}

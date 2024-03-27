@@ -2,7 +2,7 @@ import { join } from "path"
 import type { Config } from "tailwindcss"
 import { skeleton } from "@skeletonlabs/tw-plugin"
 import forms from "@tailwindcss/forms"
-import { cmiLight } from "./cmiThemes"
+import { cmiLight } from "@cmi-dair/skeleton-themes"
 
 const config = {
   plugins: [

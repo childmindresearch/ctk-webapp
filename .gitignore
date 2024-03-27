@@ -1,3 +1,5 @@
+postgresql
+*.sqlite
 .DS_Store
 test-results
 build

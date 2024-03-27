@@ -1,8 +1,4 @@
-export interface ApiNodeResponse {
-  id: number
-  text: string
-  children: ApiNodeResponse[]
-}
+import type { SqlDiagnosisSchema } from "./server/sql"
 
 export class DecisionTree {
   id: number
@@ -10,31 +6,22 @@ export class DecisionTree {
   parent?: DecisionTree
   children: DecisionTree[]
 
-  constructor(tree: ApiNodeResponse) {
-    this.id = tree.id
-    this.text = tree.text
-    this.children = tree.children.map(child => new DecisionTree(child))
-    this.children.forEach(child => {
-      child.parent = this
-    })
-  }
-
-  isLeaf(): boolean {
-    if (this.children === undefined) {
-      throw new Error("Children is undefined")
+  constructor(table: SqlDiagnosisSchema[], rootId?: number, parent?: DecisionTree) {
+    let root: SqlDiagnosisSchema | undefined
+    if (rootId === undefined) {
+      root = table.find(node => node.parent_id === null)
+    } else {
+      root = table.find(node => node.id === rootId)
     }
-    return this.children.length === 0
-  }
-
-  getDepth(): number {
-    let maxDepth = 0
-    for (const child of this.children) {
-      const depth = child.getDepth()
-      if (depth > maxDepth) {
-        maxDepth = depth
-      }
+    if (root === undefined) {
+      throw new Error("No root node found")
     }
-    return maxDepth + 1
+    this.id = root.id
+    this.text = root.text
+    this.parent = parent
+    this.children = table
+      .filter(node => node.parent_id === this.id)
+      .map(child => new DecisionTree(table, child.id, this))
   }
 
   getPath(): string[] {
