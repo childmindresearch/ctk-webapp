@@ -1,11 +1,14 @@
-import sqlite3 from "sqlite3"
-import { DATABASE_URL } from "$lib/server/secrets"
+import postgres from "postgres"
+import { POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_PORT, POSTGRES_DB, POSTGRES_HOST } from "$lib/server/secrets"
 
 export function getDatabase() {
-  if (DATABASE_URL.startsWith("sqlite")) {
-    return new sqlite3.Database(DATABASE_URL.split("://")[1])
-  }
-  throw new Error("Unsupported database")
+  return postgres({
+    host: POSTGRES_HOST,
+    port: Number(POSTGRES_PORT),
+    database: POSTGRES_DB,
+    username: POSTGRES_USER,
+    password: POSTGRES_PASSWORD
+  })
 }
 
 export interface SqlDiagnosisModel {
