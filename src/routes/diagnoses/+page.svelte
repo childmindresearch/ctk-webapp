@@ -5,7 +5,6 @@
   import ListTab from "./ListTab.svelte"
   import SelectedNodes from "./SelectedNodes.svelte"
   import type { SqlDiagnosisSchema } from "$lib/server/sql"
-  import { page } from "$app/stores"
 
   export let data: { diagnoses: SqlDiagnosisSchema[] }
 
