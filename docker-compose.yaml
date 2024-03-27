@@ -5,14 +5,15 @@ services:
       dockerfile: Dockerfile
     develop:
       watch:
-        - action: sync
+        - action: rebuild
           path: ./
-          target: /app/
           ignore:
             - node_modules/
             - postgresql
-        - action: rebuild
-          path: package.json
+            - .git
+            - build
+            - .svelte-kit
+            - .github
     ports:
       - 3000:3000
     env_file:

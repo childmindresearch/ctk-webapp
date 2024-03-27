@@ -1,43 +1,48 @@
 <script lang="ts">
-  import { AppBar } from "@skeletonlabs/skeleton"
+  import { AppBar, getDrawerStore, LightSwitch } from "@skeletonlabs/skeleton"
+
+  const drawerStore = getDrawerStore()
+
+  function drawerOpen(): void {
+    drawerStore.open({})
+  }
 </script>
 
-<AppBar shadow="shadow-2xl" slotTrail="!space-x-2">
+<AppBar slotTrail="!space-x-2">
   <svelte:fragment slot="lead">
-    <a href="/" class="hide-at-420px">
-      <img src="/cmi.svg" alt="Clinician Toolkit" class="w-28" />
-    </a>
+    <div class="flex items-center">
+      <button class="md:hidden btn btn-sm mr-4" on:click={drawerOpen}>
+        <span>
+          <svg viewBox="0 0 100 80" class="fill-token w-4 h-4">
+            <rect width="100" height="20" />
+            <rect y="30" width="100" height="20" />
+            <rect y="60" width="100" height="20" />
+          </svg>
+        </span>
+      </button>
+      <a href="/" data-testid="a-cmi-logo" class="hidden md:block">
+        <img src="/cmi.svg" alt="Clinician Toolkit" class="w-28" />
+      </a>
+    </div>
   </svelte:fragment>
-  <nav class="nav">
-    <a href="/intake">
-      <button class="btn hover:variant-soft-primary">
-        <span>Intake</span>
-      </button>
-    </a>
-    <a href="/diagnoses">
-      <button class="btn hover:variant-soft-primary">
-        <span>Diagnoses</span>
-      </button>
-    </a>
-    <a href="/summarization">
-      <button class="btn hover:variant-soft-primary">
-        <span>Summarization</span>
-      </button>
-    </a>
-  </nav>
   <svelte:fragment slot="trail">
-    <a href="mailto:dair@childmind.org">
-      <button class="btn hover:variant-soft-primary">
+    <button class="btn hover:variant-soft-primary">
+      <a
+        data-testid="a-github"
+        href="https://github.com/childmindresearch/ctk-frontend"
+        target="_blank"
+        rel="noreferrer"
+      >
+        <i class="fa-brands fa-github text-lg" />
+        <span>GitHub</span>
+      </a>
+    </button>
+    <button class="btn hover:variant-soft-primary">
+      <a data-testid="a-mailto" href="mailto:dair@childmind.org" target="_blank" rel="noreferrer">
+        <i class="fa-solid fa-envelope text-lg" />
         <span>Contact</span>
-      </button>
-    </a>
+      </a>
+    </button>
+    <LightSwitch />
   </svelte:fragment>
 </AppBar>
-
-<style>
-  .hide-at-420px {
-    @media (max-width: 420px) {
-      display: none;
-    }
-  }
-</style>
