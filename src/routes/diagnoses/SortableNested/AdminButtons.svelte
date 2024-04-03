@@ -49,7 +49,7 @@
                 })
                     .then(res => res.json())
                     .then(newNode => {
-                        node.children.push(new DecisionTree(newNode))
+                        node.children = node.children.concat(new DecisionTree([newNode], newNode.id, node))
                     })
                     .catch(console.error)
             }
