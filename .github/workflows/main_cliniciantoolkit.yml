@@ -27,7 +27,7 @@ jobs:
                   password: ${{ secrets.AzureAppService_ContainerPassword_11838a9e9295461da12021a8879e15c3 }}
 
             - name: Build and push container image to registry
-              uses: docker/build-push-action@v3
+              uses: docker/build-push-action@v5
               with:
                   push: true
                   tags: index.docker.io/cmidair/ctk-app:${{ github.sha }}
