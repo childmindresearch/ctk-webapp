@@ -5,26 +5,26 @@ title: "Bug: "
 labels: ["bug"]
 assignees: ["ReinderVosDeWael"]
 body:
-  - type: textarea
-    id: description
-    attributes:
-      label: Description
-      description: "What is the bug?  What is the current state? What is the expected behavior?"
-      placeholder: "Describe the bug here"
-    validations:
-      required: true
-  - type: textarea
-    id: tasks
-    attributes:
-      label: Tasks
-      description: "What are the concrete (sub-)tasks that need to be performed?"
-      placeholder: "Describe the tasks here."
-      value: "- [ ] Task 1"
-    validations:
-      required: true
-  - type: textarea
-    id: freeform-notes
-    attributes:
-      label: "Freeform Notes"
-      description: "Add any additional notes here."
-      placeholder: "Add notes here."
+    - type: textarea
+      id: description
+      attributes:
+          label: Description
+          description: "What is the bug?  What is the current state? What is the expected behavior?"
+          placeholder: "Describe the bug here"
+      validations:
+          required: true
+    - type: textarea
+      id: tasks
+      attributes:
+          label: Tasks
+          description: "What are the concrete (sub-)tasks that need to be performed?"
+          placeholder: "Describe the tasks here."
+          value: "- [ ] Task 1"
+      validations:
+          required: true
+    - type: textarea
+      id: freeform-notes
+      attributes:
+          label: "Freeform Notes"
+          description: "Add any additional notes here."
+          placeholder: "Add notes here."
