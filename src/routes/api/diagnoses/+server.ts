@@ -20,7 +20,9 @@ export async function GET() {
 }
 
 export async function POST({ request }) {
-    let { text, parentId } = await request.json()
+    const body = await request.json()
+    const text = body.text
+    let parentId = body.parentId
     logger.info(`Creating diagnosis with text ${text} and parent_id ${parentId}`)
     if (parentId === null) {
         parentId = "NULL"

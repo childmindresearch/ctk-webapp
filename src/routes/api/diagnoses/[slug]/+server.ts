@@ -77,7 +77,7 @@ export async function PATCH({ params, request }) {
     }
 
     if (text !== undefined) {
-        query.text += ` text = \$${query.values.length + 1},`
+        query.text += ` text = $${query.values.length + 1},`
         query.values.push(text)
     }
 
@@ -86,7 +86,7 @@ export async function PATCH({ params, request }) {
         query.values.push(String(parent_id))
     }
 
-    query.text = query.text.slice(0, -1) + ` WHERE id = \$${query.values.length + 1}`
+    query.text = query.text.slice(0, -1) + ` WHERE id = $${query.values.length + 1}`
     query.values.push(String(id))
 
     return await pool
