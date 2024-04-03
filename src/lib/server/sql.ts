@@ -7,7 +7,8 @@ export function getDatabase() {
     port: Number(POSTGRES_PORT),
     database: POSTGRES_DB,
     username: POSTGRES_USER,
-    password: POSTGRES_PASSWORD
+    password: POSTGRES_PASSWORD,
+    ssl: true
   })
 }
 

@@ -13,6 +13,7 @@ export class DecisionTree {
     } else {
       root = table.find(node => node.id === rootId)
     }
+
     if (root === undefined) {
       throw new Error("No root node found")
     }
@@ -22,6 +23,38 @@ export class DecisionTree {
     this.children = table
       .filter(node => node.parent_id === this.id)
       .map(child => new DecisionTree(table, child.id, this))
+  }
+
+  getParents(): DecisionTree[] {
+    const parents: DecisionTree[] = []
+    let current: DecisionTree | undefined = this.parent
+    while (current) {
+      parents.unshift(current)
+      current = current.parent
+    }
+    return parents
+  }
+
+  getChildrenRecursive(): DecisionTree[] {
+    const children: DecisionTree[] = []
+    for (const child of this.children) {
+      children.push(child)
+      children.push(...child.getChildrenRecursive())
+    }
+    return children
+  }
+
+  filterChildrenByIds(ids: number[]): DecisionTree {
+    const nodes = [this, ...this.getChildrenRecursive().filter(child => ids.includes(child.id))]
+    return new DecisionTree(
+      nodes.map(node => ({
+        id: node.id,
+        text: node.text,
+        parent_id: node.parent?.id ?? null
+      })),
+      this.id,
+      this.parent
+    )
   }
 
   getPath(): string[] {
