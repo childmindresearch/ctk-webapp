@@ -5,16 +5,15 @@
   import ListTab from "./ListTab.svelte"
   import SelectedNodes from "./SelectedNodes.svelte"
   import type { SqlDiagnosisSchema } from "$lib/server/sql"
+  import SearchDiagnoses from "./SearchDiagnoses.svelte"
 
   export let data: { diagnoses: SqlDiagnosisSchema[] }
 
   let selectedNodes: DecisionTree[] = []
+  let filteredNodes: DecisionTree
   let tabSet: number = 0
   let editable: boolean = false
-  let nodes: DecisionTree
-  if (data.hasOwnProperty("diagnoses")) {
-    nodes = new DecisionTree(data.diagnoses)
-  }
+  let nodes = new DecisionTree(data.diagnoses)
 </script>
 
 <TabGroup>
@@ -27,7 +26,8 @@
       <div class="right-0">
         <SlideToggle name="slider-editable" size="sm" bind:checked={editable}>Editable</SlideToggle>
       </div>
-      <ListTab {nodes} bind:selectedNodes {editable} />
+      <SearchDiagnoses tree={nodes} bind:filteredNodes />
+      <ListTab bind:nodes={filteredNodes} bind:selectedNodes {editable} />
     </div>
     <div hidden={tabSet !== 1}>
       <SelectedNodes bind:nodes={selectedNodes} />

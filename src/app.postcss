@@ -2,3 +2,14 @@
 @tailwind components;
 @tailwind utilities;
 @tailwind variants;
+
+.input,
+.input-group,
+.select,
+.textarea {
+  @apply border-neutral-300 focus-within:border-neutral-300 focus:border-neutral-500;
+}
+
+input[type="file"] {
+  @apply border-none file:variant-soft-primary hover:file:variant-filled-primary !important;
+}

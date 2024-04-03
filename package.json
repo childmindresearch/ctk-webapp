@@ -33,6 +33,7 @@
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-svelte": "^2.35.1",
     "flowbite-svelte-icons": "^1.4.5",
+    "fuse.js": "^7.0.0",
     "jsdom": "^24.0.0",
     "pg": "^8.11.3",
     "postcss": "^8.4.33",
