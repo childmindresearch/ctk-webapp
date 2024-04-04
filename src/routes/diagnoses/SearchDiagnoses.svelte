@@ -18,6 +18,12 @@
         ignoreLocation: true
     })
 
+    let debounceTimer: ReturnType<typeof setTimeout>
+    function debounceSearch(event: Event) {
+        clearTimeout(debounceTimer)
+        debounceTimer = setTimeout(() => searchDiagnoses(event), 150)
+    }
+
     function searchDiagnoses(event: Event) {
         const input = event.target as HTMLInputElement
         const query = input.value.trim()
@@ -39,5 +45,5 @@
 
 <div class="input-group input-group-divider grid-cols-[auto_1fr_auto] flex items-center">
     <i class="fas fa-search ml-2"></i>
-    <input class="input" type="search" placeholder="Search..." on:input={searchDiagnoses} />
+    <input class="input" type="search" placeholder="Search..." on:input={debounceSearch} />
 </div>
