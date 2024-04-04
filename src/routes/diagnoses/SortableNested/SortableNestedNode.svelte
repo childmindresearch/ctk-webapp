@@ -56,13 +56,13 @@
     <div>
         <!-- Inner div is necessary because otherwise the child elements are individually draggable.-->
         <div class="flex items-center" transition:slide>
-            <button class="hover-highlight" disabled={isRoot}>
+            <button class="hover-highlight" on:click={node.children.length === 0 ? onSave : fold}>
                 {#if node.children.length === 0}
-                    <CartPlusOutline class="text-secondary-400" size="lg" on:click={onSave} />
+                    <CartPlusOutline class="text-secondary-400" size="lg" />
                 {:else if isFolded}
-                    <FolderSolid class="text-secondary-900" size="lg" on:click={fold} />
+                    <FolderSolid class="text-secondary-900" size="lg" />
                 {:else}
-                    <FolderOpenSolid class="text-secondary-600" size="lg" on:click={fold} />
+                    <FolderOpenSolid class="text-secondary-600" size="lg" />
                 {/if}
             </button>
             <span tabindex="0" role="textbox" aria-multiline="true">
