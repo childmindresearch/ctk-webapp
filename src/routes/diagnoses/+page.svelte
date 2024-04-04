@@ -1,12 +1,12 @@
 <script script lang="ts">
-    import { DecisionTree } from "$lib/utils"
     import { SlideToggle, Tab, TabGroup } from "@skeletonlabs/skeleton"
+    import { onMount } from "svelte"
+    import { DecisionTree } from "$lib/utils"
+    import LoadingBar from "$lib/components/LoadingBar.svelte"
     import Checkout from "./Checkout.svelte"
-    import ListTab from "./ListTab.svelte"
+    import DiagnosesDirectory from "./DiagnosesDirectory.svelte"
     import SelectedNodes from "./SelectedNodes.svelte"
     import SearchDiagnoses from "./SearchDiagnoses.svelte"
-    import { onMount } from "svelte"
-    import LoadingBar from "$lib/components/LoadingBar.svelte"
 
     let selectedNodes: DecisionTree[] = []
     let filteredNodes: DecisionTree
@@ -34,7 +34,7 @@
                     <SlideToggle name="slider-editable" size="sm" bind:checked={editable}>Editable</SlideToggle>
                 </div>
                 <SearchDiagnoses tree={nodes} bind:filteredNodes />
-                <ListTab bind:nodes={filteredNodes} bind:selectedNodes {editable} />
+                <DiagnosesDirectory bind:nodes={filteredNodes} bind:selectedNodes {editable} />
             </div>
             <div hidden={tabSet !== 1}>
                 <SelectedNodes bind:nodes={selectedNodes} />
