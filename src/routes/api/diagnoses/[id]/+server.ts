@@ -2,7 +2,7 @@ import { logger } from "$lib/server/logging"
 import { pool, type SqlDiagnosisSchema } from "$lib/server/sql"
 
 export async function GET({ params }) {
-    const id = params.slug
+    const id = params.id
     logger.info(`Getting diagnosis with id ${id}`)
 
     const query = {
@@ -27,7 +27,7 @@ export async function GET({ params }) {
 }
 
 export async function DELETE({ params }) {
-    const id = params.slug
+    const id = params.id
     logger.info(`Deleting diagnosis with id ${id}`)
     const query = {
         text: "DELETE FROM diagnoses WHERE id = $1",
@@ -50,7 +50,7 @@ export async function DELETE({ params }) {
 }
 
 export async function PATCH({ params, request }) {
-    const id = params.slug
+    const id = params.id
     let { text, parent_id } = await request.json()
     logger.info(`Patching diagnosis with id ${id}`)
 

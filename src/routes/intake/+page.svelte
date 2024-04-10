@@ -1,13 +1,11 @@
 <script lang="ts">
     import { getModalStore, getToastStore, type ModalSettings } from "@skeletonlabs/skeleton"
     import { onMount } from "svelte"
-    import { API_ROUTE } from "$lib/api"
     import QuestionMarkIcon from "$lib/components/QuestionMarkIcon.svelte"
     import LoadingBar from "$lib/components/LoadingBar.svelte"
     import { downloadBlob } from "$lib/utils"
 
     let redcapSurveyId = ""
-    let files: FileList
     let isLoading = false
     let modalOpen = false
     let redcapIdentifierImage: HTMLImageElement
@@ -20,44 +18,42 @@
         redcapIdentifierImage.src = "redcap_identifier.png"
     })
 
-    function explainRedcapIdentifier() {
+    function explainMRN() {
         const modal: ModalSettings = {
             type: "alert",
-            title: "Redcap Identifier",
-            body: "The redcap identifier can be found in the top right corner of the intake form.",
+            title: "MRN",
+            body: "The MRN can be found in the top right corner of the intake form.",
             image: redcapIdentifierImage.src
         }
         modalStore.trigger(modal)
     }
 
     function onSubmit() {
-        if (!redcapSurveyId || !files.length) {
+        if (redcapSurveyId === "") {
             toastStore.trigger({
                 background: "variant-filled-error",
-                message: "Please fill out all fields."
+                message: "Please enter an MRN."
             })
             return
         }
-
-        const formData = new FormData()
-        formData.append("csv_file", files[0])
-        formData.append("redcap_survery_identifier", redcapSurveyId)
-
         isLoading = true
-        fetch(`${API_ROUTE}/file_conversion/intake2docx`, {
-            method: "POST",
-            body: formData
-        })
-            .then(async res => await res.blob())
+        fetch(`/api/intake-report/${redcapSurveyId}`)
+            .then(async response => {
+                if (!response.ok) {
+                    throw new Error(await response.text())
+                }
+                return await response.blob()
+            })
             .then(blob => {
                 const filename = `${redcapSurveyId}_V0_CTK.docx`
                 downloadBlob(blob, filename)
             })
-            .catch(() => {
+            .catch(error => {
                 toastStore.trigger({
                     background: "variant-filled-error",
-                    message: "Error submitting intake."
+                    message: error.message
                 })
+                isLoading = false
             })
             .finally(() => {
                 isLoading = false
@@ -67,19 +63,39 @@
     $: modalOpen = $modalStore.length > 0
 </script>
 
-<form class="space-y-2">
-    <label for="files">Redcap .csv file</label>
-    <input type="file" bind:files accept=".csv" />
+<h3 class="h3">Intake Reports</h3>
+<p>
+    This page is used to generate intake reports for patients. Please enter the MRN of the patient you would like to
+    generate a report for.
+</p>
+<form class="space-y-2 mt-5">
     <div class="flex space-x-1">
-        <label for="redcapSurveyId">Redcap survey ID</label>
-        <button class="hover-highlight" on:click={explainRedcapIdentifier} disabled={modalOpen}>
+        <label for="redcapSurveyId">MRN</label>
+        <button class="hover-highlight" on:click={explainMRN} disabled={modalOpen}>
             <QuestionMarkIcon />
         </button>
     </div>
-    <input class="input" type="text" placeholder="Redcap survey ID" bind:value={redcapSurveyId} />
+    <input class="input w-72" type="number" pattern="^\d{5}$" placeholder="MRN" bind:value={redcapSurveyId} />
+    <br />
     <button class="btn variant-filled-primary" on:click={onSubmit} disabled={isLoading}> Submit </button>
 </form>
 
 {#if isLoading}
     <LoadingBar />
 {/if}
+
+<style>
+    /* Remove the arrows from number inputs */
+    /* Chrome, Safari, Edge, Opera */
+    input::-webkit-outer-spin-button,
+    input::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+
+    /* Firefox */
+    input[type="number"] {
+        -moz-appearance: textfield;
+        appearance: textfield;
+    }
+</style>
