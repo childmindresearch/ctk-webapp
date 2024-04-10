@@ -13,22 +13,30 @@
     let tabSet: number = 0
     let editable: boolean = false
     let nodes: undefined | DecisionTree = undefined
+    let fetchFailed = false
 
     onMount(async () => {
-        const diagnoses = fetch("/api/diagnoses").then(res => res.json())
+        const diagnoses = fetch("/api/diagnoses")
+            .then(res => res.json())
+            .catch(() => {
+                fetchFailed = true
+                return []
+            })
         nodes = new DecisionTree(await diagnoses)
     })
 </script>
 
-<TabGroup>
-    <Tab bind:group={tabSet} name="Diagnoses" value={0}>Diagnoses List</Tab>
-    <Tab bind:group={tabSet} name="Selection" value={1}>{selectedNodes.length} Selections</Tab>
-    <Tab bind:group={tabSet} name="Report" value={2}>Report Generation</Tab>
+{#if fetchFailed}
+    <p>Failed to fetch data. If this error persists, please contact an administrator.</p>
+{:else if !nodes}
+    <LoadingBar />
+{:else}
+    <TabGroup>
+        <Tab bind:group={tabSet} name="Diagnoses" value={0}>Diagnoses List</Tab>
+        <Tab bind:group={tabSet} name="Selection" value={1}>{selectedNodes.length} Selections</Tab>
+        <Tab bind:group={tabSet} name="Report" value={2}>Report Generation</Tab>
 
-    <svelte:fragment slot="panel">
-        {#if !nodes}
-            <LoadingBar />
-        {:else}
+        <svelte:fragment slot="panel">
             <div hidden={tabSet !== 0}>
                 <div class="right-0">
                     <SlideToggle name="slider-editable" size="sm" bind:checked={editable}>Editable</SlideToggle>
@@ -44,6 +52,6 @@
                     <Checkout nodes={selectedNodes} />
                 {/key}
             </div>
-        {/if}
-    </svelte:fragment>
-</TabGroup>
+        </svelte:fragment>
+    </TabGroup>
+{/if}
