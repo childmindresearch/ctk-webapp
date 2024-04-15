@@ -14,7 +14,6 @@
     import ModalMarkdown from "$lib/components/ModalMarkdown.svelte"
     import "../app.postcss"
     import "@cmi-dair/skeleton-themes/cmi.postcss"
-    import { onMount } from "svelte"
     import { page } from "$app/stores"
     import { browser } from "$app/environment"
     initializeStores()

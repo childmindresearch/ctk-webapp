@@ -68,14 +68,15 @@
     This page is used to generate intake reports for patients. Please enter the MRN of the patient you would like to
     generate a report for.
 </p>
-<form class="space-y-2 mt-5">
-    <div class="flex space-x-1">
-        <label for="redcapSurveyId">MRN</label>
-        <button class="hover-highlight" on:click={explainMRN} disabled={modalOpen}>
-            <QuestionMarkIcon />
-        </button>
-    </div>
-    <input class="input w-72" type="number" pattern="^\d{5}$" placeholder="MRN" bind:value={redcapSurveyId} />
+<br />
+<div class="flex space-x-1">
+    <label for="redcapSurveyId">MRN</label>
+    <button class="hover-highlight" on:click={explainMRN} disabled={modalOpen} tabindex="-1">
+        <QuestionMarkIcon />
+    </button>
+</div>
+<form class="space-y-2">
+    <input class="input w-72" type="number" placeholder="MRN" bind:value={redcapSurveyId} />
     <br />
     <button class="btn variant-filled-primary" on:click={onSubmit} disabled={isLoading}> Submit </button>
 </form>
