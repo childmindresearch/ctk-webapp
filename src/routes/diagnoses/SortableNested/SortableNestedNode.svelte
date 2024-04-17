@@ -1,11 +1,13 @@
 <script lang="ts">
     import type { DecisionTree } from "$lib/utils"
-    import { CartPlusOutline, FolderOpenSolid, FolderSolid } from "flowbite-svelte-icons"
     import Sortable, { type SortableEvent } from "sortablejs"
     import { createEventDispatcher, onMount } from "svelte"
     import { slide } from "svelte/transition"
     import AdminButtons from "./AdminButtons.svelte"
     import { shortenText } from "$lib/utils"
+    import FolderOpen from "$lib/Icons/FolderOpen.svelte"
+    import FolderClosed from "$lib/Icons/FolderClosed.svelte"
+    import CartPlus from "$lib/Icons/CartPlus.svelte"
 
     export let node: DecisionTree
     export let editable = false
@@ -55,21 +57,23 @@
 <div id={`node-${node.id}`}>
     <div>
         <!-- Inner div is necessary because otherwise the child elements are individually draggable.-->
-        <div class="flex items-center" transition:slide>
+        <div class="flex items-center space-x-1" transition:slide>
             <button class="hover-highlight" on:click={node.children.length === 0 ? onSave : fold}>
                 {#if node.children.length === 0}
-                    <CartPlusOutline class="text-secondary-400" size="lg" />
+                    <CartPlus class="text-secondary-400" />
                 {:else if isFolded}
-                    <FolderSolid class="text-secondary-900" size="lg" />
+                    <FolderClosed class="text-secondary-900" />
                 {:else}
-                    <FolderOpenSolid class="text-secondary-600" size="lg" />
+                    <FolderOpen class="text-secondary-600" />
                 {/if}
             </button>
             <span tabindex="0" role="textbox" aria-multiline="true">
                 {shortenText(node.text)}
             </span>
             {#if editable}
-                <AdminButtons bind:node showDelete={!isRoot} showEdit={!isRoot} />
+                <div>
+                    <AdminButtons bind:node showDelete={!isRoot} showEdit={!isRoot} />
+                </div>
             {/if}
         </div>
         {#if !isFolded}
