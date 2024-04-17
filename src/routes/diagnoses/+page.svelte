@@ -1,12 +1,12 @@
 <script script lang="ts">
+    import LoadingBar from "$lib/components/LoadingBar.svelte"
     import { SlideToggle, Tab, TabGroup } from "@skeletonlabs/skeleton"
     import { onMount } from "svelte"
-    import { DecisionTree } from "$lib/utils"
-    import LoadingBar from "$lib/components/LoadingBar.svelte"
     import Checkout from "./Checkout.svelte"
+    import { DecisionTree } from "./DecisionTree"
     import DiagnosesDirectory from "./DiagnosesDirectory.svelte"
-    import SelectedNodes from "./SelectedNodes.svelte"
     import SearchDiagnoses from "./SearchDiagnoses.svelte"
+    import SelectedNodes from "./SelectedNodes.svelte"
 
     let selectedNodes: DecisionTree[] = []
     let filteredNodes: DecisionTree

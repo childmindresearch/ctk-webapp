@@ -1,13 +1,13 @@
 <script lang="ts">
-    import type { DecisionTree } from "$lib/utils"
+    import CartPlus from "$lib/icons/CartPlus.svelte"
+    import FolderClosed from "$lib/icons/FolderClosed.svelte"
+    import FolderOpen from "$lib/icons/FolderOpen.svelte"
+    import { shortenText } from "$lib/utils"
     import Sortable, { type SortableEvent } from "sortablejs"
     import { createEventDispatcher, onMount } from "svelte"
     import { slide } from "svelte/transition"
+    import type { DecisionTree } from "../DecisionTree"
     import AdminButtons from "./AdminButtons.svelte"
-    import { shortenText } from "$lib/utils"
-    import FolderOpen from "$lib/Icons/FolderOpen.svelte"
-    import FolderClosed from "$lib/Icons/FolderClosed.svelte"
-    import CartPlus from "$lib/Icons/CartPlus.svelte"
 
     export let node: DecisionTree
     export let editable = false

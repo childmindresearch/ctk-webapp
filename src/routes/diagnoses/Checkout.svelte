@@ -1,7 +1,8 @@
 <script lang="ts">
-    import { getToastStore } from "@skeletonlabs/skeleton"
-    import { downloadBlob, type DecisionTree } from "$lib/utils"
     import LoadingBar from "$lib/components/LoadingBar.svelte"
+    import { downloadBlob } from "$lib/utils"
+    import { getToastStore } from "@skeletonlabs/skeleton"
+    import type { DecisionTree } from "./DecisionTree"
 
     export let nodes: DecisionTree[]
 

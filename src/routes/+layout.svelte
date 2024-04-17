@@ -1,21 +1,21 @@
 <script lang="ts">
+    import { browser } from "$app/environment"
+    import { page } from "$app/stores"
+    import ModalMarkdown from "$lib/components/ModalMarkdown.svelte"
     import NavBar from "$lib/components/NavBar.svelte"
     import Navigation from "$lib/components/Navigation.svelte"
+    import "@cmi-dair/skeleton-themes/cmi.postcss"
     import { arrow, autoUpdate, computePosition, flip, offset, shift } from "@floating-ui/dom"
     import {
         AppShell,
+        Drawer,
         Modal,
         Toast,
         initializeStores,
         storePopup,
-        type ModalComponent,
-        Drawer
+        type ModalComponent
     } from "@skeletonlabs/skeleton"
-    import ModalMarkdown from "$lib/components/ModalMarkdown.svelte"
     import "../app.postcss"
-    import "@cmi-dair/skeleton-themes/cmi.postcss"
-    import { page } from "$app/stores"
-    import { browser } from "$app/environment"
     initializeStores()
     storePopup.set({ computePosition, autoUpdate, flip, shift, offset, arrow })
 
@@ -35,7 +35,7 @@
     <title>Clinician Toolkit</title>
     <meta name="description" content="The Clinician Toolkit developed by Child Mind Institute" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="icon" type="image/png" href="/favicon.png" />
+    <link rel="icon" type="image/ico" href="/favicon.ico" />
 </svelte:head>
 
 <Modal zIndex="z-998" components={modalRegistry} />

@@ -1,7 +1,7 @@
 <script lang="ts">
-    import type { DecisionTree } from "$lib/utils"
     import { shortenText } from "$lib/utils"
     import { getModalStore, type ModalSettings } from "@skeletonlabs/skeleton"
+    import type { DecisionTree } from "../DecisionTree"
     import SortableNestedNode from "./SortableNestedNode.svelte"
 
     export let node: DecisionTree

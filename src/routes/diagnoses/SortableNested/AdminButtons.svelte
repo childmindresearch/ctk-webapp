@@ -1,9 +1,10 @@
 <script lang="ts">
-    import EditIcon from "$lib/Icons/EditIcon.svelte"
-    import FileIcon from "$lib/Icons/FileIcon.svelte"
-    import TrashIcon from "$lib/Icons/TrashIcon.svelte"
-    import { DecisionTree, shortenText } from "$lib/utils"
+    import EditIcon from "$lib/icons/EditIcon.svelte"
+    import FileIcon from "$lib/icons/FileIcon.svelte"
+    import TrashIcon from "$lib/icons/TrashIcon.svelte"
+    import { shortenText } from "$lib/utils"
     import { getModalStore, getToastStore, type ModalSettings } from "@skeletonlabs/skeleton"
+    import { DecisionTree } from "../DecisionTree"
 
     export let node: DecisionTree
     export let showCreate = true
