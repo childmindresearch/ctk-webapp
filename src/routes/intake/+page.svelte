@@ -1,6 +1,6 @@
 <script lang="ts">
     import LoadingBar from "$lib/components/LoadingBar.svelte"
-    import QuestionMarkCircle from "$lib/icons/QuestionMarkCircle.svelte"
+    import QuestionMarkCircleIcon from "$lib/icons/QuestionMarkCircleIcon.svelte"
     import { downloadBlob } from "$lib/utils"
     import { getModalStore, getToastStore, type ModalSettings } from "@skeletonlabs/skeleton"
     import { onMount } from "svelte"
@@ -72,7 +72,7 @@
 <div class="flex space-x-1">
     <label for="redcapSurveyId">MRN</label>
     <button class="hover-highlight" on:click={explainMRN} disabled={modalOpen} tabindex="-1">
-        <QuestionMarkCircle />
+        <QuestionMarkCircleIcon />
     </button>
 </div>
 <form class="space-y-2">
