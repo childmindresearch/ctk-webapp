@@ -1,7 +1,9 @@
 <script lang="ts">
+    import EditIcon from "$lib/Icons/EditIcon.svelte"
+    import FileIcon from "$lib/Icons/FileIcon.svelte"
+    import TrashIcon from "$lib/Icons/TrashIcon.svelte"
     import { DecisionTree, shortenText } from "$lib/utils"
     import { getModalStore, getToastStore, type ModalSettings } from "@skeletonlabs/skeleton"
-    import { PenSolid, TrashBinSolid, FileSolid } from "flowbite-svelte-icons"
 
     export let node: DecisionTree
     export let showCreate = true
@@ -16,19 +18,19 @@
 
     const adminButtons = [
         {
-            icon: FileSolid,
+            icon: FileIcon,
             class: "text-success-600",
             onClick: onCreate,
             show: showCreate
         },
         {
-            icon: PenSolid,
+            icon: EditIcon,
             class: "text-warning-600",
             onClick: onEdit,
             show: showEdit
         },
         {
-            icon: TrashBinSolid,
+            icon: TrashIcon,
             class: "text-error-600",
             onClick: onDelete,
             show: showDelete
@@ -37,15 +39,16 @@
 
     async function onCreate() {
         const modal: ModalSettings = {
-            type: "prompt",
-            title: `Create diagnosis.`,
-            body: `Create a new diagnosis inside "${shortenText(node.text)}".`,
-            response: async value => {
-                if (!value) return
+            type: "component",
+            component: "markdown",
+            title: `New diagnosis inside "${shortenText(node.text)}"`,
+            meta: { instructions: instructions },
+            response: async response => {
+                if (!response) return
                 await fetch("/api/diagnoses", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ text: value, parentId: node.id })
+                    body: JSON.stringify({ text: response.value, parentId: node.id })
                 })
                     .then(res => res.json())
                     .then(newNode => {
@@ -62,6 +65,7 @@
         const modal: ModalSettings = {
             type: "component",
             component: "markdown",
+            title: `Edit diagnosis "${shortenText(node.text)}"`,
             meta: { instructions: instructions, value: node.text },
             response: async response => {
                 if (!response) return
@@ -85,7 +89,7 @@
         const modal: ModalSettings = {
             type: "confirm",
             title: "Delete diagnosis",
-            body: `Are you sure you want to delete this and any subdirectories: "${shortenText(node.text)}"?`,
+            body: `Are you sure you want to delete "${shortenText(node.text)}" and any subdirectories?`,
             response: async value => {
                 if (!value) return
                 await fetch(`/api/diagnoses/${node.id}`, { method: "DELETE" }).then(() => {
@@ -104,7 +108,7 @@
     }
 </script>
 
-<span class={"space-x-1"}>
+<span class={"space-x-2"}>
     {#each adminButtons as adminButton}
         <button on:click={adminButton.onClick} hidden={!adminButton.show} class="hover-highlight">
             <svelte:component this={adminButton.icon} class={adminButton.class} />
