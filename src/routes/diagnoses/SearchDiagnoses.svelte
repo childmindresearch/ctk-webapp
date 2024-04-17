@@ -1,6 +1,6 @@
 <script lang="ts">
-    import type { DecisionTree } from "$lib/utils"
     import Fuse from "fuse.js"
+    import type { DecisionTree } from "./DecisionTree"
 
     export let tree: DecisionTree
     export let filteredNodes: DecisionTree = tree

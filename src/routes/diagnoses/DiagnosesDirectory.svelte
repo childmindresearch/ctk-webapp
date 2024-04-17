@@ -1,8 +1,8 @@
 <script lang="ts">
-    import SortableNested from "./SortableNested/SortableNested.svelte"
     import LoadingBar from "$lib/components/LoadingBar.svelte"
-    import { DecisionTree } from "$lib/utils"
     import { getToastStore } from "@skeletonlabs/skeleton"
+    import type { DecisionTree } from "./DecisionTree"
+    import SortableNested from "./SortableNested/SortableNested.svelte"
 
     export let nodes: DecisionTree
     export let selectedNodes: DecisionTree[] = []

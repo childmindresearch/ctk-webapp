@@ -1,9 +1,9 @@
 <script lang="ts">
-    import TrashIcon from "$lib/Icons/TrashIcon.svelte"
-    import type { DecisionTree } from "$lib/utils"
+    import TrashIcon from "$lib/icons/TrashIcon.svelte"
     import { getModalStore, getToastStore } from "@skeletonlabs/skeleton"
     import Sortable, { type SortableEvent } from "sortablejs"
     import { onMount } from "svelte"
+    import type { DecisionTree } from "./DecisionTree"
 
     export let nodes: DecisionTree[]
 
