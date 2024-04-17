@@ -1,7 +1,7 @@
 <script lang="ts">
-    import CartPlus from "$lib/icons/CartPlus.svelte"
-    import FolderClosed from "$lib/icons/FolderClosed.svelte"
-    import FolderOpen from "$lib/icons/FolderOpen.svelte"
+    import CartPlusIcon from "$lib/icons/CartPlusIcon.svelte"
+    import FolderClosedIcon from "$lib/icons/FolderClosedIcon.svelte"
+    import FolderOpenIcon from "$lib/icons/FolderOpenIcon.svelte"
     import { shortenText } from "$lib/utils"
     import Sortable, { type SortableEvent } from "sortablejs"
     import { createEventDispatcher, onMount } from "svelte"
@@ -60,11 +60,11 @@
         <div class="flex items-center space-x-1" transition:slide>
             <button class="hover-highlight" on:click={node.children.length === 0 ? onSave : fold}>
                 {#if node.children.length === 0}
-                    <CartPlus class="text-secondary-400" />
+                    <CartPlusIcon class="text-secondary-400" />
                 {:else if isFolded}
-                    <FolderClosed class="text-secondary-900" />
+                    <FolderClosedIcon class="text-secondary-900" />
                 {:else}
-                    <FolderOpen class="text-secondary-600" />
+                    <FolderOpenIcon class="text-secondary-600" />
                 {/if}
             </button>
             <span tabindex="0" role="textbox" aria-multiline="true">
