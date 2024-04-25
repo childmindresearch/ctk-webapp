@@ -13,7 +13,7 @@ const config = {
 
 export const pool = new Pool(config)
 
-export interface SqlDiagnosisModel {
+export interface SqlTemplateModel {
     id: number
     text: string
     parent_id: number | null
@@ -21,7 +21,7 @@ export interface SqlDiagnosisModel {
     time_updated: string
 }
 
-export interface SqlDiagnosisSchema {
+export interface SqlTemplateSchema {
     id: number
     text: string
     parent_id: number | null

@@ -16,7 +16,7 @@
     let fetchFailed = false
 
     onMount(async () => {
-        const diagnoses = fetch("/api/diagnoses")
+        const diagnoses = fetch("/api/templates")
             .then(res => res.json())
             .catch(() => {
                 fetchFailed = true
