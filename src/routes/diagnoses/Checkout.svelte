@@ -7,11 +7,20 @@
     export let nodes: DecisionTree[]
 
     let templates = getTemplateText(nodes)
-    let userTemplates = templates.map(template => allUpperCaseUnderscoreToCapitalizedSpace(template))
-    let values = Array(templates.length).fill("")
+    let stringTemplates = templates.filter(template => !template.includes("PRONOUN"))
+    let values = Array(stringTemplates.length).fill("")
     let isLoading = false
+    let containsPronouns = templates.some(template => template.includes("PRONOUN"))
 
     const toastStore = getToastStore()
+    const pronounsArray = [
+        ["he", "him", "his", "his", "himself"],
+        ["she", "her", "her", "hers", "herself"],
+        ["they", "them", "their", "theirs", "themselves"],
+        ["ze", "zir", "zir", "zirs", "zirself"]
+    ]
+
+    let pronouns: string[] = pronounsArray[0]
 
     function onSubmit(event: Event) {
         event.preventDefault()
@@ -22,9 +31,13 @@
 
         isLoading = true
         let text = nodes.map(node => node.text).join("\n\n")
-        templates.forEach((template, index) => {
+        stringTemplates.forEach((template, index) => {
             text = text.replace(new RegExp(`\{\{${template}\}\}`, "g"), values[index])
         })
+        pronouns.forEach((pronoun, index) => {
+            text = text.replace(new RegExp(`\{\{PRONOUN_${index}\}\}`, "g"), pronoun)
+        })
+
         fetch("/api/markdown2docx", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -69,16 +82,31 @@
 </script>
 
 <div class="space-y-2">
-    {#if userTemplates.length === 0}
+    {#if stringTemplates.length === 0}
         <p class="text-center">No fields required.</p>
     {:else}
         <p class="text-center">Please fill in the following fields:</p>
     {/if}
     <div class="space-x-2">
-        {#each userTemplates as template, index}
-            <input class="input max-w-60" type="text" placeholder={template} bind:value={values[index]} />
+        {#each stringTemplates as template, index}
+            <input
+                class="input max-w-60"
+                type="text"
+                placeholder={allUpperCaseUnderscoreToCapitalizedSpace(template)}
+                bind:value={values[index]}
+            />
         {/each}
     </div>
+    {#if containsPronouns}
+        <p class="text-center">Please select the correct pronouns.</p>
+        <div class="space-x-2">
+            <select class="select" bind:value={pronouns}>
+                {#each pronounsArray as pronoun}
+                    <option value={pronoun}>{pronoun.join(", ")}</option>
+                {/each}
+            </select>
+        </div>
+    {/if}
     <button class="btn variant-filled-primary" on:click={onSubmit}>Download</button>
     {#if isLoading}
         <LoadingBar />

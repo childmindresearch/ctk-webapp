@@ -45,11 +45,11 @@
             title: `New diagnosis inside "${shortenText(node.text)}"`,
             meta: { instructions: instructions },
             response: async response => {
-                if (!response) return
-                await fetch("/api/diagnoses", {
+                if (!response.value) return
+                await fetch(`/api/templates/${node.id}`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ text: response.value, parentId: node.id })
+                    body: JSON.stringify({ text: response.value })
                 })
                     .then(res => res.json())
                     .then(newNode => {
@@ -70,7 +70,7 @@
             meta: { instructions: instructions, value: node.text },
             response: async response => {
                 if (!response) return
-                await fetch(`/api/diagnoses/${node.id}`, {
+                await fetch(`/api/templates/${node.id}`, {
                     method: "PATCH",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ text: response.value, parentId })
@@ -93,7 +93,7 @@
             body: `Are you sure you want to delete "${shortenText(node.text)}" and any subdirectories?`,
             response: async value => {
                 if (!value) return
-                await fetch(`/api/diagnoses/${node.id}`, { method: "DELETE" }).then(() => {
+                await fetch(`/api/templates/${node.id}`, { method: "DELETE" }).then(() => {
                     if (!node.parent) {
                         toastStore.trigger({
                             message: "Cannot delete the root node.",
