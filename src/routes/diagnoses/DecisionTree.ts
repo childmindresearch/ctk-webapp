@@ -1,4 +1,4 @@
-import type { SqlDiagnosisSchema } from "$lib/server/sql"
+import type { SqlTemplateSchema } from "$lib/server/sql"
 
 export class DecisionTree {
     id: number
@@ -6,8 +6,8 @@ export class DecisionTree {
     parent?: DecisionTree
     children: DecisionTree[]
 
-    constructor(table: SqlDiagnosisSchema[], rootId?: number, parent?: DecisionTree) {
-        let root: SqlDiagnosisSchema | undefined
+    constructor(table: SqlTemplateSchema[], rootId?: number, parent?: DecisionTree) {
+        let root: SqlTemplateSchema | undefined
         if (rootId === undefined) {
             root = table.find(node => node.parent_id === null)
         } else {

@@ -25,7 +25,7 @@
             )}"?`,
             response: async confirmed => {
                 if (confirmed) {
-                    await fetch(`/api/diagnoses/${sourceId}`, {
+                    await fetch(`/api/templates/${sourceId}`, {
                         method: "PATCH",
                         headers: { "Content-Type": "application/json" },
                         body: JSON.stringify({ parentId: targetId })
