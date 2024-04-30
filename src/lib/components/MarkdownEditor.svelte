@@ -15,6 +15,7 @@
         new Vditor(elem.id, {
             theme: "classic",
             minHeight: 300,
+            height: 500,
             lang: "en_US",
             mode: "wysiwyg",
             input: text => {
