@@ -14,8 +14,11 @@
     const modalStore = getModalStore()
     const toastStore = getToastStore()
 
-    const instructions =
-        "To add a template value, write it in all caps with underscores for spaces between two curly brackets. For example: {{CHILD_NAME}} could be used as a template for a child's name."
+    const instructions = `To add a template value, write it in all caps with dashes for spaces
+        between two curly brackets. For example: {{CHILD-NAME}} could be used
+        as a template for a child's name. Pronouns may also be added with
+        {{PRONOUN-0}} through {{PRONOUN-4}} representing "she/her/her/hers/herself".
+        Please conjugate verbs in the singular (i.e. do not adjust conjugations for they/them).`
 
     const adminButtons = [
         {

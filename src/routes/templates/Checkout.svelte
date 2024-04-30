@@ -35,7 +35,7 @@
             text = text.replace(new RegExp(`\{\{${template}\}\}`, "g"), values[index])
         })
         pronouns.forEach((pronoun, index) => {
-            text = text.replace(new RegExp(`\{\{PRONOUN_${index}\}\}`, "g"), pronoun)
+            text = text.replace(new RegExp(`\{\{PRONOUN-${index}\}\}`, "g"), pronoun)
         })
 
         fetch("/api/markdown2docx", {
@@ -60,9 +60,9 @@
             })
     }
 
-    function allUpperCaseUnderscoreToCapitalizedSpace(input: string): string {
+    function allUpperCaseDashToCapitalizedSpace(input: string): string {
         return input
-            .split("_")
+            .split("-")
             .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
             .join(" ")
     }
@@ -85,20 +85,20 @@
     {#if stringTemplates.length === 0}
         <p class="text-center">No fields required.</p>
     {:else}
-        <p class="text-center">Please fill in the following fields:</p>
+        <p>Please fill in the following fields:</p>
     {/if}
     <div class="space-x-2">
         {#each stringTemplates as template, index}
             <input
                 class="input max-w-60"
                 type="text"
-                placeholder={allUpperCaseUnderscoreToCapitalizedSpace(template)}
+                placeholder={allUpperCaseDashToCapitalizedSpace(template)}
                 bind:value={values[index]}
             />
         {/each}
     </div>
     {#if containsPronouns}
-        <p class="text-center">Please select the correct pronouns.</p>
+        <p>Please select the patient's pronouns.</p>
         <div class="space-x-2">
             <select class="select" bind:value={pronouns}>
                 {#each pronounsArray as pronoun}
