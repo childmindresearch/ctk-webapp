@@ -17,7 +17,7 @@
         nodes = nodes.filter(n => n.id !== node.id)
         toastStore.trigger({
             background: "variant-filled-success",
-            message: "Diagnosis removed from selection."
+            message: "Template removed from selection."
         })
     }
 
@@ -25,7 +25,7 @@
         return node.getPath().slice(1)
     }
 
-    function openDiagnosis(node: DecisionTree): void {
+    function openTemplate(node: DecisionTree): void {
         modalStore.trigger({
             type: "alert",
             title: "Full text",
@@ -47,7 +47,7 @@
 </script>
 
 {#if nodes.length === 0}
-    <p class="text-center">No diagnoses selected.</p>
+    <p class="text-center">No templates selected.</p>
 {/if}
 
 <div class="table-container">
@@ -55,7 +55,7 @@
         <tbody>
             <div bind:this={elem} class="align-middle text-center">
                 {#each nodes as node}
-                    <tr on:dblclick={() => openDiagnosis(node)}>
+                    <tr on:dblclick={() => openTemplate(node)}>
                         <td>
                             <button on:click={() => removeNode(node)} class="hover-highlight">
                                 <TrashIcon class="text-error-600" />

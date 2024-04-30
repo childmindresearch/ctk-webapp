@@ -21,10 +21,10 @@
     let debounceTimer: ReturnType<typeof setTimeout>
     function debounceSearch(event: Event) {
         clearTimeout(debounceTimer)
-        debounceTimer = setTimeout(() => searchDiagnoses(event), 150)
+        debounceTimer = setTimeout(() => searchTemplates(event), 150)
     }
 
-    function searchDiagnoses(event: Event) {
+    function searchTemplates(event: Event) {
         const input = event.target as HTMLInputElement
         const query = input.value.trim()
 

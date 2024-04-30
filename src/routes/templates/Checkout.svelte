@@ -50,7 +50,7 @@
                 return await res.blob()
             })
             .then(blob => {
-                const filename = "diagnosis.docx"
+                const filename = "templates.docx"
                 downloadBlob(blob, filename)
                 isLoading = false
             })

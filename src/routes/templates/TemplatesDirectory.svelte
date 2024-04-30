@@ -18,7 +18,7 @@
         if (selectedNodes.find(savedNode => savedNode.id === node.id)) {
             toastStore.trigger({
                 background: "variant-filled-warning",
-                message: "This diagnosis is already selected."
+                message: "This template is already selected."
             })
             return
         }
@@ -26,13 +26,13 @@
         selectedNodes = [...selectedNodes, node]
         toastStore.trigger({
             background: "variant-filled-success",
-            message: "Diagnosis added to selection."
+            message: "Template added to selection."
         })
     }
 </script>
 
 {#if !nodes}
-    <LoadingBar label="Processing diagnoses..." />
+    <LoadingBar label="Processing templates..." />
 {:else}
     <SortableNested node={nodes} on:save={onSave} {editable} />
 {/if}

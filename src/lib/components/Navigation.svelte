@@ -4,9 +4,9 @@
 
   const drawerStore = getDrawerStore()
   const pages = [
-    { name: "Diagnoses", href: "/diagnoses" },
     { name: "Intake", href: "/intake" },
-    { name: "Summarization", href: "/summarization" }
+    { name: "Summarization", href: "/summarization" },
+    { name: "Templates", href: "/templates" },
   ]
 
   function drawerClose(): void {
