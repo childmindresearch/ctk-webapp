@@ -25,6 +25,7 @@
         "@testing-library/jest-dom": "^6.4.2",
         "@testing-library/svelte": "^4.1.0",
         "@types/pg": "^8.11.4",
+        "@types/showdown": "^2.0.6",
         "@types/sortablejs": "^1.15.8",
         "@typescript-eslint/eslint-plugin": "^7.5.0",
         "@typescript-eslint/parser": "^7.5.0",
@@ -57,5 +58,8 @@
         "arrowParens": "avoid",
         "tabWidth": 4,
         "printWidth": 120
+    },
+    "dependencies": {
+        "showdown": "^2.1.0"
     }
 }
