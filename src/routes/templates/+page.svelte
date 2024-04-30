@@ -4,8 +4,8 @@
     import { onMount } from "svelte"
     import Checkout from "./Checkout.svelte"
     import { DecisionTree } from "./DecisionTree"
-    import DiagnosesDirectory from "./DiagnosesDirectory.svelte"
-    import SearchDiagnoses from "./SearchDiagnoses.svelte"
+    import TemplatesDirectory from "./TemplatesDirectory.svelte"
+    import SearchTemplates from "./SearchTemplates.svelte"
     import SelectedNodes from "./SelectedNodes.svelte"
 
     let selectedNodes: DecisionTree[] = []
@@ -16,13 +16,13 @@
     let fetchFailed = false
 
     onMount(async () => {
-        const diagnoses = fetch("/api/templates")
+        const templates = fetch("/api/templates")
             .then(res => res.json())
             .catch(() => {
                 fetchFailed = true
                 return []
             })
-        nodes = new DecisionTree(await diagnoses)
+        nodes = new DecisionTree(await templates)
     })
 </script>
 
@@ -32,7 +32,7 @@
     <LoadingBar />
 {:else}
     <TabGroup>
-        <Tab bind:group={tabSet} name="Diagnoses" value={0}>Diagnoses List</Tab>
+        <Tab bind:group={tabSet} name="Templates" value={0}>Templates List</Tab>
         <Tab bind:group={tabSet} name="Selection" value={1}>{selectedNodes.length} Selections</Tab>
         <Tab bind:group={tabSet} name="Report" value={2}>Report Generation</Tab>
 
@@ -41,8 +41,8 @@
                 <div class="right-0">
                     <SlideToggle name="slider-editable" size="sm" bind:checked={editable}>Editable</SlideToggle>
                 </div>
-                <SearchDiagnoses tree={nodes} bind:filteredNodes />
-                <DiagnosesDirectory bind:nodes={filteredNodes} bind:selectedNodes {editable} />
+                <SearchTemplates tree={nodes} bind:filteredNodes />
+                <TemplatesDirectory bind:nodes={filteredNodes} bind:selectedNodes {editable} />
             </div>
             <div hidden={tabSet !== 1}>
                 <SelectedNodes bind:nodes={selectedNodes} />

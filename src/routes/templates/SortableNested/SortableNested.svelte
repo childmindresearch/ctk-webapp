@@ -19,7 +19,7 @@
         if (!sourceNode || !targetParentNode) return
         const modal: ModalSettings = {
             type: "confirm",
-            title: "Move diagnosis",
+            title: "Move template",
             body: `Are you sure you want to move "${shortenText(sourceNode.text)}" to "${shortenText(
                 targetParentNode.text
             )}"?`,

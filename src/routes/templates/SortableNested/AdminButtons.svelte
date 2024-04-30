@@ -42,7 +42,7 @@
         const modal: ModalSettings = {
             type: "component",
             component: "markdown",
-            title: `New diagnosis inside "${shortenText(node.text)}"`,
+            title: `New template inside "${shortenText(node.text)}"`,
             meta: { instructions: instructions },
             response: async response => {
                 if (!response.value) return
@@ -66,7 +66,7 @@
         const modal: ModalSettings = {
             type: "component",
             component: "markdown",
-            title: `Edit diagnosis "${shortenText(node.text)}"`,
+            title: `Edit template "${shortenText(node.text)}"`,
             meta: { instructions: instructions, value: node.text },
             response: async response => {
                 if (!response) return
@@ -89,7 +89,7 @@
         }
         const modal: ModalSettings = {
             type: "confirm",
-            title: "Delete diagnosis",
+            title: "Delete template",
             body: `Are you sure you want to delete "${shortenText(node.text)}" and any subdirectories?`,
             response: async value => {
                 if (!value) return
