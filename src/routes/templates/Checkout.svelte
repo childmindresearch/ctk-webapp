@@ -40,7 +40,11 @@
 
         fetch("/api/markdown2docx", {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: {
+                "Content-Type": "application/json",
+                "X-Correct-They": pronouns[0] === "they" ? "true" : "false",
+                "X-Correct-Capitalization": "true"
+            },
             body: text
         })
             .then(async res => {
