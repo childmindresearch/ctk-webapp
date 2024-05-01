@@ -3,11 +3,17 @@ import { logger } from "$lib/server/logging"
 
 export async function POST({ fetch, request }) {
     logger.info("Converting markdown to docx")
-    const headers = new Headers({ "x-functions-key": env.AZURE_FUNCTION_PYTHON_KEY || "" })
+    const headers = new Headers({
+        "x-functions-key": env.AZURE_FUNCTION_PYTHON_KEY || "",
+        "X-Correct-They": request.headers.get("x-correct-they") || "",
+        "X-Correct-Capitalization": request.headers.get("x-correct-capitalization") || ""
+    })
     return await fetch(`${env.AZURE_FUNCTION_PYTHON_URL}/markdown2docx/`, {
         method: "POST",
         headers: headers,
-        body: await request.text()
+        body: JSON.stringify({
+            markdown: await request.text()
+        })
     })
         .then(async response => {
             if (response.ok && response.body) {
