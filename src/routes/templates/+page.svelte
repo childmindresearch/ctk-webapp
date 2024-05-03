@@ -4,12 +4,11 @@
     import { onMount } from "svelte"
     import Checkout from "./Checkout.svelte"
     import { DecisionTree } from "./DecisionTree"
-    import TemplatesDirectory from "./TemplatesDirectory.svelte"
-    import SearchTemplates from "./SearchTemplates.svelte"
+    import TemplatesDirectory from "./TemplatesDirectory/TemplatesDirectory.svelte"
     import SelectedNodes from "./SelectedNodes.svelte"
+    import MarkdownEditor from "$lib/components/MarkdownEditor.svelte"
 
     let selectedNodes: DecisionTree[] = []
-    let filteredNodes: DecisionTree
     let tabSet: number = 0
     let editable: boolean = false
     let nodes: undefined | DecisionTree = undefined
@@ -26,6 +25,13 @@
     })
 </script>
 
+{#if editable}
+    <div class="hidden">
+        <!-- Preload to reduce loading time on the Markdown modals.-->
+        <MarkdownEditor />
+    </div>
+{/if}
+
 {#if fetchFailed}
     <p>Failed to fetch data. If this error persists, please contact an administrator.</p>
 {:else if !nodes}
@@ -41,8 +47,7 @@
                 <div class="right-0">
                     <SlideToggle name="slider-editable" size="sm" bind:checked={editable}>Editable</SlideToggle>
                 </div>
-                <SearchTemplates tree={nodes} bind:filteredNodes />
-                <TemplatesDirectory bind:nodes={filteredNodes} bind:selectedNodes {editable} />
+                <TemplatesDirectory {nodes} bind:selectedNodes {editable} />
             </div>
             <div hidden={tabSet !== 1}>
                 <SelectedNodes bind:nodes={selectedNodes} />

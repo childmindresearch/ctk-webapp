@@ -1,12 +1,14 @@
 <script lang="ts">
     import LoadingBar from "$lib/components/LoadingBar.svelte"
     import { getToastStore } from "@skeletonlabs/skeleton"
-    import type { DecisionTree } from "./DecisionTree"
-    import SortableNested from "./SortableNested/SortableNested.svelte"
+    import type { DecisionTree } from "../DecisionTree"
+    import SortableNested from "./SortableNested.svelte"
+    import SearchTemplates from "./SearchTemplates.svelte"
 
     export let nodes: DecisionTree
     export let selectedNodes: DecisionTree[] = []
     export let editable: boolean = false
+    let filteredNodes: DecisionTree = nodes
 
     const toastStore = getToastStore()
 
@@ -34,5 +36,6 @@
 {#if !nodes}
     <LoadingBar label="Processing templates..." />
 {:else}
-    <SortableNested node={nodes} on:save={onSave} {editable} />
+    <SearchTemplates tree={nodes} bind:filteredNodes />
+    <SortableNested node={filteredNodes} on:save={onSave} {editable} />
 {/if}
