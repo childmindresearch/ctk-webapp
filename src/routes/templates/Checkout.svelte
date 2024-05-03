@@ -103,13 +103,11 @@
     </div>
     {#if containsPronouns}
         <p>Please select the patient's pronouns.</p>
-        <div class="space-x-2">
-            <select class="select" bind:value={pronouns}>
-                {#each pronounsArray as pronoun}
-                    <option value={pronoun}>{pronoun.join(", ")}</option>
-                {/each}
-            </select>
-        </div>
+        <select class="select" bind:value={pronouns}>
+            {#each pronounsArray as pronoun}
+                <option value={pronoun}>{pronoun.join(", ")}</option>
+            {/each}
+        </select>
     {/if}
     <button class="btn variant-filled-primary" on:click={onSubmit}>Download</button>
     {#if isLoading}
