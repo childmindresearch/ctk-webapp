@@ -2,16 +2,20 @@
     import LoadingBar from "$lib/components/LoadingBar.svelte"
     import { downloadBlob } from "$lib/utils"
     import { getToastStore } from "@skeletonlabs/skeleton"
-    import type { DecisionTree } from "./DecisionTree"
+    import type { DecisionTree } from "../DecisionTree"
+    import { allUpperCaseDashToCapitalizedSpace, getTemplateValues } from "./templateValueParsing"
 
     export let nodes: DecisionTree[]
 
-    let templates = getTemplateText(nodes)
-    let stringTemplates = templates.filter(template => !template.includes("PRONOUN"))
-    let values = Array(stringTemplates.length).fill("")
     let isLoading = false
-    let containsPronouns = templates.some(template => template.includes("PRONOUN"))
+    let values: string[] = []
 
+    const texts = nodes.map(node => node.text)
+    const templates = texts.map(text => getTemplateValues(text)).flat()
+    const uniqueTemplates = templates.filter((value, _, self) => self.find(elem => elem.text === value.text) === value)
+    const inputTemplates = uniqueTemplates.filter(value => value.type === "input")
+    const containsPronouns = uniqueTemplates.some(value => value.type === "pronoun")
+    const containsWarnings = uniqueTemplates.some(value => value.type === "warning")
     const toastStore = getToastStore()
     const pronounsArray = [
         ["he", "him", "his", "his", "himself"],
@@ -30,12 +34,12 @@
         }
 
         isLoading = true
-        let text = nodes.map(node => node.text).join("\n\n")
-        stringTemplates.forEach((template, index) => {
-            text = text.replace(new RegExp(`\{\{${template}\}\}`, "g"), values[index])
+        let markdown = texts.join("\n\n")
+        inputTemplates.forEach((template, index) => {
+            markdown = markdown.replace(new RegExp(`\{\{${template.text}\}\}`, "g"), values[index])
         })
         pronouns.forEach((pronoun, index) => {
-            text = text.replace(new RegExp(`\{\{PRONOUN-${index}\}\}`, "g"), pronoun)
+            markdown = markdown.replace(new RegExp(`\{\{PRONOUN-${index}\}\}`, "g"), pronoun)
         })
 
         fetch("/api/markdown2docx", {
@@ -45,7 +49,7 @@
                 "X-Correct-They": pronouns[0] === "they" ? "true" : "false",
                 "X-Correct-Capitalization": "true"
             },
-            body: text
+            body: markdown
         })
             .then(async res => {
                 if (!res.ok) {
@@ -63,52 +67,37 @@
                 isLoading = false
             })
     }
-
-    function allUpperCaseDashToCapitalizedSpace(input: string): string {
-        return input
-            .split("-")
-            .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-            .join(" ")
-    }
-
-    function getTemplateText(nodes: DecisionTree[]): string[] {
-        const templates = new Set<string>()
-        nodes.forEach(node => {
-            const matches = node.text.match(/{{(.*?)}}/g)
-            if (!matches) return
-            matches.forEach(match => {
-                const template = match.replace(/{{|}}/g, "").trim()
-                templates.add(template)
-            })
-        })
-        return Array.from(templates)
-    }
 </script>
 
+{#if containsWarnings}
+    <aside class="alert variant-filled-warning mb-3">
+        <div class="alert-message">
+            <h3 class="h3">Not all template values covered.</h3>
+            <p>Some of the template values will have to be filled in in the Word document.</p>
+        </div>
+    </aside>
+{/if}
+
 <div class="space-y-2">
-    {#if stringTemplates.length === 0}
-        <p class="text-center">No fields required.</p>
-    {:else}
-        <p>Please fill in the following fields:</p>
-    {/if}
     <div class="space-x-2">
-        {#each stringTemplates as template, index}
+        {#each inputTemplates as template, index}
             <input
                 class="input max-w-60"
                 type="text"
-                placeholder={allUpperCaseDashToCapitalizedSpace(template)}
+                placeholder={allUpperCaseDashToCapitalizedSpace(template.text)}
                 bind:value={values[index]}
             />
         {/each}
     </div>
     {#if containsPronouns}
         <p>Please select the patient's pronouns.</p>
-        <select class="select" bind:value={pronouns}>
+        <select class="select max-w-80" bind:value={pronouns}>
             {#each pronounsArray as pronoun}
                 <option value={pronoun}>{pronoun.join(", ")}</option>
             {/each}
         </select>
     {/if}
+
     <button class="btn variant-filled-primary" on:click={onSubmit}>Download</button>
     {#if isLoading}
         <LoadingBar />

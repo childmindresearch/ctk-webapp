@@ -2,7 +2,7 @@
     import LoadingBar from "$lib/components/LoadingBar.svelte"
     import { SlideToggle, Tab, TabGroup } from "@skeletonlabs/skeleton"
     import { onMount } from "svelte"
-    import Checkout from "./Checkout.svelte"
+    import Checkout from "./Checkout/Checkout.svelte"
     import { DecisionTree } from "./DecisionTree"
     import TemplatesDirectory from "./TemplatesDirectory/TemplatesDirectory.svelte"
     import SelectedNodes from "./SelectedNodes.svelte"

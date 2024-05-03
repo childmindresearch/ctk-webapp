@@ -16,8 +16,10 @@
 
     const instructions = `To add a template value, write it in all caps with dashes for spaces
         between two curly brackets. For example: {{CHILD-NAME}} could be used
-        as a template for a child's name. Pronouns may also be added with
-        {{PRONOUN-0}} through {{PRONOUN-4}} representing "she/her/her/hers/herself".
+        as a template for a child's name. Templates values with an ! (e.g. {{!SYMPTOM_FREQUENCY}})
+        will be left in the Word document, marked in red. Use this to indicate required values that
+        can't be easily described within the webformat. Pronouns may also be added with {{PRONOUN-0}}
+        through {{PRONOUN-4}} representing "he/she, him/her, his/her, his/hers, himself/herself".
         Please conjugate verbs in the singular (i.e. do not adjust conjugations for they/them).`
 
     const adminButtons = [
