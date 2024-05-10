@@ -60,6 +60,7 @@
         "printWidth": 120
     },
     "dependencies": {
+        "mammoth": "^1.7.2",
         "showdown": "^2.1.0"
     }
 }
