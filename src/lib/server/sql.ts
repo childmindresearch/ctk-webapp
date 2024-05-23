@@ -1,13 +1,13 @@
 import pkg from "pg"
-const { Pool } = pkg
-import { env } from "$env/dynamic/private"
+import { POSTGRES_HOST, POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_DB, POSTGRES_PORT } from "./secrets"
 
+const { Pool } = pkg
 const config = {
-    host: env.POSTGRES_HOST,
-    user: env.POSTGRES_USER,
-    password: env.POSTGRES_PASSWORD,
-    database: env.POSTGRES_DB,
-    port: Number(env.POSTGRES_PORT),
+    host: POSTGRES_HOST,
+    user: POSTGRES_USER,
+    password: POSTGRES_PASSWORD,
+    database: POSTGRES_DB,
+    port: Number(POSTGRES_PORT),
     ssl: true
 }
 
