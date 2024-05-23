@@ -9,6 +9,10 @@ on:
             - main
     workflow_dispatch:
 
+env:
+    AZURE_BLOB_ACCOUNT_NAME: fake
+    AZURE_BLOB_SAS: fake
+
 jobs:
     build:
         runs-on: ubuntu-latest
