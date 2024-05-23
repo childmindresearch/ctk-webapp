@@ -40,6 +40,7 @@
         "postcss-load-config": "^5.0.3",
         "prettier": "^3.2.5",
         "prettier-plugin-svelte": "^3.2.2",
+        "showdown": "^2.1.0",
         "sortablejs": "^1.15.2",
         "svelte": "^4.2.12",
         "svelte-check": "^3.6.9",
@@ -58,8 +59,5 @@
         "arrowParens": "avoid",
         "tabWidth": 4,
         "printWidth": 120
-    },
-    "dependencies": {
-        "showdown": "^2.1.0"
     }
 }
