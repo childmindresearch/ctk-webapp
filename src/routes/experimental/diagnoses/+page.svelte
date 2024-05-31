@@ -1,12 +1,10 @@
 <script lang="ts">
-    const wopisrc: string =
-        "https://cliniciantoolkit.azurewebsites.net/api/experimental/wopi/files/test3.docx?access_token=fake"
-    const encodedWopisrc: string = encodeURIComponent(wopisrc)
+    import { COLLABORA_URL, WOPI_URL } from "$lib/publicEnv"
+
+    const wopisrc = WOPI_URL + "/wopi/files/test3.docx"
+    const encodedWopisrc = encodeURIComponent(wopisrc)
+
+    const src = COLLABORA_URL + `/browser/80a6f97/cool.html?WOPISrc=${encodedWopisrc}`
 </script>
 
-<iframe
-    title={"Editor"}
-    src={`https://libreoffice.jollybeach-29614a80.eastus.azurecontainerapps.io/browser/80a6f97/cool.html?WOPISrc=${encodedWopisrc}`}
-    width="90%"
-    height="1200px"
-></iframe>
+<iframe title={"Editor"} {src} width="90%" height="1200px"></iframe>
