@@ -1,4 +1,4 @@
 import { env } from "$env/dynamic/public"
 
-export const WOPI_URL = env.WOPI_URL || ""
-export const COLLABORA_URL: string = env.COLLABORA_URL || ""
+export const PUBLIC_WOPI_URL = env.PUBLIC_WOPI_URL || ""
+export const PUBLIC_COLLABORA_URL: string = env.PUBLIC_COLLABORA_URL || ""
