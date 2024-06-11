@@ -6,6 +6,10 @@ on:
             - main
     pull_request:
 
+env:
+    AZURE_BLOB_ACCOUNT_NAME: fake
+    AZURE_BLOB_SAS: fake
+
 jobs:
     testing:
         runs-on: ubuntu-latest
