@@ -8,21 +8,22 @@ then it keeps spinning forever.
 @param {string | undefined} label - The label to display below the progress radial.
 -->
 <script lang="ts">
-  import { ProgressRadial } from "@skeletonlabs/skeleton"
+    import { ProgressRadial } from "@skeletonlabs/skeleton"
 
-  export let value: number | undefined = undefined
-  export let label: string | undefined = undefined
+    export let value: number | undefined = undefined
+    export let label: string | undefined = undefined
+    export let hidden = false
 
-  const stroke = 100
-  const width = "w-12"
-  const meter = "stroke-primary-500"
-  const track = "stroke-primary-500/20"
-  const strokeLinecap = "round"
+    const stroke = 100
+    const width = "w-12"
+    const meter = "stroke-primary-500"
+    const track = "stroke-primary-500/20"
+    const strokeLinecap = "round"
 </script>
 
-<div class="mr-auto flex justify-center items-center">
-  <ProgressRadial {value} {meter} {track} {stroke} {width} {strokeLinecap} />
+<div class="mr-auto flex justify-center items-center" class:hidden>
+    <ProgressRadial {value} {meter} {track} {stroke} {width} {strokeLinecap} />
 </div>
 {#if label}
-  <p class="text-center text-md pt-2">{label}</p>
+    <p class="text-center text-md pt-2">{label}</p>
 {/if}
