@@ -2,8 +2,10 @@
     import mammoth from "mammoth"
     import { systemPrompt } from "./prompt"
     import { getToastStore, type ToastSettings } from "@skeletonlabs/skeleton"
+    import LoadingBar from "$lib/components/LoadingBar.svelte"
 
     let file: FileList
+    let loading = false
 
     const toastStore = getToastStore()
 
@@ -39,13 +41,14 @@
         form.append("userPrompt", userPrompt)
         form.append("systemPrompt", systemPrompt)
 
-        fetch("/api/llm", {
+        loading = true
+        const response = await fetch("/api/llm", {
             method: "POST",
             body: form
         })
-            .then(response => {
+            .then(async response => {
                 if (response.ok) {
-                    return response.json()
+                    return await response.text()
                 }
                 const toast: ToastSettings = {
                     message: "There was a problem connecting to the server.",
@@ -54,8 +57,42 @@
                 toastStore.trigger(toast)
                 return
             })
-            .then(data => {
-                return data.text
+            .catch(error => {
+                const toast: ToastSettings = {
+                    message: `There was a interpreting the server response: ${error}.`,
+                    background: "variant-filled-error"
+                }
+                toastStore.trigger(toast)
+                loading = false
+                return
+            })
+        if (!response) {
+            loading = false
+            return
+        }
+        return await fetch("/api/markdown2docx", {
+            method: "POST",
+            body: response
+        })
+            .then(async response => {
+                if (response.ok) {
+                    const blob = await response.blob()
+                    const url = URL.createObjectURL(blob)
+                    const a = document.createElement("a")
+                    a.href = url
+                    a.download = "summary.docx"
+                    a.click()
+                    URL.revokeObjectURL(url)
+                    loading = false
+                    return
+                }
+                const toast: ToastSettings = {
+                    message: "There was a problem connecting to the server.",
+                    background: "variant-filled-error"
+                }
+                toastStore.trigger(toast)
+                loading = false
+                return
             })
             .catch(error => {
                 const toast: ToastSettings = {
@@ -63,6 +100,7 @@
                     background: "variant-filled-error"
                 }
                 toastStore.trigger(toast)
+                loading = false
                 return
             })
     }
@@ -82,3 +120,5 @@ impressions' and 'recommendations' sections, as we only send the paragraphs in b
     <input type="file" accept=".docx" bind:files={file} />
     <button type="submit" class="btn variant-filled-primary">Upload</button>
 </form>
+
+<LoadingBar hidden={!loading} />

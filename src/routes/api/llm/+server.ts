@@ -1,16 +1,21 @@
 import { env } from "$env/dynamic/private"
 import { logger } from "$lib/server/logging"
+import { AZURE_FUNCTION_PYTHON_KEY } from "$lib/server/secrets"
 
 export async function POST({ fetch, request }) {
     logger.info("Making LLM request.")
     const headers = new Headers({
-        "x-functions-key": env.AZURE_FUNCTION_PYTHON_KEY || ""
+        "x-functions-key": AZURE_FUNCTION_PYTHON_KEY
     })
     const formData = await request.formData()
-    const body = JSON.stringify({
-        systemPrompt: formData.get("systemPrompt"),
-        userPrompt: formData.get("userPrompt")
-    })
+
+    const systemPrompt = formData.get("systemPrompt")
+    const userPrompt = formData.get("userPrompt")
+
+    if (!systemPrompt || !userPrompt) {
+        return new Response("System or user prompt not found.", { status: 400 })
+    }
+    const body = JSON.stringify({ system_prompt: systemPrompt, user_prompt: userPrompt })
 
     return await fetch(`${env.AZURE_FUNCTION_PYTHON_URL}/llm/`, {
         method: "POST",

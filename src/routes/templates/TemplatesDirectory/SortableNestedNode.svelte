@@ -2,7 +2,7 @@
     import CartPlusIcon from "$lib/icons/CartPlusIcon.svelte"
     import FolderClosedIcon from "$lib/icons/FolderClosedIcon.svelte"
     import FolderOpenIcon from "$lib/icons/FolderOpenIcon.svelte"
-    import showdown from 'showdown'
+    import showdown from "showdown"
     import Sortable, { type SortableEvent } from "sortablejs"
     import { createEventDispatcher, onMount } from "svelte"
     import { slide } from "svelte/transition"
@@ -51,21 +51,20 @@
         })
     })
 
+    function markdownToSkeletonHtml(markdown: string): string {
+        const converter = new showdown.Converter({ tables: true })
+        const tags = ["h1", "h2", "h3", "h4", "h5", "h6"]
 
- function markdownToSkeletonHtml(markdown: string): string {
-    const converter = new showdown.Converter({ tables: true});
-    const tags = ["h1", "h2", "h3", "h4", "h5", "h6"];
+        let html = converter.makeHtml(markdown)
+        tags.forEach(tag => {
+            const tagRegex = new RegExp(`<${tag}`, "g")
+            html = html.replace(tagRegex, `<${tag} class="${tag}"`)
+        })
 
-    let html = converter.makeHtml(markdown);
-    tags.forEach(tag => {
-        const tagRegex = new RegExp(`<${tag}`, 'g');
-        html = html.replace(tagRegex, `<${tag} class="${tag}"`);
-    });
-
-    html = html.replace(/<table/g, '<div class="table-container"><table class="table table-compact table-hover"');
-    html = html.replace(/<\/table>/g, '</table></div>');
-    return html;
-}
+        html = html.replace(/<table/g, '<div class="table-container"><table class="table table-compact table-hover"')
+        html = html.replace(/<\/table>/g, "</table></div>")
+        return html
+    }
 
     $: sorter?.option("disabled", !editable)
 </script>
@@ -84,10 +83,10 @@
                 {/if}
             </button>
             <div class="overflow-y-scroll max-h-[200px]">
-            <span tabindex="0" role="textbox" aria-multiline="true">
-                {@html markdownToSkeletonHtml(node.text)}
-            </span>
-        </div>
+                <span tabindex="0" role="textbox" aria-multiline="true">
+                    {@html markdownToSkeletonHtml(node.text)}
+                </span>
+            </div>
             {#if editable}
                 <div>
                     <AdminButtons bind:node showDelete={!isRoot} showEdit={!isRoot} />
