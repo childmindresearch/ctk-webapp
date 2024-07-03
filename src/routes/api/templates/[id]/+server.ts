@@ -111,7 +111,18 @@ export async function DELETE({ params }) {
     const id = params.id
     logger.info(`Deleting template with id ${id}`)
     const query = {
-        text: "DELETE FROM templates WHERE id = $1",
+        text: `
+WITH RECURSIVE descendants AS (
+    SELECT id
+    FROM templates
+    WHERE id = $1
+    UNION ALL
+    SELECT templates.id
+    FROM templates
+    INNER JOIN descendants ON templates.parent_id = descendants.id
+)
+DELETE FROM templates
+WHERE id IN (SELECT descendants.id FROM descendants);`,
         values: [id]
     }
 

@@ -98,8 +98,13 @@
             body: `Are you sure you want to delete "${shortenText(node.text)}" and any subdirectories?`,
             response: async value => {
                 if (!value) return
-                await fetch(`/api/templates/${node.id}`, { method: "DELETE" }).then(() => {
-                    if (!node.parent) {
+                await fetch(`/api/templates/${node.id}`, { method: "DELETE" }).then(response => {
+                    if (!response.ok) {
+                        toastStore.trigger({
+                            message: "Failed to delete the template.",
+                            background: "variant-filled-error"
+                        })
+                    } else if (!node.parent) {
                         toastStore.trigger({
                             message: "Cannot delete the root node.",
                             background: "variant-filled-error"
