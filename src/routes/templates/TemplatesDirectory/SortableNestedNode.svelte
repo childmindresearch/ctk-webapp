@@ -17,6 +17,7 @@
     let sorter: Sortable
 
     const dispatch = createEventDispatcher()
+    const alphabeticChildren = node.children.sort((a, b) => a.text.localeCompare(b.text))
 
     function fold() {
         if (isRoot) return
@@ -95,7 +96,7 @@
         </div>
         {#if !isFolded}
             <div class="border-secondary-500 border-l-2 pl-3 mb-2" transition:slide>
-                {#each node.children as child}
+                {#each alphabeticChildren as child}
                     {#key child.id}
                         <svelte:self bind:node={child} bind:editable isRoot={false} on:drag on:save on:create />
                     {/key}
