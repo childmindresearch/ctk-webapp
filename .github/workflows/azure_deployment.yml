@@ -65,4 +65,4 @@ jobs:
                   app-name: "cliniciantoolkit"
                   slot-name: ${{ github.ref == 'refs/heads/main' && 'production' || 'development' }}
                   package: .
-                  publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_9A3AB102193241559E3EADB479BA0400 }}
+                  publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_D8F19C70B5EA48B29386C08288419993 }}
