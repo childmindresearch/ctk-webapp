@@ -63,7 +63,8 @@ export async function handle({ event, resolve }) {
     return response
 }
 
-async function getOrInsertUser(email: string) {
+// Exported for testing purposes.
+export async function getOrInsertUser(email: string) {
     return await pool.connect().then(async client => {
         const getUserQuery = {
             text: "SELECT * FROM users WHERE email = $1",
