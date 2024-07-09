@@ -1,5 +1,5 @@
 import { logger } from "$lib/server/logging"
-import { AZURE_FUNCTION_PYTHON_KEY, AZURE_FUNCTION_PYTHON_URL } from "$lib/server/secrets"
+import { AZURE_FUNCTION_PYTHON_KEY, AZURE_FUNCTION_PYTHON_URL } from "$lib/server/environment"
 
 export async function GET() {
     logger.info("Warming up the server.")

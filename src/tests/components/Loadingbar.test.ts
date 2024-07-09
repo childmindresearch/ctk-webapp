@@ -1,6 +1,5 @@
 import { cleanup, render } from "@testing-library/svelte"
 import LoadingBar from "$lib/components/LoadingBar.svelte"
-
 afterEach(cleanup)
 
 describe("LoadingBar Component", () => {

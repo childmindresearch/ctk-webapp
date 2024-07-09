@@ -1,5 +1,5 @@
 import pkg from "pg"
-import { POSTGRES_HOST, POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_DB, POSTGRES_PORT } from "./secrets"
+import { POSTGRES_HOST, POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_DB, POSTGRES_PORT } from "./environment"
 
 const { Pool } = pkg
 const config = {

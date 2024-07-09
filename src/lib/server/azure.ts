@@ -1,4 +1,4 @@
-import { AZURE_BLOB_ACCOUNT_NAME, AZURE_BLOB_SAS } from "./secrets"
+import { AZURE_BLOB_ACCOUNT_NAME, AZURE_BLOB_SAS } from "./environment"
 import { logger } from "./logging"
 
 if (!AZURE_BLOB_ACCOUNT_NAME || !AZURE_BLOB_SAS) {

@@ -8,6 +8,8 @@
     import SelectedNodes from "./SelectedNodes.svelte"
     import MarkdownEditor from "$lib/components/MarkdownEditor.svelte"
 
+    export let data
+
     let selectedNodes: DecisionTree[] = []
     let tabSet: number = 0
     let editable: boolean = false
@@ -44,9 +46,11 @@
 
         <svelte:fragment slot="panel">
             <div hidden={tabSet !== 0}>
-                <div class="right-0">
-                    <SlideToggle name="slider-editable" size="sm" bind:checked={editable}>Editable</SlideToggle>
-                </div>
+                {#if data.user?.is_admin}
+                    <div class="right-0">
+                        <SlideToggle name="slider-editable" size="sm" bind:checked={editable}>Editable</SlideToggle>
+                    </div>
+                {/if}
                 <TemplatesDirectory {nodes} bind:selectedNodes {editable} />
             </div>
             <div hidden={tabSet !== 1}>

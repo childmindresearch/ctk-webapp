@@ -1,6 +1,6 @@
 import { env } from "$env/dynamic/private"
 import { logger } from "$lib/server/logging"
-import { AZURE_FUNCTION_PYTHON_KEY } from "$lib/server/secrets"
+import { AZURE_FUNCTION_PYTHON_KEY } from "$lib/server/environment"
 
 export async function POST({ fetch, request }) {
     logger.info("Making LLM request.")
