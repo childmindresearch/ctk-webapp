@@ -1,12 +1,6 @@
+import type { User } from "$lib/databaseTypes"
 import { DEVELOPMENT_USER } from "$lib/server/environment.js"
 import { pool } from "$lib/server/sql"
-
-type User = {
-    id: number
-    email: string
-    is_admin: boolean
-    is_alpha_user: boolean
-}
 
 export async function load({ request }) {
     const userEmail = request.headers.get("X-MS-CLIENT-PRINCIPAL-NAME") || DEVELOPMENT_USER

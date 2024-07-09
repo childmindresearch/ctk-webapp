@@ -56,11 +56,19 @@
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ text: response.value })
                 })
-                    .then(res => res.json())
+                    .then(res => {
+                        if (!res.ok) {
+                            toastStore.trigger({
+                                message: `Failed to create the template: ${res.statusText}`,
+                                background: "variant-filled-error"
+                            })
+                        } else {
+                            return res.json()
+                        }
+                    })
                     .then(newNode => {
                         node.children = node.children.concat(new DecisionTree([newNode], newNode.id, node))
                     })
-                    .catch(console.error)
             }
         }
         modalStore.trigger(modal)
@@ -79,9 +87,15 @@
                     method: "PATCH",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ text: response.value, parentId })
+                }).then(result => {
+                    if (!result.ok) {
+                        toastStore.trigger({
+                            message: `Failed to edit the template: ${result.statusText}`,
+                            background: "variant-filled-error"
+                        })
+                    }
+                    node.text = response.value
                 })
-                    .then(() => (node.text = response.value))
-                    .catch(console.error)
             }
         }
         modalStore.trigger(modal)
@@ -101,7 +115,7 @@
                 await fetch(`/api/templates/${node.id}`, { method: "DELETE" }).then(response => {
                     if (!response.ok) {
                         toastStore.trigger({
-                            message: "Failed to delete the template.",
+                            message: "Failed to delete the template: " + response.statusText,
                             background: "variant-filled-error"
                         })
                     } else if (!node.parent) {

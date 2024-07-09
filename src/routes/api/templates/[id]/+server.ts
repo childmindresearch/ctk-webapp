@@ -26,31 +26,6 @@ export async function POST({ request, params }) {
         })
 }
 
-export async function GET({ params }) {
-    const id = params.id
-    logger.info(`Getting template with id ${id}`)
-
-    const query = {
-        text: "SELECT * FROM templates WHERE id = $1",
-        values: [id]
-    }
-
-    return await pool
-        .connect()
-        .then(async client => {
-            const result = await client.query(query)
-            client.release()
-            return result.rows[0]
-        })
-        .then(row => {
-            return new Response(JSON.stringify(row), { headers: { "Content-Type": "application/json" } })
-        })
-        .catch(error => {
-            logger.error(`Error getting template with id ${id}:`, error)
-            return new Response(null, { status: 500 })
-        })
-}
-
 export async function PATCH({ params, request }) {
     const id = params.id
     let { text, parent_id } = await request.json()

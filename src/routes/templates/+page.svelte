@@ -46,7 +46,7 @@
 
         <svelte:fragment slot="panel">
             <div hidden={tabSet !== 0}>
-                {#if data.user?.is_alpha_user}
+                {#if data.user?.is_admin}
                     <div class="right-0">
                         <SlideToggle name="slider-editable" size="sm" bind:checked={editable}>Editable</SlideToggle>
                     </div>
