@@ -1,7 +1,7 @@
 <script lang="ts">
     import LoadingBar from "$lib/components/LoadingBar.svelte"
     import QuestionMarkCircleIcon from "$lib/icons/QuestionMarkCircleIcon.svelte"
-    import { downloadBlob } from "$lib/utils"
+    import { downloadBlob, LLM_MODELS } from "$lib/utils"
     import { getModalStore, getToastStore, type ModalSettings } from "@skeletonlabs/skeleton"
     import { onMount } from "svelte"
 
@@ -9,6 +9,7 @@
     let isLoading = false
     let modalOpen = false
     let redcapIdentifierImage: HTMLImageElement
+    let model = "gpt-4o"
 
     const toastStore = getToastStore()
     const modalStore = getModalStore()
@@ -36,7 +37,8 @@
             })
             return
         }
-        isLoading = true
+        const headers = new Headers()
+        headers.append("X-model", model)
         fetch(`/api/intake-report/${redcapSurveyId}`)
             .then(async response => {
                 if (!response.ok) {
@@ -77,6 +79,16 @@
 </div>
 <form class="space-y-2">
     <input class="input w-72" type="number" placeholder="MRN" bind:value={redcapSurveyId} />
+    <br />
+    <label>
+        Model
+        <br />
+        <select class="input w-72" bind:value={model}>
+            {#each LLM_MODELS as model}
+                <option value={model.tag}>{model.name}</option>
+            {/each}
+        </select>
+    </label>
     <br />
     <button class="btn variant-filled-primary" on:click={onSubmit} disabled={isLoading}> Submit </button>
 </form>
