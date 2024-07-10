@@ -1,10 +1,11 @@
 import { logger } from "$lib/server/logging"
 import { AZURE_FUNCTION_PYTHON_KEY, AZURE_FUNCTION_PYTHON_URL } from "$lib/server/environment"
 
-export async function GET({ params, fetch }) {
+export async function GET({ request, params, fetch }) {
     const id = params.id
     logger.info("Getting intake with id ", id)
-    const headers = new Headers({ "x-functions-key": AZURE_FUNCTION_PYTHON_KEY || "" })
+    const model = request.headers.get("X-Model") || "gpt-4o"
+    const headers = new Headers({ "x-functions-key": AZURE_FUNCTION_PYTHON_KEY || "", "X-model": model })
     return await fetch(`${AZURE_FUNCTION_PYTHON_URL}/intake-report/${id}`, { headers: headers })
         .then(async response => {
             if (response.ok && response.body) {
