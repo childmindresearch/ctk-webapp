@@ -37,9 +37,10 @@
             })
             return
         }
+        isLoading = true
         const headers = new Headers()
-        headers.append("X-model", model)
-        fetch(`/api/intake-report/${redcapSurveyId}`)
+        headers.set("X-Model", model)
+        fetch(`/api/intake-report/${redcapSurveyId}`, { headers })
             .then(async response => {
                 if (!response.ok) {
                     throw new Error(await response.text())
@@ -71,30 +72,31 @@
     generate a report for.
 </p>
 <br />
-<div class="flex space-x-1">
-    <label for="redcapSurveyId">MRN</label>
-    <button class="hover-highlight" on:click={explainMRN} disabled={modalOpen} tabindex="-1">
-        <QuestionMarkCircleIcon />
-    </button>
-</div>
-<form class="space-y-2">
-    <input class="input w-72" type="number" placeholder="MRN" bind:value={redcapSurveyId} />
-    <br />
-    <label>
-        Model
-        <br />
-        <select class="input w-72" bind:value={model}>
-            {#each LLM_MODELS as model}
-                <option value={model.tag}>{model.name}</option>
-            {/each}
-        </select>
-    </label>
-    <br />
-    <button class="btn variant-filled-primary" on:click={onSubmit} disabled={isLoading}> Submit </button>
-</form>
-
 {#if isLoading}
-    <LoadingBar />
+    <LoadingBar label="Loading... This may take a while." />
+{:else}
+    <div class="flex space-x-1">
+        <label for="redcapSurveyId">MRN</label>
+        <button class="hover-highlight" on:click={explainMRN} disabled={modalOpen} tabindex="-1">
+            <QuestionMarkCircleIcon />
+        </button>
+    </div>
+
+    <form class="space-y-2">
+        <input class="input w-72" type="number" placeholder="MRN" bind:value={redcapSurveyId} />
+        <br />
+        <label>
+            Model
+            <br />
+            <select class="input w-72" bind:value={model}>
+                {#each LLM_MODELS as model}
+                    <option value={model.tag}>{model.name}</option>
+                {/each}
+            </select>
+        </label>
+        <br />
+        <button class="btn variant-filled-primary" on:click={onSubmit} disabled={isLoading}> Submit </button>
+    </form>
 {/if}
 
 <style>
