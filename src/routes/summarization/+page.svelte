@@ -3,9 +3,11 @@
     import { systemPrompt } from "./prompt"
     import { getToastStore, type ToastSettings } from "@skeletonlabs/skeleton"
     import LoadingBar from "$lib/components/LoadingBar.svelte"
+    import { LLM_MODELS } from "$lib/utils"
 
     let file: FileList
     let loading = false
+    let model = LLM_MODELS[0].tag
 
     const toastStore = getToastStore()
 
@@ -116,8 +118,18 @@
 
 Upload a clinical report to generate a summary. The clinical report should contain the 'clinical summary and
 impressions' and 'recommendations' sections, as we only send the paragraphs in between these.
-<form on:submit={onSubmit}>
+<form class="space-y-2" on:submit={onSubmit}>
     <input type="file" accept=".docx" bind:files={file} />
+    <label>
+        Model
+        <br />
+
+        <select class="input w-72" bind:value={model}>
+            {#each LLM_MODELS as model}
+                <option value={model.tag}>{model.name}</option>
+            {/each}
+        </select>
+    </label>
     <button type="submit" class="btn variant-filled-primary">Upload</button>
 </form>
 

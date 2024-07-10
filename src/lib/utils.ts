@@ -15,3 +15,14 @@ export function downloadBlob(blob: Blob, filename: string) {
     window.URL.revokeObjectURL(url)
     link.remove()
 }
+
+export const LLM_MODELS = [
+    {
+        name: "GPT-4o",
+        tag: "gpt-4o"
+    },
+    {
+        name: "Claude 3 Opus",
+        tag: "anthropic.claude-3-opus-20240229-v1:0"
+    }
+]
