@@ -14,7 +14,7 @@
         "test:unit": "vitest"
     },
     "devDependencies": {
-        "@cmi-dair/skeleton-themes": "^0.0.4",
+        "@cmi-dair/skeleton-themes": "^0.1.0",
         "@floating-ui/dom": "^1.6.3",
         "@playwright/test": "^1.42.1",
         "@skeletonlabs/skeleton": "^2.9.0",
