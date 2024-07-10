@@ -4,7 +4,7 @@ import { AZURE_FUNCTION_PYTHON_KEY, AZURE_FUNCTION_PYTHON_URL } from "$lib/serve
 export async function GET({ request, params, fetch }) {
     const id = params.id
     logger.info("Getting intake with id ", id)
-    const model = request.headers.get("X-model") || "gpt-4o"
+    const model = request.headers.get("X-Model") || "gpt-4o"
     const headers = new Headers({ "x-functions-key": AZURE_FUNCTION_PYTHON_KEY || "", "X-model": model })
     return await fetch(`${AZURE_FUNCTION_PYTHON_URL}/intake-report/${id}`, { headers: headers })
         .then(async response => {
