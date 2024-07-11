@@ -24,5 +24,9 @@ export const LLM_MODELS = [
     {
         name: "Claude 3 Opus",
         tag: "anthropic.claude-3-opus-20240229-v1:0"
+    },
+    {
+        name: "Claude 3.5 Sonnet",
+        tag: "anthropic.claude-3-5-sonnet-20240620-v1:0"
     }
 ]
