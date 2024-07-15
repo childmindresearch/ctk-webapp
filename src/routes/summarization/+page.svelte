@@ -29,7 +29,7 @@
             return
         }
         const text = await docxToText(file[0])
-        const userPrompt = getTextBetween(text, "clinical summary and impressions", "Recommendations")
+        const userPrompt = getTextBetween(text, /\n\s+clinical summary and impressions/i, /\n\s+recommendations/i)
         if (!userPrompt) {
             const toast = {
                 message: "Could not find the 'clinical summary and impressions' and 'recommendations' in the document.",
@@ -42,6 +42,7 @@
         const form = new FormData()
         form.append("userPrompt", userPrompt)
         form.append("systemPrompt", systemPrompt)
+        form.append("model", model)
 
         loading = true
         const response = await fetch("/api/llm", {
@@ -107,10 +108,11 @@
             })
     }
 
-    function getTextBetween(text: string, start: string, end: string) {
-        const startIndex = text.toLowerCase().indexOf(start.toLowerCase())
-        const endIndex = text.toLowerCase().indexOf(end.toLowerCase())
-        console.log(startIndex, endIndex)
+    function getTextBetween(text: string, start: RegExp, end: RegExp) {
+        const regexStart = new RegExp(start)
+        const regexEnd = new RegExp(end)
+        const startIndex = text.search(regexStart)
+        const endIndex = text.search(regexEnd)
         if (startIndex === -1 || endIndex === -1) return null
         return text.slice(startIndex, endIndex)
     }
