@@ -1,12 +1,14 @@
 <script script lang="ts">
     import LoadingBar from "$lib/components/LoadingBar.svelte"
-    import { SlideToggle, Tab, TabGroup } from "@skeletonlabs/skeleton"
+    import { getToastStore, SlideToggle, Tab, TabGroup } from "@skeletonlabs/skeleton"
     import { onMount } from "svelte"
     import Checkout from "./Checkout/Checkout.svelte"
     import { DecisionTree } from "./DecisionTree"
     import TemplatesDirectory from "./TemplatesDirectory/TemplatesDirectory.svelte"
     import SelectedNodes from "./SelectedNodes.svelte"
     import MarkdownEditor from "$lib/components/MarkdownEditor.svelte"
+    import { nodesToMarkdown } from "./TemplatesDirectory/templateExport"
+    import { downloadBlob } from "$lib/utils"
 
     export let data
 
@@ -15,6 +17,8 @@
     let editable: boolean = false
     let nodes: undefined | DecisionTree = undefined
     let fetchFailed = false
+    let isLoading = false
+    const toastStore = getToastStore()
 
     onMount(async () => {
         const templates = fetch("/api/templates")
@@ -25,6 +29,38 @@
             })
         nodes = new DecisionTree(await templates)
     })
+
+    function exportTemplates() {
+        if (!nodes) {
+            toastStore.trigger({ message: "Templates have not finished loading.", background: "variant-filled-error" })
+            return
+        }
+        isLoading = true
+        let markdown = nodesToMarkdown(nodes)
+
+        fetch("/api/markdown2docx", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: markdown
+        })
+            .then(async res => {
+                if (!res.ok) {
+                    throw new Error(await res.text())
+                }
+                return await res.blob()
+            })
+            .then(blob => {
+                const filename = "templates.docx"
+                downloadBlob(blob, filename)
+                isLoading = false
+            })
+            .catch(error => {
+                toastStore.trigger({ message: error.message, background: "variant-filled-error" })
+                isLoading = false
+            })
+    }
 </script>
 
 {#if editable}
@@ -47,8 +83,17 @@
         <svelte:fragment slot="panel">
             <div hidden={tabSet !== 0}>
                 {#if data.user?.is_admin}
-                    <div class="right-0">
-                        <SlideToggle name="slider-editable" size="sm" bind:checked={editable}>Editable</SlideToggle>
+                    <div class="flex space-x-3 pb-2">
+                        <div class="right-0 content-center">
+                            <SlideToggle name="slider-editable" size="sm" bind:checked={editable}>Editable</SlideToggle>
+                        </div>
+                        <button
+                            disabled={isLoading}
+                            class="btn variant-filled-primary hover:variant-soft-primary"
+                            on:click={exportTemplates}
+                        >
+                            Export Templates
+                        </button>
                     </div>
                 {/if}
                 <TemplatesDirectory {nodes} bind:selectedNodes {editable} />
