@@ -12,6 +12,7 @@
         Modal,
         Toast,
         initializeStores,
+        modeCurrent,
         storePopup,
         type ModalComponent
     } from "@skeletonlabs/skeleton"
@@ -23,6 +24,7 @@
         markdown: { ref: ModalMarkdown }
     }
 
+    $modeCurrent = true
     $: $page.url.pathname, warmupFunction()
 
     async function warmupFunction() {

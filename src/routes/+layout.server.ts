@@ -1,4 +1,4 @@
-import type { User } from "$lib/databaseTypes"
+import type { User } from "$lib/types"
 import { DEVELOPMENT_USER } from "$lib/server/environment.js"
 import { pool } from "$lib/server/sql"
 
