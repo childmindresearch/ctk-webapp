@@ -10,7 +10,7 @@
     let isLoading = false
     let values: string[] = []
 
-    const texts = nodes.map(node => node.text)
+    const texts = nodes.map(node => `*[${node.parent?.text}]{.underline}*\n\n${node.text}`)
     const templates = texts.map(text => getTemplateValues(text)).flat()
     const uniqueTemplates = templates.filter((value, _, self) => self.find(elem => elem.text === value.text) === value)
     const inputTemplates = uniqueTemplates.filter(value => value.type === "input")
@@ -98,8 +98,9 @@
         </select>
     {/if}
 
-    <button class="btn variant-filled-primary" on:click={onSubmit}>Download</button>
     {#if isLoading}
         <LoadingBar />
+    {:else}
+        <button class="btn variant-filled-primary" on:click={onSubmit}>Download</button>
     {/if}
 </div>
