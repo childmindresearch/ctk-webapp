@@ -47,7 +47,7 @@
             type: "component",
             component: "markdown",
             title: `New template inside "${shortenText(node.text)}"`,
-            meta: { instructions: instructions },
+            meta: { instructions: instructions, value: "" },
             response: async response => {
                 if (!response.value) return
                 await fetch(`/api/templates/${node.id}`, {
