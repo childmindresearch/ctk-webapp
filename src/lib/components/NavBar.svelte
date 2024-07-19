@@ -45,6 +45,5 @@
                 <span>Contact</span>
             </a>
         </button>
-        <LightSwitch />
     </svelte:fragment>
 </AppBar>

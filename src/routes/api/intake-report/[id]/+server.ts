@@ -5,7 +5,7 @@ export async function GET({ request, params, fetch }) {
     const id = params.id
     const model = request.headers.get("X-Model") || "gpt-4o"
     logger.info(`Getting intake with id ${id} and model ${model}`)
-    const headers = new Headers({ "x-functions-key": AZURE_FUNCTION_PYTHON_KEY || "", "X-model": model })
+    const headers = new Headers({ "x-functions-key": AZURE_FUNCTION_PYTHON_KEY || "", "X-Model": model })
     return await fetch(`${AZURE_FUNCTION_PYTHON_URL}/intake-report/${id}`, { headers: headers })
         .then(async response => {
             if (response.ok && response.body) {
