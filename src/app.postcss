@@ -4,3 +4,27 @@
 .textarea {
     @apply border-neutral-300 focus-within:border-neutral-300 focus:border-neutral-500;
 }
+
+/* Vditor does not work well with Tailwinds default list styles.*/
+.vditor-reset {
+    ol > li {
+        list-style-type: decimal;
+    }
+}
+
+.indented-list {
+    ol,
+    ul {
+        padding-left: 2em;
+    }
+    ol > li {
+        list-style-type: decimal;
+    }
+    ul > li {
+        list-style-type: disc;
+    }
+    ol,
+    ul > li::marker {
+        padding-left: 2em;
+    }
+}

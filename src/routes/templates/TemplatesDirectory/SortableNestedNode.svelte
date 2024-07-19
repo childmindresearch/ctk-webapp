@@ -2,14 +2,12 @@
     import CartPlusIcon from "$lib/icons/CartPlusIcon.svelte"
     import FolderClosedIcon from "$lib/icons/FolderClosedIcon.svelte"
     import FolderOpenIcon from "$lib/icons/FolderOpenIcon.svelte"
-    import SvelteMarkdown from "svelte-markdown"
     import Sortable, { type SortableEvent } from "sortablejs"
     import { createEventDispatcher, onMount } from "svelte"
+    import SvelteMarkdown from "svelte-markdown"
     import { slide } from "svelte/transition"
     import type { DecisionTree } from "../DecisionTree"
     import AdminButtons from "./AdminButtons.svelte"
-    import OrderedListItem from "$lib/markdownRenderers/OrderedListItem.svelte"
-    import UnorderedListItem from "$lib/markdownRenderers/UnorderedListItem.svelte"
 
     export let node: DecisionTree
     export let editable = false
@@ -69,15 +67,8 @@
                     <FolderOpenIcon class="text-secondary-600" />
                 {/if}
             </button>
-            <div class=" overflow-y-scroll max-h-[200px]">
-                <SvelteMarkdown
-                    source={node.text}
-                    renderers={{
-                        // @ts-ignore SvelteMarkdown does not have a type definition for all renderers.
-                        orderedlistitem: OrderedListItem,
-                        unorderedlistItem: UnorderedListItem
-                    }}
-                />
+            <div class="indented-list overflow-y-scroll max-h-[200px]">
+                <SvelteMarkdown source={node.text} />
             </div>
             {#if editable}
                 <div>
