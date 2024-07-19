@@ -28,6 +28,7 @@
                 return []
             })
         nodes = new DecisionTree(await templates)
+        nodes.recursiveSortChildren()
     })
 
     function exportTemplates() {
@@ -87,13 +88,17 @@
                         <div class="right-0 content-center">
                             <SlideToggle name="slider-editable" size="sm" bind:checked={editable}>Editable</SlideToggle>
                         </div>
-                        <button
-                            disabled={isLoading}
-                            class="btn variant-filled-primary hover:variant-soft-primary"
-                            on:click={exportTemplates}
-                        >
-                            Export Templates
-                        </button>
+                        {#if isLoading}
+                            <LoadingBar label="Preparing template document." />
+                        {:else}
+                            <button
+                                disabled={isLoading}
+                                class="btn variant-filled-primary hover:variant-soft-primary"
+                                on:click={exportTemplates}
+                            >
+                                Export Templates
+                            </button>
+                        {/if}
                     </div>
                 {/if}
                 <TemplatesDirectory {nodes} bind:selectedNodes {editable} />

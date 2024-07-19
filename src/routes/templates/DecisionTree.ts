@@ -85,4 +85,9 @@ export class DecisionTree {
         this.children.forEach(child => child.deleteNodeById(id))
         return this
     }
+
+    recursiveSortChildren() {
+        this.children = this.children?.sort((a, b) => a.text.localeCompare(b.text))
+        this.children?.forEach(child => child.recursiveSortChildren())
+    }
 }
