@@ -69,10 +69,11 @@
                     <FolderOpenIcon class="text-secondary-600" />
                 {/if}
             </button>
-            <div class="revert-tailwind-lists overflow-y-scroll max-h-[200px]">
+            <div class=" overflow-y-scroll max-h-[200px]">
                 <SvelteMarkdown
                     source={node.text}
                     renderers={{
+                        // @ts-ignore SvelteMarkdown does not have a type definition for all renderers.
                         orderedlistitem: OrderedListItem,
                         unorderedlistItem: UnorderedListItem
                     }}
