@@ -1,9 +1,8 @@
 <script lang="ts">
     import LoadingBar from "$lib/components/LoadingBar.svelte"
-    import { downloadBlob } from "$lib/utils"
     import { getToastStore } from "@skeletonlabs/skeleton"
     import type { DecisionTree } from "../DecisionTree"
-    import { allUpperCaseDashToCapitalizedSpace, getTemplateValues } from "./templateValueParsing"
+    import { allUpperCaseDashToCapitalizedSpace, getTemplateValues, submitMarkdownToDocx } from "./checkoutUtilities"
 
     export let nodes: DecisionTree[]
 
@@ -26,7 +25,7 @@
 
     let pronouns: string[] = pronounsArray[0]
 
-    function onSubmit(event: Event) {
+    async function onSubmit(event: Event) {
         event.preventDefault()
         if (values.some(value => value === "")) {
             toastStore.trigger({ message: "Please fill all the fields.", background: "variant-filled-error" })
@@ -34,7 +33,8 @@
         }
 
         isLoading = true
-        let markdown = texts.join("\n\n")
+        let markdown = texts.join("  \n&nbsp;  \n ") // Adds an "empty" line between each template
+        const rules = ["BASE_FORM", "PERS_PRONOUN_AGREEMENT", "NON3PRS_VERB", "UPPERCASE_SENTENCE_START"]
         inputTemplates.forEach((template, index) => {
             markdown = markdown.replace(new RegExp(`\{\{${template.text}\}\}`, "g"), values[index])
         })
@@ -42,30 +42,11 @@
             markdown = markdown.replace(new RegExp(`\{\{PRONOUN-${index}\}\}`, "g"), pronoun)
         })
 
-        fetch("/api/markdown2docx", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "X-Correct-They": pronouns[0] === "they" ? "true" : "false",
-                "X-Correct-Capitalization": "true"
-            },
-            body: markdown
-        })
-            .then(async res => {
-                if (!res.ok) {
-                    throw new Error(await res.text())
-                }
-                return await res.blob()
-            })
-            .then(blob => {
-                const filename = "templates.docx"
-                downloadBlob(blob, filename)
-                isLoading = false
-            })
-            .catch(error => {
-                toastStore.trigger({ message: error.message, background: "variant-filled-error" })
-                isLoading = false
-            })
+        try {
+            await submitMarkdownToDocx(markdown, rules)
+        } finally {
+            isLoading = false
+        }
     }
 </script>
 
