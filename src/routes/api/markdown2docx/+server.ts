@@ -12,11 +12,18 @@ export async function POST({ fetch, request }) {
     if (!markdown) {
         return new Response(null, { status: 400 })
     }
-    const formatting = formData.get("formatting") || null
-    const body = JSON.stringify({
-        markdown,
-        formatting
-    })
+    const formatting = formData.get("formatting")
+    let body: string
+    if (!formatting) {
+        body = JSON.stringify({
+            markdown
+        })
+    } else {
+        body = JSON.stringify({
+            markdown,
+            formatting
+        })
+    }
 
     return await fetch(`${AZURE_FUNCTION_PYTHON_URL}/markdown2docx/`, {
         method: "POST",
