@@ -17,11 +17,13 @@
             return
         }
         isLoading = true
-        let markdown = nodesToMarkdown(nodes)
+        const markdown = nodesToMarkdown(nodes)
+        const form = new FormData()
+        form.append("markdown", markdown)
 
         fetch("/api/markdown2docx", {
             method: "POST",
-            body: markdown
+            body: form
         })
             .then(async res => {
                 if (!res.ok) {
