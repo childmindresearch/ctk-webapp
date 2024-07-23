@@ -35,9 +35,9 @@ export function getTemplateValues(text: string): TemplateValue[] {
 }
 
 export async function submitMarkdownToDocx(markdown: string, rules: string[]) {
-    const form = new FormData()
-    form.append("text", markdown)
-    form.append("rules", rules.join(","))
+    const languageToolForm = new FormData()
+    languageToolForm.append("text", markdown)
+    languageToolForm.append("rules", rules.join(","))
 
     let text: string
     if (rules.length === 0) {
@@ -45,7 +45,7 @@ export async function submitMarkdownToDocx(markdown: string, rules: string[]) {
     } else {
         const languageToolResponse = await fetch("/api/language-tool", {
             method: "POST",
-            body: form
+            body: languageToolForm
         })
 
         if (!languageToolResponse.ok) {
@@ -55,9 +55,13 @@ export async function submitMarkdownToDocx(markdown: string, rules: string[]) {
     }
 
     text = giveMarkdownUrlsHyperlinks(text)
+    const markdown2DocxForm = new FormData()
+    markdown2DocxForm.append("markdown", text)
+    markdown2DocxForm.append("formatting", JSON.stringify({ space_before: 0, space_after: 0 }))
+
     const docxResponse = await fetch("/api/markdown2docx", {
         method: "POST",
-        body: text
+        body: markdown2DocxForm
     })
     if (!docxResponse.ok) {
         throw new Error(await docxResponse.text())

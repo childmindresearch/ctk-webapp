@@ -6,12 +6,22 @@ export async function POST({ fetch, request }) {
     const headers = new Headers({
         "x-functions-key": AZURE_FUNCTION_PYTHON_KEY || ""
     })
+
+    const formData = await request.formData()
+    const markdown = formData.get("markdown")
+    if (!markdown) {
+        return new Response(null, { status: 400 })
+    }
+    const formatting = formData.get("formatting") || null
+    const body = JSON.stringify({
+        markdown,
+        formatting
+    })
+
     return await fetch(`${AZURE_FUNCTION_PYTHON_URL}/markdown2docx/`, {
         method: "POST",
         headers: headers,
-        body: JSON.stringify({
-            markdown: await request.text()
-        })
+        body: body
     })
         .then(async response => {
             if (response.ok && response.body) {
@@ -21,6 +31,7 @@ export async function POST({ fetch, request }) {
             }
         })
         .catch(error => {
+            console.log(error)
             logger.error("Error converting markdown to docx:", error)
             return new Response(null, { status: 500 })
         })
