@@ -37,7 +37,7 @@ export function getTemplateValues(text: string): TemplateValue[] {
 export async function submitMarkdownToDocx(markdown: string, rules: string[]) {
     const languageToolForm = new FormData()
     languageToolForm.append("text", markdown)
-    languageToolForm.append("rules", rules.join(","))
+    languageToolForm.append("rules", JSON.stringify(rules))
 
     let text: string
     if (rules.length === 0) {
