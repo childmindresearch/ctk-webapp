@@ -44,17 +44,8 @@ export class DecisionTree {
         return children
     }
 
-    filterChildrenByIds(ids: number[]): DecisionTree {
-        const nodes = [this, ...this.getChildrenRecursive().filter(child => ids.includes(child.id))]
-        return new DecisionTree(
-            nodes.map(node => ({
-                id: node.id,
-                text: node.text,
-                parent_id: node.parent?.id ?? null
-            })),
-            this.id,
-            this.parent
-        )
+    filterChildrenByIds(ids: number[]): DecisionTree[] {
+        return this.getChildrenRecursive().filter(child => ids.includes(child.id))
     }
 
     getPath(): string[] {
