@@ -1,3 +1,3 @@
 import { writable } from "svelte/store"
 
-export let openNodeIds = writable<Set<number>>(new Set())
+export const openNodeIds = writable<Set<number>>(new Set())
