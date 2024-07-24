@@ -46,7 +46,7 @@
         const modal: ModalSettings = {
             type: "component",
             component: "markdown",
-            title: `New template inside "${shortenText(node.text)}"`,
+            title: `New template inside "${shortenText([...node.getPath(), node.text].join(" | "))}"`,
             meta: { instructions: instructions, value: "" },
             response: async response => {
                 if (!response.value) return
@@ -132,9 +132,13 @@
     }
 </script>
 
-<span class={"space-x-2"}>
+<span class="grid grid-rows-1 grid-flow-col gap-0">
     {#each adminButtons as adminButton}
-        <button on:click={adminButton.onClick} hidden={!adminButton.show} class="hover-highlight">
+        <button
+            on:click={adminButton.onClick}
+            hidden={!adminButton.show}
+            class="btn hover:variant-ghost-primary w-[1rem] h-[1.5rem]"
+        >
             <svelte:component this={adminButton.icon} class={adminButton.class} />
         </button>
     {/each}

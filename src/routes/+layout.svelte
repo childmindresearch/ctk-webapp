@@ -17,11 +17,13 @@
         type ModalComponent
     } from "@skeletonlabs/skeleton"
     import "../app.postcss"
+    import ModalSearchDecisionTree from "./templates/TemplatesDirectory/ModalSearchDecisionTree.svelte"
     initializeStores()
     storePopup.set({ computePosition, autoUpdate, flip, shift, offset, arrow })
 
     const modalRegistry: Record<string, ModalComponent> = {
-        markdown: { ref: ModalMarkdown }
+        markdown: { ref: ModalMarkdown },
+        searchDecisionTree: { ref: ModalSearchDecisionTree }
     }
 
     $modeCurrent = true
