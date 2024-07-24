@@ -8,23 +8,31 @@
     import { slide } from "svelte/transition"
     import type { DecisionTree } from "../DecisionTree"
     import AdminButtons from "./AdminButtons.svelte"
+    import { openNodeIds } from "./store"
 
     export let node: DecisionTree
     export let editable = false
     export let isRoot = true
 
-    let isFolded = !isRoot
     let sorter: Sortable
 
     const dispatch = createEventDispatcher()
 
     function fold() {
         if (isRoot) return
-        isFolded = !isFolded
+        if ($openNodeIds.has(node.id)) {
+            openNodeIds.set(new Set([...$openNodeIds].filter(id => id !== node.id)))
+        } else {
+            openNodeIds.set(new Set([...$openNodeIds, node.id]))
+        }
     }
+    let isFolded = isRoot ? false : !$openNodeIds.has(node.id)
+    const unsubscribe = openNodeIds.subscribe(value => {
+        isFolded = isRoot ? false : !value.has(node.id)
+    })
 
     function onSave() {
-        dispatch("save", { id: node.id })
+        dispatch("save", { node: node })
     }
 
     onMount(() => {
@@ -49,6 +57,7 @@
                 })
             }
         })
+        return unsubscribe
     })
 
     $: sorter?.option("disabled", !editable)
