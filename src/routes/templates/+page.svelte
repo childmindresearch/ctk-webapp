@@ -48,15 +48,7 @@
 
         <svelte:fragment slot="panel">
             <div hidden={tabSet !== 0}>
-                {#if data.user?.is_admin}
-                    <div class="flex space-x-3 pb-2">
-                        <div class="right-0 content-center">
-                            <SlideToggle name="slider-editable" size="sm" bind:checked={editable}>Editable</SlideToggle>
-                        </div>
-                        <ExportTemplates bind:nodes />
-                    </div>
-                {/if}
-                <TemplatesDirectory {nodes} bind:selectedNodes {editable} />
+                <TemplatesDirectory {nodes} bind:selectedNodes isAdmin={data.user?.is_admin} />
             </div>
             <div hidden={tabSet !== 1}>
                 <SelectedNodes bind:nodes={selectedNodes} />
