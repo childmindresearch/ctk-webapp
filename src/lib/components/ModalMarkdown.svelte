@@ -7,12 +7,18 @@
     let replacementTags: string[] = []
     let warningTags: string[] = []
 
+    let isLoading = false
+
     function onSubmit(event: Event) {
         event.preventDefault()
-        if ($modalStore[0].response) {
-            $modalStore[0].response({ value: text })
-        }
-        modalStore.close()
+        isLoading = true
+        // Text can take a moment to update, so we'll wait a bit before closing the modal.
+        setTimeout(() => {
+            if ($modalStore[0].response) {
+                $modalStore[0].response({ value: text })
+            }
+            modalStore.close()
+        }, 1000)
     }
 
     function detectTags(text: string, regex: RegExp) {
@@ -86,6 +92,6 @@
             </div>
         </div>
 
-        <button class="btn variant-filled-primary" on:click={onSubmit}>Save</button>
+        <button disabled={isLoading} class="btn variant-filled-primary" on:click={onSubmit}>Save</button>
     </div>
 {/if}
