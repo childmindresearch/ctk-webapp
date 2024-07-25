@@ -9,7 +9,8 @@
     let isLoading = false
     let values: string[] = []
 
-    const texts = nodes.map(node => `*[${node.parent?.text}]{.underline}*\n\n${node.text}`)
+    // A custom LUA filter in the backend converts ++{}++ to underlined. Commonmark does not support underlining.
+    const texts = nodes.map(node => `*++${node.parent?.text}++*\n\n${node.text}`)
     const templates = texts.map(text => getTemplateValues(text)).flat()
     const uniqueTemplates = templates.filter((value, _, self) => self.find(elem => elem.text === value.text) === value)
     const inputTemplates = uniqueTemplates.filter(value => value.type === "input")
