@@ -55,8 +55,10 @@ export async function submitMarkdownToDocx(markdown: string, rules: string[]) {
     }
 
     text = giveMarkdownUrlsHyperlinks(text)
+    // Pandoc does not support tabs. We use |t as a workaround.
+    const textWithEncodedTab = text.replace(/\t/g, "|t")
     const markdown2DocxForm = new FormData()
-    markdown2DocxForm.append("markdown", text)
+    markdown2DocxForm.append("markdown", textWithEncodedTab)
     markdown2DocxForm.append("formatting", JSON.stringify({ space_before: 0, space_after: 0 }))
 
     const docxResponse = await fetch("/api/markdown2docx", {
