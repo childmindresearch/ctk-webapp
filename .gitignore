@@ -1,3 +1,5 @@
+settings.json
+local
 postgresql
 *.sqlite
 .DS_Store
