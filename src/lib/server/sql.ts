@@ -13,16 +13,14 @@ const config = {
 
 export const pool = new Pool(config)
 
-export interface SqlTemplateModel {
+export type SqlTemplateSchema = {
     id: number
     text: string
     parent_id: number | null
-    time_created: string
-    time_updated: string
 }
 
-export interface SqlTemplateSchema {
+export type SqlDsmCodeSchema = {
     id: number
-    text: string
-    parent_id: number | null
+    code: string
+    label: string
 }

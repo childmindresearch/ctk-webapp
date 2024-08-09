@@ -1,13 +1,12 @@
 <script script lang="ts">
     import LoadingBar from "$lib/components/LoadingBar.svelte"
-    import { SlideToggle, Tab, TabGroup } from "@skeletonlabs/skeleton"
+    import { Tab, TabGroup } from "@skeletonlabs/skeleton"
     import { onMount } from "svelte"
     import Checkout from "./Checkout/Checkout.svelte"
     import { DecisionTree } from "./DecisionTree"
     import TemplatesDirectory from "./TemplatesDirectory/TemplatesDirectory.svelte"
     import SelectedNodes from "./SelectedNodes.svelte"
     import MarkdownEditor from "$lib/components/MarkdownEditor.svelte"
-    import ExportTemplates from "./ExportTemplates.svelte"
 
     export let data
 
