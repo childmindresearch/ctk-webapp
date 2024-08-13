@@ -83,7 +83,7 @@
     </div>
 
     <form class="space-y-2">
-        <input class="input w-72" type="number" placeholder="MRN" bind:value={redcapSurveyId} />
+        <input class="input w-72" inputmode="numeric" placeholder="MRN" bind:value={redcapSurveyId} />
         <br />
         <label>
             Model
@@ -98,19 +98,3 @@
         <button class="btn variant-filled-primary" on:click={onSubmit} disabled={isLoading}> Submit </button>
     </form>
 {/if}
-
-<style>
-    /* Remove the arrows from number inputs */
-    /* Chrome, Safari, Edge, Opera */
-    input::-webkit-outer-spin-button,
-    input::-webkit-inner-spin-button {
-        -webkit-appearance: none;
-        margin: 0;
-    }
-
-    /* Firefox */
-    input[type="number"] {
-        -moz-appearance: textfield;
-        appearance: textfield;
-    }
-</style>
