@@ -123,7 +123,7 @@
 <div class="max-h-[40vh] p-4 overflow-y-auto border-2 bg-white">
     <ul class="w-full">
         {#each autoCompeleteOptions as option}
-            <li class="grid grid-cols-[auto_100px] w-full">
+            <li class="grid grid-cols-[auto_100px] w-full" class:grid-cols-1={!isAdmin}>
                 <button
                     class="btn hover:variant-ghost-primary"
                     class:variant-soft-primary={selected.some(s => s.label === option.label)}

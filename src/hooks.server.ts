@@ -3,10 +3,16 @@ import { randomUUID } from "crypto"
 import { performance } from "perf_hooks"
 import { pool } from "$lib/server/sql"
 import { DEVELOPMENT_USER } from "$lib/server/environment"
-import type { User } from "$lib/databaseTypes"
+import type { User } from "$lib/types"
 import type { RequestEvent } from "@sveltejs/kit"
 
-const ADMIN_ENDPOINTS = ["/api/templates/.*?"]
+type Endpoint = {
+    path: string
+    method: "GET" | "PATCH" | "POST" | "PUT" | "DELETE"
+}
+
+const ADMIN_ENDPOINT_PATHS = ["/api/templates/.*?", "/api/dsm/.*?"]
+const ADMIN_SPECIFIC_ENDPOINTS: Endpoint[] = [{ path: "/api/dsm", method: "POST" }]
 
 export async function handle({ event, resolve }) {
     const requestId = randomUUID()
@@ -87,8 +93,14 @@ export async function getOrInsertUser(email: string) {
 }
 
 function isUserAuthorized(event: RequestEvent<Partial<Record<string, string>>, string | null>, user: User) {
-    if (!user.is_admin && ADMIN_ENDPOINTS.some(endpoint => event.request.url.match(endpoint))) {
+    if (!user.is_admin && ADMIN_ENDPOINT_PATHS.some(path => event.request.url.match(path))) {
         return false
+    }
+
+    for (let endpoint of ADMIN_SPECIFIC_ENDPOINTS) {
+        if (!user.is_admin && event.request.url.match(endpoint.path) && event.request.method === endpoint.method) {
+            return false
+        }
     }
     return true
 }
