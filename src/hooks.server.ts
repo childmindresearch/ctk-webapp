@@ -97,7 +97,7 @@ function isUserAuthorized(event: RequestEvent<Partial<Record<string, string>>, s
         return false
     }
 
-    for (let endpoint of ADMIN_SPECIFIC_ENDPOINTS) {
+    for (const endpoint of ADMIN_SPECIFIC_ENDPOINTS) {
         if (!user.is_admin && event.request.url.match(endpoint.path) && event.request.method === endpoint.method) {
             return false
         }

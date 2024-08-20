@@ -1,4 +1,4 @@
-export function indexForNewItemInSortedList<T>(list: string[], item: string) {
+export function indexForNewItemInSortedList(list: string[], item: string) {
     let left = 0
     let right = list.length - 1
 
