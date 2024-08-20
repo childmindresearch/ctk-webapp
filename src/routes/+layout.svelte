@@ -18,10 +18,12 @@
     } from "@skeletonlabs/skeleton"
     import "../app.postcss"
     import ModalSearchDecisionTree from "./templates/TemplatesDirectory/ModalSearchDecisionTree.svelte"
+    import ModalDsmForm from "./dsm/ModalDsmForm.svelte"
     initializeStores()
     storePopup.set({ computePosition, autoUpdate, flip, shift, offset, arrow })
 
     const modalRegistry: Record<string, ModalComponent> = {
+        dsmForm: { ref: ModalDsmForm },
         markdown: { ref: ModalMarkdown },
         searchDecisionTree: { ref: ModalSearchDecisionTree }
     }
