@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { SqlDsmCodeSchema } from "$lib/server/sql"
-    import { getToastStore, SlideToggle, type ToastSettings } from "@skeletonlabs/skeleton"
+    import { getToastStore, type ToastSettings } from "@skeletonlabs/skeleton"
     import { onMount } from "svelte"
     import EditButton from "./EditButton.svelte"
     import CreateButton from "./CreateButton.svelte"
@@ -15,7 +15,6 @@
     let autoCompeleteOptions: SqlDsmCodeSchema[] = []
     let selected: SqlDsmCodeSchema[] = []
     let inputDiv: HTMLDivElement
-    let editable: boolean
     let isAdmin = data.user?.is_admin
 
     const toastStore = getToastStore()
@@ -79,12 +78,6 @@
 
 <span class="flex space-x-2 pb-2 h-12">
     {#if isAdmin}
-        <div class="right-0 content-center">
-            <SlideToggle name="slider-editable" size="sm" bind:checked={editable}>Editable</SlideToggle>
-        </div>
-    {/if}
-
-    {#if editable}
         <CreateButton {onCreate} />
     {/if}
 </span>
@@ -123,20 +116,20 @@
 <div class="max-h-[40vh] p-4 overflow-y-auto border-2 bg-white">
     <ul class="w-full">
         {#each autoCompeleteOptions as option}
-            <li class="grid grid-cols-[auto_100px] w-full" class:grid-cols-1={!isAdmin}>
+            <li class="grid grid-cols-[70px_auto] w-full" class:grid-cols-1={!isAdmin}>
+                {#if isAdmin}
+                    <span class="grid grid-cols-2 mt-2 gap-3 mr-4">
+                        <EditButton bind:dsmItem={option} />
+                        <DeleteButton dsmItem={option} {onDelete} />
+                    </span>
+                {/if}
                 <button
-                    class="btn hover:variant-ghost-primary"
+                    class="btn hover:variant-ghost-primary flex justify-start text-left w-full"
                     class:variant-soft-primary={selected.some(s => s.label === option.label)}
                     on:click={() => onButtonClick(option)}
                 >
                     {option.label}
                 </button>
-                {#if editable}
-                    <span>
-                        <EditButton bind:dsmItem={option} />
-                        <DeleteButton dsmItem={option} {onDelete} />
-                    </span>
-                {/if}
             </li>
         {/each}
     </ul>
