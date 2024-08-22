@@ -9,7 +9,7 @@
     let isLoading = false
     let modalOpen = false
     let redcapIdentifierImage: HTMLImageElement
-    let model = "gpt-4o"
+    let model = "anthropic.claude-3-5-sonnet-20240620-v1:0"
 
     const toastStore = getToastStore()
     const modalStore = getModalStore()
