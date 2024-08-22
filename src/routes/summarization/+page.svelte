@@ -7,7 +7,7 @@
 
     let file: FileList
     let loading = false
-    let model = LLM_MODELS[0].tag
+    let model = "anthropic.claude-3-5-sonnet-20240620-v1:0"
 
     const toastStore = getToastStore()
 
