@@ -1,5 +1,4 @@
 <script lang="ts">
-    import FileIcon from "$lib/icons/FileIcon.svelte"
     import type { SqlDsmCodeSchema } from "$lib/server/sql"
     import { getModalStore, getToastStore, type ModalSettings } from "@skeletonlabs/skeleton"
 

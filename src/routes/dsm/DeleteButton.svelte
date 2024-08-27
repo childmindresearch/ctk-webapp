@@ -6,8 +6,6 @@
     export let dsmItem: { label: string; code: string; id: number }
     export let onDelete: (item: SqlDsmCodeSchema) => void
 
-    const instructions = "Edit the DSM code."
-
     const toastStore = getToastStore()
     const modalStore = getModalStore()
 
@@ -28,7 +26,7 @@
                             background: "variant-filled-error"
                         })
                     } else {
-                        onDelete(item)
+                        onDelete(dsmItem)
                         toastStore.trigger({
                             message: `Deleted the DSM code.`,
                             background: "variant-filled-success"
