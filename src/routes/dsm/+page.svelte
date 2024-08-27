@@ -36,7 +36,10 @@
     })
 
     function onButtonClick(item: { label: string; id: number; code: string }) {
-        if (selected.some(s => s.label === item.label)) return
+        if (selected.some(s => s.label === item.label)) {
+            selected = selected.filter(s => s.label !== item.label)
+            return
+        }
         selected = [...selected, item]
         searchString = ""
         inputDiv.focus()
