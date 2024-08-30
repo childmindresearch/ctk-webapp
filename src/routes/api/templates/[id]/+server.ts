@@ -1,5 +1,5 @@
 import { logger } from "$lib/server/logging"
-import { pool, type SqlTemplateSchema } from "$lib/server/sql"
+import { pool } from "$lib/server/sql"
 
 export async function POST({ request, params }) {
     const body = await request.json()
@@ -34,7 +34,7 @@ type PutRequest = {
 
 export async function PUT({ params, request }) {
     const id = params.id
-    let { text, parentId, priority } = (await request.json()) as PutRequest
+    const { text, parentId, priority } = (await request.json()) as PutRequest
 
     if (text === null || parentId === null || priority === null) {
         logger.error("Missing parameter in request.")
