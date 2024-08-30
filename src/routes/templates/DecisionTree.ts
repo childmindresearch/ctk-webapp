@@ -22,10 +22,16 @@ export class DecisionTree {
         this.parent = parent
         this.children = table
             .filter(node => node.parent_id === this.id)
+            .sort((a, b) => a.priority - b.priority)
             .map(child => new DecisionTree(table, child.id, this))
+        this.recursiveSortChildren()
     }
 
-    getParents(): DecisionTree[] {
+    get priority(): number {
+        return this.parent?.children.findIndex(child => child.id === this.id) ?? 0
+    }
+
+    getAncestors(): DecisionTree[] {
         const parents: DecisionTree[] = []
         let current: DecisionTree | undefined = this.parent
         while (current) {
@@ -71,14 +77,40 @@ export class DecisionTree {
         return null
     }
 
-    deleteNodeById(id: number): DecisionTree {
-        this.children = this.children.filter(child => child.id !== id)
-        this.children.forEach(child => child.deleteNodeById(id))
+    addChild(child: DecisionTree, index: number | undefined = undefined) {
+        if (index === undefined) {
+            index = this.children.length + 1
+        }
+        child.parent = this
+        this.children = [...this.children.slice(0, index), child, ...this.children.slice(index)]
+        return this
+    }
+
+    deleteChild(id: number) {
+        const childIndex = this.children.findIndex(child => child.id === id)
+        if (childIndex === -1) {
+            return
+        }
+        this.children.splice(childIndex, 1)
+        return this
+    }
+
+    moveChild(id: number, newIndex: number) {
+        if (newIndex >= this.children.length) return
+
+        const currentIndex = this.children.findIndex(child => child.id === id)
+        if (currentIndex === -1 || currentIndex === newIndex) return
+
+        const child = this.children[currentIndex]
+
+        this.deleteChild(id)
+        this.addChild(child, newIndex)
+
         return this
     }
 
     recursiveSortChildren() {
-        this.children = this.children?.sort((a, b) => a.text.localeCompare(b.text))
+        this.children = this.children?.sort((a, b) => a.priority - b.priority)
         this.children?.forEach(child => child.recursiveSortChildren())
     }
 }

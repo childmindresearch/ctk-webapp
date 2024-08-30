@@ -3,7 +3,7 @@
     import type { DecisionTree } from "../DecisionTree"
 
     export let tree: DecisionTree
-    export let filteredNodes: DecisionTree = tree
+    export let filteredNodes: DecisionTree[] = [tree]
 
     const allChildNodes = tree.getChildrenRecursive()
     const pathsTextsAndIds = allChildNodes.map(node => ({
@@ -29,14 +29,14 @@
         const query = input.value.trim()
 
         if (!query) {
-            filteredNodes = tree
+            filteredNodes = [tree]
             return
         }
 
         const searchedPaths = searcher.search(query).map(result => result.item)
         const searchedNodes = allChildNodes.filter(node => searchedPaths.some(path => path.id === node.id))
         const searchIncludingParentKid = [
-            ...searchedNodes.map(node => [...node.getParents(), node]).flat(),
+            ...searchedNodes.map(node => [...node.getAncestors(), node]).flat(),
             ...searchedNodes.map(node => node.getChildrenRecursive()).flat()
         ].filter((value, index, self) => self.indexOf(value) === index)
         filteredNodes = tree.filterChildrenByIds(searchIncludingParentKid.map(node => node.id))

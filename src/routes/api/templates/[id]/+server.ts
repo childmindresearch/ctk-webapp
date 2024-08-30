@@ -26,45 +26,29 @@ export async function POST({ request, params }) {
         })
 }
 
-export async function PATCH({ params, request }) {
+type PutRequest = {
+    text: string | null
+    parentId: number | null
+    priority: number | null
+}
+
+export async function PUT({ params, request }) {
     const id = params.id
-    let { text, parent_id } = await request.json()
+    let { text, parentId, priority } = (await request.json()) as PutRequest
+
+    if (text === null || parentId === null || priority === null) {
+        logger.error("Missing parameter in request.")
+        return new Response(null, { status: 400 })
+    }
+
     logger.info(`Patching template with id ${id}`)
 
-    const existingtemplate = await pool.connect().then(async client => {
-        const result = await client.query({
-            text: "SELECT * FROM templates WHERE id = $1",
-            values: [id]
-        })
-        client.release()
-        return result.rows[0] as SqlTemplateSchema
-    })
-
-    if (!existingtemplate) {
-        throw new Error(`template with id ${id} not found`)
-    }
-    if (existingtemplate) {
-        text = text ?? existingtemplate.text
-        parent_id = parent_id ?? existingtemplate.parent_id
-    }
-
     const query = {
-        text: "UPDATE templates SET",
-        values: [] as string[]
+        text: "UPDATE templates SET text = $1, parent_id = $2, priority = $3 WHERE id = $4",
+        values: [text, parentId, priority, id]
     }
 
-    if (text !== undefined) {
-        query.text += ` text = $${query.values.length + 1},`
-        query.values.push(text)
-    }
-
-    if (parent_id !== undefined) {
-        query.text += ` parent_id = $${query.values.length + 1},`
-        query.values.push(String(parent_id))
-    }
-
-    query.text = query.text.slice(0, -1) + ` WHERE id = $${query.values.length + 1}`
-    query.values.push(String(id))
+    logger.debug(query)
 
     return await pool
         .connect()

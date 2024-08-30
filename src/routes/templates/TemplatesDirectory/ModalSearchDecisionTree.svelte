@@ -2,8 +2,10 @@
     import { getModalStore } from "@skeletonlabs/skeleton"
     import type { DecisionTree } from "../DecisionTree"
     import Fuse from "fuse.js"
-    import AdminButtons from "./AdminButtons.svelte"
     import { openNodeIds } from "./store"
+    import CreateButton from "./CreateButton.svelte"
+    import EditButton from "./EditButton.svelte"
+    import DeleteButton from "./DeleteButton.svelte"
 
     const modalStore = getModalStore()
 
@@ -45,7 +47,7 @@
         const searchedPaths = searcher.search(searchTerm).map(result => result.item)
         const searchedNodes = allChildNodes.filter(node => searchedPaths.some(path => path.id === node.id))
         const searchedIds = [
-            ...searchedNodes.map(node => [...node.getParents(), node]).flat(),
+            ...searchedNodes.map(node => [...node.getAncestors(), node]).flat(),
             ...searchedNodes.map(node => node.getChildrenRecursive()).flat()
         ]
             .filter((value, index, self) => self.indexOf(value) === index)
@@ -62,7 +64,7 @@
     }
 
     function onSearchClick(node: DecisionTree) {
-        const parents = node.getParents()
+        const parents = node.getAncestors()
         const ids = [...parents.map(parent => parent.id), node.id]
         openNodeIds.set(new Set(ids))
         modalStore.close()
@@ -99,7 +101,11 @@
                                 <!-- svelte-ignore a11y-click-events-have-key-events -->
                                 <!-- svelte-ignore a11y-no-static-element-interactions -->
                                 <div on:click={() => modalStore.close()}>
-                                    <AdminButtons {node} />
+                                    <span class="grid grid-rows-1 grid-flow-col gap-0">
+                                        <CreateButton {node} />
+                                        <EditButton {node} />
+                                        <DeleteButton {node} ondelete={() => {}} />
+                                    </span>
                                 </div>
                             {/if}
                             <button
