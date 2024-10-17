@@ -34,7 +34,7 @@
         }
 
         isLoading = true
-        let markdown = texts.join("  \n&nbsp;  \n ") // Adds an "empty" line between each template
+        let markdown = texts.join("  \n&nbsp;  \n\n") // Adds an "empty" line between each template
         const rules = ["BASE_FORM", "PERS_PRONOUN_AGREEMENT", "NON3PRS_VERB", "UPPERCASE_SENTENCE_START"]
         inputTemplates.forEach((template, index) => {
             markdown = markdown.replace(new RegExp(`\{\{${template.text}\}\}`, "g"), values[index])
