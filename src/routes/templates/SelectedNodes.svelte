@@ -1,17 +1,15 @@
 <script lang="ts">
+    import ArrowDownIcon from "$lib/icons/ArrowDownIcon.svelte"
+    import ArrowUpIcon from "$lib/icons/ArrowUpIcon.svelte"
     import TrashIcon from "$lib/icons/TrashIcon.svelte"
-    import { getModalStore, getToastStore } from "@skeletonlabs/skeleton"
-    import Sortable, { type SortableEvent } from "sortablejs"
-    import { onMount } from "svelte"
+    import { getToastStore } from "@skeletonlabs/skeleton"
+    import { flip } from "svelte/animate"
+    import { quintOut } from "svelte/easing"
     import type { DecisionTree } from "./DecisionTree"
 
     export let nodes: DecisionTree[]
 
-    let elem: HTMLDivElement
-    let sorter: Sortable
-
     const toastStore = getToastStore()
-    const modalStore = getModalStore()
 
     function removeNode(node: DecisionTree): void {
         nodes = nodes.filter(n => n.id !== node.id)
@@ -25,25 +23,17 @@
         return node.getPath().slice(1)
     }
 
-    function openTemplate(node: DecisionTree): void {
-        modalStore.trigger({
-            type: "alert",
-            title: "Full text",
-            body: node.text
-        })
+    function move(node: DecisionTree, by: number): void {
+        const index = nodes.findIndex(n => n.id == node.id)
+        if (index === undefined) {
+            return
+        }
+        const swapIndex = index + by
+        if (swapIndex < 0 || swapIndex >= nodes.length) {
+            return
+        }
+        ;[nodes[index], nodes[swapIndex]] = [nodes[swapIndex], nodes[index]]
     }
-
-    onMount(() => {
-        sorter = Sortable.create(elem, {
-            animation: 100,
-            onEnd(event: SortableEvent) {
-                if (event.oldIndex === event.newIndex) return
-                if (event.oldIndex === undefined || event.newIndex === undefined) return
-                const [removed] = nodes.splice(event.oldIndex, 1)
-                nodes.splice(event.newIndex, 0, removed)
-            }
-        })
-    })
 </script>
 
 {#if nodes.length === 0}
@@ -53,11 +43,18 @@
 <div class="table-container">
     <table class="table table-hover table-compact">
         <tbody>
-            <div bind:this={elem} class="align-middle text-center">
-                {#each nodes as node}
-                    <tr on:dblclick={() => openTemplate(node)}>
-                        <td>
-                            <button on:click={() => removeNode(node)} class="hover-highlight">
+            <div class="align-middle text-center">
+                {#each nodes as node (node)}
+                    <tr animate:flip={{ delay: 0, duration: 250, easing: quintOut }}>
+                        <td class="flex gap-x-2">
+                            <button on:click={() => move(node, -1)}>
+                                <ArrowUpIcon />
+                            </button>
+                            <button on:click={() => move(node, 1)}>
+                                <ArrowDownIcon />
+                            </button>
+                            <div />
+                            <button on:click={() => removeNode(node)}>
                                 <TrashIcon class="text-error-600" />
                             </button>
                         </td>
