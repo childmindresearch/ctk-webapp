@@ -1,7 +1,7 @@
 <script lang="ts">
     import LoadingBar from "$lib/components/LoadingBar.svelte"
     import QuestionMarkCircleIcon from "$lib/icons/QuestionMarkCircleIcon.svelte"
-    import { downloadBlob, LLM_MODELS } from "$lib/utils"
+    import { downloadBlob } from "$lib/utils"
     import { getModalStore, getToastStore, type ModalSettings } from "@skeletonlabs/skeleton"
     import { onMount } from "svelte"
 
@@ -9,8 +9,8 @@
     let isLoading = false
     let modalOpen = false
     let redcapIdentifierImage: HTMLImageElement
-    let model = "anthropic.claude-3-5-sonnet-20240620-v1:0"
 
+    const model = "anthropic.claude-3-5-sonnet-20240620-v1:0"
     const toastStore = getToastStore()
     const modalStore = getModalStore()
 
@@ -84,16 +84,6 @@
 
     <form class="space-y-2">
         <input class="input w-72" inputmode="numeric" placeholder="MRN" bind:value={redcapSurveyId} />
-        <br />
-        <label>
-            Model
-            <br />
-            <select class="input w-72" bind:value={model}>
-                {#each LLM_MODELS as model}
-                    <option value={model.tag}>{model.name}</option>
-                {/each}
-            </select>
-        </label>
         <br />
         <button class="btn variant-filled-primary" on:click={onSubmit} disabled={isLoading}> Submit </button>
     </form>
