@@ -28,7 +28,7 @@ export function getTemplateValues(text: string): TemplateValue[] {
         values.push({ type: "warning", text: match[1] })
     }
     while ((match = inputRegex.exec(text)) !== null) {
-        if (warningRegex.test(match[0]) || pronounRegex.test(match[0])) continue
+        if (match[0].startsWith("{{!") || match[0].startsWith("{{PRONOUN-")) continue
         values.push({ type: "input", text: match[1] })
     }
     return values
