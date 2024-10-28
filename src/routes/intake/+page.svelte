@@ -10,7 +10,7 @@
     let modalOpen = false
     let redcapIdentifierImage: HTMLImageElement
 
-    const model = "anthropic.claude-3-5-sonnet-20240620-v1:0"
+    const model = "anthropic.claude-3-5-sonnet-20241022-v2:0"
     const toastStore = getToastStore()
     const modalStore = getModalStore()
 
