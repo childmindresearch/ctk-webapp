@@ -3,12 +3,11 @@
     import { systemPrompt } from "./prompt"
     import { getToastStore, type ToastSettings } from "@skeletonlabs/skeleton"
     import LoadingBar from "$lib/components/LoadingBar.svelte"
-    import { LLM_MODELS } from "$lib/utils"
 
     let file: FileList
     let loading = false
-    let model = "anthropic.claude-3-5-sonnet-20240620-v1:0"
 
+    const model = "anthropic.claude-3-5-sonnet-20241022-v2:0"
     const toastStore = getToastStore()
 
     async function docxToText(docx: File) {
@@ -73,9 +72,11 @@
             loading = false
             return
         }
+        let markdown2docxForm = new FormData()
+        markdown2docxForm.append("markdown", response)
         return await fetch("/api/markdown2docx", {
             method: "POST",
-            body: response
+            body: markdown2docxForm
         })
             .then(async response => {
                 if (response.ok) {
@@ -122,17 +123,7 @@ Upload a clinical report to generate a summary. The clinical report should conta
 impressions' and 'recommendations' sections, as we only send the paragraphs in between these.
 <form class="space-y-2" on:submit={onSubmit}>
     <input type="file" accept=".docx" bind:files={file} />
-    <label>
-        Model
-        <br />
-
-        <select class="input w-72" bind:value={model}>
-            {#each LLM_MODELS as model}
-                <option value={model.tag}>{model.name}</option>
-            {/each}
-        </select>
-    </label>
-    <button type="submit" class="btn variant-filled-primary">Upload</button>
+    <button type="submit" class="btn variant-filled-primary">Submit</button>
 </form>
 
 <LoadingBar hidden={!loading} />
