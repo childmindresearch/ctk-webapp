@@ -83,7 +83,7 @@
     </div>
 
     <form class="space-y-2">
-        <input class="input w-72" inputmode="numeric" placeholder="MRN" bind:value={redcapSurveyId} />
+        <input class="input w-72" placeholder="MRN" bind:value={redcapSurveyId} />
         <br />
         <button class="btn variant-filled-primary" on:click={onSubmit} disabled={isLoading}> Submit </button>
     </form>
