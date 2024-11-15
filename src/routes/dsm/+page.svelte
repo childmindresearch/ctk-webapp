@@ -1,27 +1,27 @@
 <script lang="ts">
+    import XIcon from "$lib/icons/XIcon.svelte"
     import type { SqlDsmCodeSchema } from "$lib/server/sql"
+    import type { User } from "$lib/types"
     import { getToastStore, type ToastSettings } from "@skeletonlabs/skeleton"
     import { onMount } from "svelte"
-    import EditButton from "./EditButton.svelte"
     import CreateButton from "./CreateButton.svelte"
     import DeleteButton from "./DeleteButton.svelte"
+    import EditButton from "./EditButton.svelte"
     import { indexForNewItemInSortedList } from "./utils"
-    import XIcon from "$lib/icons/XIcon.svelte"
-    import type { PageData } from "../$types"
 
-    type Props = { data: PageData }
+    type Props = { data: { user: User } }
     let { data }: Props = $props()
 
     let searchString = $state("")
     let selected: SqlDsmCodeSchema[] = $state([])
 
-    let dsmCodes: SqlDsmCodeSchema[] = []
+    let dsmCodes: SqlDsmCodeSchema[] = $state([])
     let autoCompeleteOptions = $derived(
         dsmCodes.filter(code => (code.code + " " + code.label).toLowerCase().includes(searchString.toLowerCase()))
     )
     let inputDiv: HTMLDivElement
-    let isAdmin = data.user?.is_admin
 
+    const isAdmin = data.user?.is_admin
     const toastStore = getToastStore()
     const copyToast: ToastSettings = {
         message: "The selected DSM codes have been copied to your clipboard."
@@ -77,6 +77,7 @@
 
     function onDelete(item: SqlDsmCodeSchema) {
         dsmCodes = dsmCodes.filter(code => code.id !== item.id)
+        selected = selected.filter(code => code.id !== item.id)
     }
 </script>
 
@@ -119,11 +120,11 @@
 
 <div class="max-h-[40vh] p-4 overflow-y-auto border-2 bg-white">
     <ul class="w-full">
-        {#each autoCompeleteOptions as option, index}
-            <li class="grid grid-cols-[70px_auto] w-full" class:grid-cols-1={!isAdmin}>
+        {#each autoCompeleteOptions as option}
+            <li class:grid-cols-1={!isAdmin} class:grid-cols-[70px_auto]={isAdmin} class="grid w-full">
                 {#if isAdmin}
                     <span class="grid grid-cols-2 mt-2 gap-3 mr-4">
-                        <EditButton bind:dsmItem={autoCompeleteOptions[index]} />
+                        <EditButton bind:dsmItem={dsmCodes[dsmCodes.findIndex(dsm => dsm.id === option.id)]} />
                         <DeleteButton dsmItem={option} {onDelete} />
                     </span>
                 {/if}
