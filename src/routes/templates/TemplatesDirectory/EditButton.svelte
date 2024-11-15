@@ -1,10 +1,12 @@
 <script lang="ts">
     import EditIcon from "$lib/icons/EditIcon.svelte"
     import { getModalStore, getToastStore, type ModalSettings } from "@skeletonlabs/skeleton"
-    import { DecisionTree } from "../DecisionTree"
+    import { DecisionTree } from "../DecisionTree.svelte"
 
-    export let node: DecisionTree
-    export let onedit = () => {}
+    type Props = {
+        node: DecisionTree
+    }
+    let { node }: Props = $props()
 
     const modalStore = getModalStore()
     const toastStore = getToastStore()
@@ -38,7 +40,6 @@
                         return
                     }
                     node.text = response.value
-                    onedit()
                 })
             }
         }
@@ -46,6 +47,6 @@
     }
 </script>
 
-<button on:click={onEdit} class="btn hover:variant-ghost-primary w-[1rem] h-[1.5rem]">
+<button onclick={onEdit} class="btn hover:variant-ghost-primary w-[1rem] h-[1.5rem]">
     <EditIcon class="text-warning-600" />
 </button>

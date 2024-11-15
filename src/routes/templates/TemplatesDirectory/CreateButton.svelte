@@ -2,10 +2,12 @@
     import FileIcon from "$lib/icons/FileIcon.svelte"
     import { shortenText } from "$lib/utils"
     import { getModalStore, getToastStore, type ModalSettings } from "@skeletonlabs/skeleton"
-    import { DecisionTree } from "../DecisionTree"
+    import { DecisionTree } from "../DecisionTree.svelte"
 
-    export let node: DecisionTree
-    export let oncreate = () => {}
+    type Props = {
+        node: DecisionTree
+    }
+    let { node }: Props = $props()
 
     const modalStore = getModalStore()
     const toastStore = getToastStore()
@@ -24,7 +26,7 @@
             title: `New template inside "${shortenText([...node.getPath(), node.text].join(" | "))}"`,
             meta: { instructions: instructions, value: "" },
             response: async response => {
-                if (!response.value) return
+                if (response === undefined || !response.value) return
                 await fetch(`/api/templates/${node.id}`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
@@ -43,7 +45,6 @@
                     .then(newNode => {
                         const newChild = new DecisionTree([newNode], newNode.id, node)
                         node = node.addChild(newChild)
-                        oncreate()
                     })
             }
         }
@@ -51,6 +52,6 @@
     }
 </script>
 
-<button on:click={localOnCreate} class="btn hover:variant-ghost-primary w-[1rem] h-[1.5rem]">
+<button onclick={localOnCreate} class="btn hover:variant-ghost-primary w-[1rem] h-[1.5rem]">
     <FileIcon class="text-success-600" />
 </button>

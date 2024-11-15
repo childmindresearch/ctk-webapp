@@ -1,1 +1,1 @@
-<i class={`fa-brands fa-github ${$$props.class}`} />
+<i class={`fa-brands fa-github ${$$props.class}`}></i>

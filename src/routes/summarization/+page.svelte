@@ -121,7 +121,7 @@
 
 Upload a clinical report to generate a summary. The clinical report should contain the 'clinical summary and
 impressions' and 'recommendations' sections, as we only send the paragraphs in between these.
-<form class="space-y-2" on:submit={onSubmit}>
+<form class="space-y-2" onsubmit={onSubmit}>
     <input type="file" accept=".docx" bind:files={file} />
     <button type="submit" class="btn variant-filled-primary">Submit</button>
 </form>

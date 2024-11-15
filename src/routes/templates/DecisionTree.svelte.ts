@@ -2,9 +2,9 @@ import type { SqlTemplateSchema } from "$lib/server/sql"
 
 export class DecisionTree {
     id: number
-    text: string
-    parent?: DecisionTree
-    children: DecisionTree[]
+    text: string = $state("")
+    parent?: DecisionTree = $state(undefined)
+    children: DecisionTree[] = $state([])
 
     constructor(table: SqlTemplateSchema[], rootId?: number, parent?: DecisionTree) {
         let root: SqlTemplateSchema | undefined
@@ -79,27 +79,29 @@ export class DecisionTree {
 
     addChild(child: DecisionTree, index: number | undefined = undefined) {
         if (index === undefined) {
-            index = this.children.length + 1
+            index = this.children.length
         }
         child.parent = this
-        this.children = [...this.children.slice(0, index), child, ...this.children.slice(index)]
+        this.children.splice(index, 0, child)
+        this.children = this.children
         return this
     }
 
     deleteChild(id: number) {
         const childIndex = this.children.findIndex(child => child.id === id)
         if (childIndex === -1) {
-            return
+            return this
         }
         this.children.splice(childIndex, 1)
+        this.children = this.children
         return this
     }
 
     moveChild(id: number, newIndex: number) {
-        if (newIndex >= this.children.length) return
+        if (newIndex >= this.children.length) return this
 
         const currentIndex = this.children.findIndex(child => child.id === id)
-        if (currentIndex === -1 || currentIndex === newIndex) return
+        if (currentIndex === -1 || currentIndex === newIndex) return this
 
         const child = this.children[currentIndex]
 

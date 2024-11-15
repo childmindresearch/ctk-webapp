@@ -2,11 +2,14 @@
     import TrashIcon from "$lib/icons/TrashIcon.svelte"
     import { shortenText } from "$lib/utils"
     import { getModalStore, getToastStore, type ModalSettings } from "@skeletonlabs/skeleton"
-    import { DecisionTree } from "../DecisionTree"
+    import { DecisionTree } from "../DecisionTree.svelte"
     import { openNodeIds } from "./store"
 
-    export let node: DecisionTree
-    export let ondelete: () => void
+    type Props = {
+        node: DecisionTree
+        ondelete?: () => void
+    }
+    let { node }: Props = $props()
 
     const modalStore = getModalStore()
     const toastStore = getToastStore()
@@ -35,10 +38,8 @@
                         })
                     } else {
                         const parent = node.parent
-                        parent.deleteChild(node.id)
                         openNodeIds.set(new Set([...$openNodeIds].filter(id => id !== node.id)))
-                        console.log(parent)
-                        ondelete()
+                        parent.deleteChild(node.id)
                     }
                 })
             }
@@ -47,6 +48,6 @@
     }
 </script>
 
-<button on:click={onDelete} class="btn hover:variant-ghost-primary w-[1rem] h-[1.5rem]">
+<button onclick={onDelete} class="btn hover:variant-ghost-primary w-[1rem] h-[1.5rem]">
     <TrashIcon class="text-error-600" />
 </button>

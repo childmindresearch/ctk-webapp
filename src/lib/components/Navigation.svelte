@@ -14,14 +14,16 @@
         drawerStore.close()
     }
 
-    $: classesActive = (href: string) => (href === $page.url.pathname ? "bg-primary-100 dark:bg-primary-700" : "")
+    let classesActive = $derived((href: string) =>
+        href === $page.url.pathname ? "bg-primary-100 dark:bg-primary-700" : ""
+    )
 </script>
 
 <nav class="list-nav p-4 flex flex-col" data-testid="div-navigation">
     <ul class="list-none" style="flex-grow: 1">
         {#each pages as { name, href }}
             <li>
-                <a {href} class={classesActive(href)} data-testid="a-navigation" on:click={drawerClose}>{name}</a>
+                <a {href} class={classesActive(href)} data-testid="a-navigation" onclick={drawerClose}>{name}</a>
             </li>
         {/each}
     </ul>

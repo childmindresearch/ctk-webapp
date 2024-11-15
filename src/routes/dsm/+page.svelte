@@ -7,13 +7,18 @@
     import DeleteButton from "./DeleteButton.svelte"
     import { indexForNewItemInSortedList } from "./utils"
     import XIcon from "$lib/icons/XIcon.svelte"
+    import type { PageData } from "../$types"
 
-    export let data
+    type Props = { data: PageData }
+    let { data }: Props = $props()
 
-    let searchString = ""
+    let searchString = $state("")
+    let selected: SqlDsmCodeSchema[] = $state([])
+
     let dsmCodes: SqlDsmCodeSchema[] = []
-    let autoCompeleteOptions: SqlDsmCodeSchema[] = []
-    let selected: SqlDsmCodeSchema[] = []
+    let autoCompeleteOptions = $derived(
+        dsmCodes.filter(code => (code.code + " " + code.label).toLowerCase().includes(searchString.toLowerCase()))
+    )
     let inputDiv: HTMLDivElement
     let isAdmin = data.user?.is_admin
 
@@ -73,10 +78,6 @@
     function onDelete(item: SqlDsmCodeSchema) {
         dsmCodes = dsmCodes.filter(code => code.id !== item.id)
     }
-
-    $: autoCompeleteOptions = dsmCodes.filter(code =>
-        (code.code + " " + code.label).toLowerCase().includes(searchString.toLowerCase())
-    )
 </script>
 
 <span class="flex space-x-2 pb-2 h-12">
@@ -96,7 +97,7 @@
         bind:value={searchString}
     />
 
-    <button tabindex="-1" class="btn variant-filled-primary" on:click={exportToClipboard}>
+    <button tabindex="-1" class="btn variant-filled-primary" onclick={exportToClipboard}>
         <span>
             <i class="fas fa-copy"></i>
             Copy
@@ -108,7 +109,7 @@
     {#each selected as selection}
         <button
             class="chip variant-filled hover:variant-filled"
-            on:click={() => (selected = selected.filter(s => s.id !== selection.id))}
+            onclick={() => (selected = selected.filter(s => s.id !== selection.id))}
         >
             <span><XIcon /></span>
             <span>{selection.label}</span>
@@ -118,18 +119,18 @@
 
 <div class="max-h-[40vh] p-4 overflow-y-auto border-2 bg-white">
     <ul class="w-full">
-        {#each autoCompeleteOptions as option}
+        {#each autoCompeleteOptions as option, index}
             <li class="grid grid-cols-[70px_auto] w-full" class:grid-cols-1={!isAdmin}>
                 {#if isAdmin}
                     <span class="grid grid-cols-2 mt-2 gap-3 mr-4">
-                        <EditButton bind:dsmItem={option} />
+                        <EditButton bind:dsmItem={autoCompeleteOptions[index]} />
                         <DeleteButton dsmItem={option} {onDelete} />
                     </span>
                 {/if}
                 <button
                     class="btn hover:variant-ghost-primary flex justify-start text-left w-full"
                     class:variant-soft-primary={selected.some(s => s.label === option.label)}
-                    on:click={() => onButtonClick(option)}
+                    onclick={() => onButtonClick(option)}
                 >
                     {option.label}
                 </button>

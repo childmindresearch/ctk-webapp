@@ -19,6 +19,7 @@
     import "../app.postcss"
     import ModalSearchDecisionTree from "./templates/TemplatesDirectory/ModalSearchDecisionTree.svelte"
     import ModalDsmForm from "./dsm/ModalDsmForm.svelte"
+
     initializeStores()
     storePopup.set({ computePosition, autoUpdate, flip, shift, offset, arrow })
 
@@ -29,7 +30,10 @@
     }
 
     $modeCurrent = true
-    $: $page.url.pathname, warmupFunction()
+    $effect(() => {
+        $page.url.pathname
+        warmupFunction()
+    })
 
     async function warmupFunction() {
         if (!browser) return
