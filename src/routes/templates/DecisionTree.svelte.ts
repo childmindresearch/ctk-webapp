@@ -83,7 +83,6 @@ export class DecisionTree {
         }
         child.parent = this
         this.children.splice(index, 0, child)
-        this.children = this.children
         return this
     }
 
@@ -93,7 +92,6 @@ export class DecisionTree {
             return this
         }
         this.children.splice(childIndex, 1)
-        this.children = this.children
         return this
     }
 
