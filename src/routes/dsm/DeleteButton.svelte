@@ -3,8 +3,11 @@
     import type { SqlDsmCodeSchema } from "$lib/server/sql"
     import { getModalStore, getToastStore, type ModalSettings } from "@skeletonlabs/skeleton"
 
-    export let dsmItem: { label: string; code: string; id: number }
-    export let onDelete: (item: SqlDsmCodeSchema) => void
+    type Props = {
+        dsmItem: { label: string; code: string; id: number }
+        onDelete: (item: SqlDsmCodeSchema) => void
+    }
+    let { dsmItem, onDelete }: Props = $props()
 
     const toastStore = getToastStore()
     const modalStore = getModalStore()
@@ -39,6 +42,6 @@
     }
 </script>
 
-<button on:click={onClick} class="btn hover:variant-ghost-primary w-[1rem] h-[1.5rem]">
+<button onclick={onClick} class="btn hover:variant-ghost-primary w-[1rem] h-[1.5rem]">
     <TrashIcon class="text-error-600" />
 </button>

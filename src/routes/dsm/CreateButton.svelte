@@ -2,7 +2,8 @@
     import type { SqlDsmCodeSchema } from "$lib/server/sql"
     import { getModalStore, getToastStore, type ModalSettings } from "@skeletonlabs/skeleton"
 
-    export let onCreate: (item: SqlDsmCodeSchema) => void
+    type Props = { onCreate: (item: SqlDsmCodeSchema) => void }
+    let { onCreate }: Props = $props()
 
     const instructions = "Create a new DSM code."
 
@@ -41,6 +42,6 @@
     }
 </script>
 
-<button on:click={onClick} class="btn variant-filled-secondary">
+<button onclick={onClick} class="btn variant-filled-secondary">
     <span>Create DSM Code</span>
 </button>

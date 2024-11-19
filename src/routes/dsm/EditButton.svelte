@@ -2,7 +2,8 @@
     import EditIcon from "$lib/icons/EditIcon.svelte"
     import { getModalStore, getToastStore, type ModalSettings } from "@skeletonlabs/skeleton"
 
-    export let dsmItem: { label: string; code: string; id: number }
+    type Props = { dsmItem: { label: string; code: string; id: number } }
+    let { dsmItem = $bindable() }: Props = $props()
     const instructions = "Edit the DSM code."
 
     const toastStore = getToastStore()
@@ -41,6 +42,6 @@
     }
 </script>
 
-<button on:click={onClick} class="btn hover:variant-ghost-primary w-[1rem] h-[1.5rem]">
+<button onclick={onClick} class="btn hover:variant-ghost-primary w-[1rem] h-[1.5rem]">
     <EditIcon class="text-warning-600" />
 </button>

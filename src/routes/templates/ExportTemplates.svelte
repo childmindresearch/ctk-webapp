@@ -1,7 +1,7 @@
 <script lang="ts">
     import LoadingBar from "$lib/components/LoadingBar.svelte"
     import { getToastStore } from "@skeletonlabs/skeleton"
-    import { DecisionTree } from "./DecisionTree"
+    import { DecisionTree } from "./DecisionTree.svelte"
 
     import { nodesToMarkdown } from "./TemplatesDirectory/templateExport"
     import { downloadBlob } from "$lib/utils"

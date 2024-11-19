@@ -1,5 +1,5 @@
 import { giveMarkdownUrlsHyperlinks } from "$lib/utils"
-import type { DecisionTree } from "../DecisionTree"
+import type { DecisionTree } from "../DecisionTree.svelte"
 
 export function nodesToMarkdown(node: DecisionTree, depth: number = 0): string {
     const isLeaf = !node.children || node.children.length === 0
