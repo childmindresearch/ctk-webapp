@@ -1,16 +1,19 @@
 <script lang="ts">
     import LoadingBar from "$lib/components/LoadingBar.svelte"
     import { getModalStore, getToastStore, SlideToggle, type ModalSettings } from "@skeletonlabs/skeleton"
-    import type { DecisionTree } from "../DecisionTree"
+    import type { DecisionTree } from "../DecisionTree.svelte"
     import SortableNested from "./SortableNested.svelte"
     import ExportTemplates from "../ExportTemplates.svelte"
 
-    export let nodes: DecisionTree
-    export let selectedNodes: DecisionTree[] = []
-    export let isAdmin: boolean = false
+    type Props = {
+        nodes: DecisionTree
+        onAddToCart: (node: DecisionTree) => void
+        isAdmin: boolean
+    }
+    let { nodes, onAddToCart, isAdmin = false }: Props = $props()
 
     let filteredNodes: DecisionTree = nodes
-    let editable: boolean = false
+    let editable: boolean = $state(false)
 
     const toastStore = getToastStore()
     const modalStore = getModalStore()
@@ -21,27 +24,10 @@
             component: "searchDecisionTree",
             meta: { root: nodes, editable: editable },
             response: (response: { value: DecisionTree }) => {
-                onSave(response.value)
+                onAddToCart(response.value)
             }
         }
         modalStore.trigger(modal)
-    }
-
-    function onSave(node: DecisionTree) {
-        if (!node) return
-        if (selectedNodes.find(savedNode => savedNode.id === node.id)) {
-            toastStore.trigger({
-                background: "variant-filled-warning",
-                message: "This template is already selected."
-            })
-            return
-        }
-
-        selectedNodes = [...selectedNodes, node]
-        toastStore.trigger({
-            background: "variant-filled-success",
-            message: "Template added to selection."
-        })
     }
 </script>
 
@@ -49,7 +35,7 @@
     <LoadingBar label="Processing templates..." />
 {:else}
     <div class="flex space-x-3 pb-2">
-        <button class="btn variant-filled-primary hover:variant-soft-primary" on:click={openSearchModal}>
+        <button class="btn variant-filled-primary hover:variant-soft-primary" onclick={openSearchModal}>
             <i class="fas fa-search mr-2"></i>
             Search
         </button>
@@ -60,5 +46,5 @@
             </div>
         {/if}
     </div>
-    <SortableNested node={filteredNodes} on:save={e => onSave(e.detail.node)} {editable} />
+    <SortableNested node={filteredNodes} {onAddToCart} {editable} />
 {/if}

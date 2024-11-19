@@ -1,1 +1,1 @@
-<i class={`fa-solid fa-envelope ${$$props.class}`} />
+<i class={`fa-solid fa-envelope ${$$props.class}`}></i>

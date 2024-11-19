@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest"
-import { DecisionTree } from "./DecisionTree"
+import { DecisionTree } from "./DecisionTree.svelte"
 import type { SqlTemplateSchema } from "$lib/server/sql"
 
 describe("DecisionTree", () => {

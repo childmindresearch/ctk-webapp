@@ -10,9 +10,12 @@ then it keeps spinning forever.
 <script lang="ts">
     import { ProgressRadial } from "@skeletonlabs/skeleton"
 
-    export let value: number | undefined = undefined
-    export let label: string | undefined = undefined
-    export let hidden = false
+    type Props = {
+        value?: number | undefined
+        label?: string | undefined
+        hidden?: boolean
+    }
+    let { value = undefined, label = undefined, hidden = false }: Props = $props()
 
     const stroke = 100
     const width = "w-12"

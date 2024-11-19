@@ -1,9 +1,9 @@
-<script script lang="ts">
+<script lang="ts">
     import LoadingBar from "$lib/components/LoadingBar.svelte"
-    import { Tab, TabGroup } from "@skeletonlabs/skeleton"
+    import { getToastStore, Tab, TabGroup } from "@skeletonlabs/skeleton"
     import { onMount } from "svelte"
     import Checkout from "./Checkout/Checkout.svelte"
-    import { DecisionTree } from "./DecisionTree"
+    import { DecisionTree } from "./DecisionTree.svelte"
     import TemplatesDirectory from "./TemplatesDirectory/TemplatesDirectory.svelte"
     import SelectedNodes from "./SelectedNodes.svelte"
     import MarkdownEditor from "$lib/components/MarkdownEditor.svelte"
@@ -15,6 +15,25 @@
     let editable: boolean = false
     let nodes: undefined | DecisionTree = undefined
     let fetchFailed = false
+
+    const toastStore = getToastStore()
+
+    function onAddToCart(node: DecisionTree) {
+        if (!node) return
+        if (selectedNodes.find(savedNode => savedNode.id === node.id)) {
+            toastStore.trigger({
+                background: "variant-filled-warning",
+                message: "This template is already selected."
+            })
+            return
+        }
+
+        selectedNodes = [...selectedNodes, node]
+        toastStore.trigger({
+            background: "variant-filled-success",
+            message: "Template added to selection."
+        })
+    }
 
     onMount(async () => {
         const templates = fetch("/api/templates")
@@ -47,7 +66,7 @@
 
         <svelte:fragment slot="panel">
             <div hidden={tabSet !== 0}>
-                <TemplatesDirectory {nodes} bind:selectedNodes isAdmin={data.user?.is_admin} />
+                <TemplatesDirectory {nodes} {onAddToCart} isAdmin={data.user?.is_admin || false} />
             </div>
             <div hidden={tabSet !== 1}>
                 <SelectedNodes bind:nodes={selectedNodes} />

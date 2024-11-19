@@ -5,7 +5,7 @@
     import { getToastStore } from "@skeletonlabs/skeleton"
     import { flip } from "svelte/animate"
     import { quintOut } from "svelte/easing"
-    import type { DecisionTree } from "./DecisionTree"
+    import type { DecisionTree } from "./DecisionTree.svelte"
 
     export let nodes: DecisionTree[]
 
@@ -42,35 +42,33 @@
 
 <div class="table-container">
     <table class="table table-hover table-compact">
-        <tbody>
-            <div class="align-middle text-center">
-                {#each nodes as node (node)}
-                    <tr animate:flip={{ delay: 0, duration: 250, easing: quintOut }}>
-                        <td class="flex gap-x-2">
-                            <button on:click={() => move(node, -1)}>
-                                <ArrowUpIcon />
-                            </button>
-                            <button on:click={() => move(node, 1)}>
-                                <ArrowDownIcon />
-                            </button>
-                            <div />
-                            <button on:click={() => removeNode(node)}>
-                                <TrashIcon class="text-error-600" />
-                            </button>
-                        </td>
-                        <td width="99%">
-                            <ol class="breadcrumb">
-                                {#each getNodePath(node) as path, index}
-                                    {#if index !== 0}
-                                        <li class="crumb-separator" aria-hidden>&rsaquo;</li>
-                                    {/if}
-                                    <li class="crumb">{path}</li>
-                                {/each}
-                            </ol>
-                        </td>
-                    </tr>
-                {/each}
-            </div>
+        <tbody class="align-middle text-center">
+            {#each nodes as node (node)}
+                <tr animate:flip={{ delay: 0, duration: 250, easing: quintOut }}>
+                    <td class="flex gap-x-2">
+                        <button on:click={() => move(node, -1)}>
+                            <ArrowUpIcon />
+                        </button>
+                        <button on:click={() => move(node, 1)}>
+                            <ArrowDownIcon />
+                        </button>
+                        <div></div>
+                        <button on:click={() => removeNode(node)}>
+                            <TrashIcon class="text-error-600" />
+                        </button>
+                    </td>
+                    <td width="99%">
+                        <ol class="breadcrumb">
+                            {#each getNodePath(node) as path, index}
+                                {#if index !== 0}
+                                    <li class="crumb-separator" aria-hidden={true}>&rsaquo;</li>
+                                {/if}
+                                <li class="crumb">{path}</li>
+                            {/each}
+                        </ol>
+                    </td>
+                </tr>
+            {/each}
         </tbody>
     </table>
 </div>

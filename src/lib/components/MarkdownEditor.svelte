@@ -44,4 +44,4 @@
 {#if !mounted}
     <LoadingBar label="Loading editor..." />
 {/if}
-<div bind:this={elem} id={`vditor-div-${uuid}`} data-testid="vditor-div" use:isMounted />
+<div bind:this={elem} id={`vditor-div-${uuid}`} data-testid="vditor-div" use:isMounted></div>

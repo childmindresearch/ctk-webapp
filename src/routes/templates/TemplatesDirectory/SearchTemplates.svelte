@@ -1,9 +1,12 @@
 <script lang="ts">
     import Fuse from "fuse.js"
-    import type { DecisionTree } from "../DecisionTree"
+    import type { DecisionTree } from "../DecisionTree.svelte"
 
-    export let tree: DecisionTree
-    export let filteredNodes: DecisionTree[] = [tree]
+    type Props = {
+        tree: DecisionTree
+        filteredNodes?: DecisionTree[]
+    }
+    let { tree, filteredNodes = [tree] }: Props = $props()
 
     const allChildNodes = tree.getChildrenRecursive()
     const pathsTextsAndIds = allChildNodes.map(node => ({
@@ -45,5 +48,5 @@
 
 <div class="input-group input-group-divider grid-cols-[auto_1fr_auto] flex items-center">
     <i class="fas fa-search ml-2"></i>
-    <input class="input" type="search" placeholder="Search..." on:input={debounceSearch} />
+    <input class="input" type="search" placeholder="Search..." oninput={debounceSearch} />
 </div>

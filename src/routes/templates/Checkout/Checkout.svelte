@@ -1,12 +1,15 @@
 <script lang="ts">
     import LoadingBar from "$lib/components/LoadingBar.svelte"
     import { getToastStore } from "@skeletonlabs/skeleton"
-    import type { DecisionTree } from "../DecisionTree"
+    import type { DecisionTree } from "../DecisionTree.svelte"
     import { allUpperCaseDashToCapitalizedSpace, getTemplateValues, submitMarkdownToDocx } from "./checkoutUtilities"
 
-    export let nodes: DecisionTree[]
+    type Props = {
+        nodes: DecisionTree[]
+    }
+    let { nodes }: Props = $props()
 
-    let isLoading = false
+    let isLoading = $state(false)
     let values: string[] = []
 
     // A custom LUA filter in the backend converts ++{}++ to underlined. Commonmark does not support underlining.
@@ -24,7 +27,7 @@
         ["ze", "zir", "zir", "zirs", "zirself"]
     ]
 
-    let pronouns: string[] = pronounsArray[0]
+    let pronouns: string[] = $state(pronounsArray[0])
 
     async function onSubmit(event: Event) {
         event.preventDefault()
@@ -83,6 +86,6 @@
     {#if isLoading}
         <LoadingBar />
     {:else}
-        <button class="btn variant-filled-primary" on:click={onSubmit}>Download</button>
+        <button class="btn variant-filled-primary" onclick={onSubmit}>Download</button>
     {/if}
 </div>

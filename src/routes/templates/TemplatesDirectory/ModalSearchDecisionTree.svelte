@@ -1,6 +1,6 @@
 <script lang="ts">
     import { getModalStore } from "@skeletonlabs/skeleton"
-    import type { DecisionTree } from "../DecisionTree"
+    import type { DecisionTree } from "../DecisionTree.svelte"
     import Fuse from "fuse.js"
     import { openNodeIds } from "./store"
     import CreateButton from "./CreateButton.svelte"
@@ -86,8 +86,8 @@
             bind:value={searchTerm}
             type="search"
             placeholder="Search..."
-            on:input={debounceSearch}
-            on:keydown={onKeyDown}
+            oninput={debounceSearch}
+            onkeydown={onKeyDown}
         />
     </header>
 
@@ -100,7 +100,7 @@
                             {#if editable}
                                 <!-- svelte-ignore a11y-click-events-have-key-events -->
                                 <!-- svelte-ignore a11y-no-static-element-interactions -->
-                                <div on:click={() => modalStore.close()}>
+                                <div onclick={() => modalStore.close()}>
                                     <span class="grid grid-rows-1 grid-flow-col gap-0">
                                         <CreateButton {node} />
                                         <EditButton {node} />
@@ -110,11 +110,12 @@
                             {/if}
                             <button
                                 class="btn hover:variant-ghost-primary w-[1rem] h-[1.5rem]"
-                                on:click={() => onSaveClick(node)}
+                                onclick={() => onSaveClick(node)}
+                                aria-label="Add to cart."
                             >
                                 <i class="fa-solid fa-plus"></i>
                             </button>
-                            <button on:click={() => onSearchClick(node)} class="btn hover:variant-ghost-primary">
+                            <button onclick={() => onSearchClick(node)} class="btn hover:variant-ghost-primary">
                                 <span class="text-wrap text-left">{node.getPath().slice(1).join("  |  ")}</span>
                             </button>
                         </div>
