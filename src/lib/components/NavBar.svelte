@@ -30,19 +30,12 @@
     <svelte:fragment slot="trail">
         <button class="btn hover:variant-soft-primary">
             <a
-                data-testid="a-github"
-                href="https://github.com/childmindresearch/ctk-frontend"
+                href="https://chief-resonance-054.notion.site/138229e809388113b654dabf11c4dd33?pvs=105"
                 target="_blank"
                 rel="noreferrer"
             >
-                <GithubIcon class="text-lg" />
-                <span>GitHub</span>
-            </a>
-        </button>
-        <button class="btn hover:variant-soft-primary">
-            <a data-testid="a-mailto" href="mailto:dair@childmind.org" target="_blank" rel="noreferrer">
                 <EnvelopeIcon class="text-lg" />
-                <span>Contact</span>
+                <span>Feedback</span>
             </a>
         </button>
     </svelte:fragment>
