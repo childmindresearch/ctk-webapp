@@ -62,6 +62,7 @@
         "printWidth": 120
     },
     "dependencies": {
-        "@sveltejs/vite-plugin-svelte": "^4.0.0"
+        "@sveltejs/vite-plugin-svelte": "^4.0.0",
+        "@vincjo/datatables": "^2.1.0"
     }
 }
