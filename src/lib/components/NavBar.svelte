@@ -1,6 +1,5 @@
 <script lang="ts">
     import EnvelopeIcon from "$lib/icons/EnvelopeIcon.svelte"
-    import GithubIcon from "$lib/icons/GithubIcon.svelte"
     import { AppBar, getDrawerStore } from "@skeletonlabs/skeleton"
 
     const drawerStore = getDrawerStore()
