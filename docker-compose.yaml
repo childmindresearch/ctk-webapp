@@ -6,14 +6,8 @@ services:
         develop:
             watch:
                 - action: rebuild
-                  path: ./
-                  ignore:
-                      - node_modules/
-                      - postgresql
-                      - .git
-                      - build
-                      - .svelte-kit
-                      - .github
+                  path: ./src
+
         ports:
             - 3000:3000
         env_file:

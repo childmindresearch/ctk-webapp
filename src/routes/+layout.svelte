@@ -19,11 +19,13 @@
     import "../app.postcss"
     import ModalSearchDecisionTree from "./templates/TemplatesDirectory/ModalSearchDecisionTree.svelte"
     import ModalDsmForm from "./dsm/ModalDsmForm.svelte"
+    import ModalReferralForm from "./referral-admin/ModalReferralForm.svelte"
 
     initializeStores()
     storePopup.set({ computePosition, autoUpdate, flip, shift, offset, arrow })
 
     const modalRegistry: Record<string, ModalComponent> = {
+        createReferral: { ref: ModalReferralForm },
         dsmForm: { ref: ModalDsmForm },
         markdown: { ref: ModalMarkdown },
         searchDecisionTree: { ref: ModalSearchDecisionTree }
@@ -48,8 +50,8 @@
     <link rel="icon" type="image/ico" href="/favicon.ico" />
 </svelte:head>
 
-<Modal zIndex="z-998" components={modalRegistry} />
-<Toast zIndex="z-999" />
+<Modal zIndex="z-[998]" components={modalRegistry} />
+<Toast zIndex="z-[999]" />
 
 <Drawer width="w-64">
     <h2 class="p-4 h2">Navigation</h2>

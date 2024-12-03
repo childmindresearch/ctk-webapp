@@ -3,8 +3,8 @@
 
     Props:
     @param {T[]} data - Array of objects to display in the table
-    @param {Function} onExport - Callback function when export button is clicked, receives current table data
     @param {(keyof T)[]} [hiddenColumns] - Optional array of column keys to hide from display
+    @param {Function} onExport - Optional callback function when export button is clicked, receives current table data
     @param {Function} [onCreate] - Optional callback function when create button is clicked
     @param {Function} [onEdit] - Optional callback function when edit button is clicked, receives row data
     @param {Function} [onDelete] - Optional callback function when delete button is clicked, receives row data
@@ -13,45 +13,45 @@
     ```svelte
     <DataTable
         data={myData}
-        onExport={(data) => handleExport(data)}
         hiddenColumns={['id']}
+        onExport={(data) => handleExport(data)}
         onCreate={() => handleCreate()}
         onEdit={(row) => handleEdit(row)}
         onDelete={(row) => handleDelete(row)}
     />
     ```
 -->
-<script lang="ts">
+<script lang="ts" generics="T extends Record<string, any>">
     import EditIcon from "$lib/icons/EditIcon.svelte"
     import TrashIcon from "$lib/icons/TrashIcon.svelte"
     import { TableHandler, Datatable, ThSort, ThFilter, Th } from "@vincjo/datatables"
 
-    type Props<T extends Record<string, string | number | string[]>> = {
+    type Props<T> = {
         data: T[]
         hiddenColumns?: (keyof T)[]
-        onExport?: (data: T[]) => void
-        onCreate?: () => T
-        onEdit?: (row: T) => void
-        onDelete?: (row: T) => void
+        onExport?: (rows: typeof data) => void
+        onCreate?: () => void
+        onEdit?: (row: (typeof data)[number]) => void
+        onDelete?: (row: (typeof data)[number]) => void
     }
 
-    let { data, hiddenColumns, onExport, onCreate, onEdit, onDelete }: Props<Record<string, string | number>> = $props()
+    let { data, hiddenColumns, onExport, onCreate, onEdit, onDelete }: Props<T> = $props()
 
-    type DataItem = (typeof data)[number]
-    const columnNames: (keyof DataItem)[] = Object.keys(data[0])
+    const showControls = onEdit || onDelete
+    const columnNames: (keyof T)[] = Object.keys(data[0])
 
     let table = new TableHandler(data, { rowsPerPage: 10, selectBy: "id" })
-    const view = table.createView(
+    let view = table.createView(
         columnNames.map((col, index) => {
             return {
-                index: index + (onEdit || onDelete ? 1 : 0), // +1 to skip the controls column.
-                name: col,
+                index: index + (showControls ? 1 : 0), // +1 to skip the controls column.
+                name: col as string,
                 isVisible: !hiddenColumns?.find(c => c === col)
             }
         })
     )
 
-    const search = table.createSearch()
+    const search = $derived(table.createSearch())
 
     function titleCase(str: string) {
         return str
@@ -83,7 +83,7 @@
     <table>
         <thead>
             <tr>
-                {#if onEdit || onDelete}
+                {#if showControls}
                     <Th><strong>Controls</strong></Th>
                 {/if}
                 {#each view.columns as column}
@@ -93,7 +93,7 @@
                 {/each}
             </tr>
             <tr>
-                {#if onEdit || onDelete}
+                {#if showControls}
                     <Th />
                 {/if}
                 {#each view.columns as column}
@@ -105,14 +105,17 @@
         <tbody>
             {#each table.rows as row}
                 <tr>
-                    {#if onEdit || onDelete}
+                    {#if showControls}
                         <td>
                             <div class="text-center space-x-2">
                                 <button
                                     aria-label="edit"
                                     class="text-warning-600 hover:text-warning-300 transition-colors duration-150"
                                     onclick={() => {
-                                        if (onEdit) onEdit(row)
+                                        if (onEdit) {
+                                            // @ts-ignore
+                                            onEdit(row)
+                                        }
                                     }}
                                 >
                                     <EditIcon />
@@ -121,7 +124,10 @@
                                     aria-label="delete"
                                     class="text-error-600 hover:text-error-300 transition-colors duration-150"
                                     onclick={() => {
-                                        if (onDelete) onDelete(row)
+                                        if (onDelete) {
+                                            // @ts-ignore
+                                            onDelete(row)
+                                        }
                                     }}
                                 >
                                     <TrashIcon />
@@ -130,7 +136,10 @@
                         </td>
                     {/if}
                     {#each columnNames as column}
-                        <td>{row[column]}</td>
+                        <td>
+                            {// @ts-ignore
+                            row[column]}
+                        </td>
                     {/each}
                 </tr>
             {/each}
@@ -144,7 +153,14 @@
             <button aria-label="create" class="btn variant-filled-primary" onclick={onCreate}> Create </button>
         {/if}
         {#if onExport}
-            <button aria-label="export" class="btn variant-filled-primary" onclick={() => onExport([...table.allRows])}>
+            <button
+                aria-label="export"
+                class="btn variant-filled-primary"
+                onclick={() => {
+                    // @ts-ignore
+                    onExport([...table.allRows])
+                }}
+            >
                 Export
             </button>
         {/if}
