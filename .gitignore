@@ -1,7 +1,6 @@
 .env.local
 .env.azure
 .vscode
-init.sql
 
 settings.json
 local

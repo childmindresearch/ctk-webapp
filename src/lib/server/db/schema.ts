@@ -66,53 +66,53 @@ export const areasCoveredRelations = relations(referralAreaCovered, ({ many }) =
 export const providersToLanguages = pgTable("providers_to_languages", {
     providerId: integer("provider_id")
         .notNull()
-        .references(() => referralProviders.id),
+        .references(() => referralProviders.id, { onDelete: "cascade" }),
     languageId: integer("language_id")
         .notNull()
-        .references(() => referralLanguages.id)
+        .references(() => referralLanguages.id, { onDelete: "cascade" })
 })
 
 export const providersToAreasCovered = pgTable("providers_to_areas_covered", {
     providerId: integer("provider_id")
         .notNull()
-        .references(() => referralProviders.id),
+        .references(() => referralProviders.id, { onDelete: "cascade" }),
     areaCoveredId: integer("area_covered_id")
         .notNull()
-        .references(() => referralAreaCovered.id)
+        .references(() => referralAreaCovered.id, { onDelete: "cascade" })
 })
 
 export const providersToServices = pgTable("providers_to_services", {
     providerId: integer("provider_id")
         .notNull()
-        .references(() => referralProviders.id),
+        .references(() => referralProviders.id, { onDelete: "cascade" }),
     serviceId: integer("service_id")
         .notNull()
-        .references(() => referralServices.id)
+        .references(() => referralServices.id, { onDelete: "cascade" })
 })
 
 export const presetsToLanguages = pgTable("presets_to_languages", {
     presetId: integer("preset_id")
         .notNull()
-        .references(() => referralPresets.id),
+        .references(() => referralPresets.id, { onDelete: "cascade" }),
     languageId: integer("language_id")
         .notNull()
-        .references(() => referralLanguages.id)
+        .references(() => referralLanguages.id, { onDelete: "cascade" })
 })
 
 export const presetsToAreasCovered = pgTable("presets_to_areas_covered", {
     presetId: integer("preset_id")
         .notNull()
-        .references(() => referralPresets.id),
+        .references(() => referralPresets.id, { onDelete: "cascade" }),
     areaCoveredId: integer("area_covered_id")
         .notNull()
-        .references(() => referralAreaCovered.id)
+        .references(() => referralAreaCovered.id, { onDelete: "cascade" })
 })
 
 export const presetsToServices = pgTable("presets_to_services", {
     presetId: integer("preset_id")
         .notNull()
-        .references(() => referralPresets.id),
+        .references(() => referralPresets.id, { onDelete: "cascade" }),
     serviceId: integer("service_id")
         .notNull()
-        .references(() => referralServices.id)
+        .references(() => referralServices.id, { onDelete: "cascade" })
 })
