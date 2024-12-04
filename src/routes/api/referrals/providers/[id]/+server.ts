@@ -13,7 +13,7 @@ export async function PUT({ request, params }) {
     const schema = createInsertSchema(referralProviders)
 
     try {
-        let data = schema.parse(await request.json())
+        const data = schema.parse(await request.json())
         delete data.id // Ensure ID is not overwritten.
         const newRow = await db.update(referralProviders).set(data).where(eq(referralProviders.id, id)).returning()
         return json(newRow[0])
