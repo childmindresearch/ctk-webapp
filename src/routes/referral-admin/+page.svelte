@@ -1,5 +1,5 @@
 <script lang="ts">
-    import DataTable from "$lib/components/DataTable.svelte"
+    import DataTable from "$lib/components/DataTable/DataTable.svelte"
     import LoadingBar from "$lib/components/LoadingBar.svelte"
     import { getModalStore, getToastStore, type ModalSettings, type ToastSettings } from "@skeletonlabs/skeleton"
 
@@ -8,13 +8,13 @@
     const toastStore = getToastStore()
     const modalStore = getModalStore()
 
-    let tableData = $state(data.data)
+    let providers = $state(data.providers)
     let loading = $state(false)
 
     let resetTable = $state(false)
 
     async function onCreate() {
-        return await new Promise<(typeof tableData)[number]>(resolve => {
+        return await new Promise<(typeof providers)[number]>(resolve => {
             const modal: ModalSettings = {
                 type: "component",
                 component: "createReferral",
@@ -33,7 +33,7 @@
                 })
             })
             .then(async response => {
-                tableData.push(await response.json())
+                providers.push(await response.json())
             })
             .catch(reason => {
                 toastStore.trigger({
@@ -63,9 +63,9 @@
                 })
             })
             .then(async response => {
-                const index = tableData.findIndex(tableRow => tableRow.id === row.id)
+                const index = providers.findIndex(tableRow => tableRow.id === row.id)
                 if (!index) return
-                tableData[index] = await response.json()
+                providers[index] = await response.json()
             })
             .catch(reason => {
                 toastStore.trigger({
@@ -88,7 +88,7 @@
                     .then(async response => {
                         console.log(response)
                         if (!response.ok) throw await response.text()
-                        tableData = tableData.filter(tableRow => tableRow.id !== row.id)
+                        providers = providers.filter(tableRow => tableRow.id !== row.id)
                         resetTable = !resetTable // Reactivity doesn't work well for deletions.
                     })
                     .catch(reason => {
@@ -107,7 +107,7 @@
 
         loading = true
         // @ts-expect-error - we know all columns exist on these rows and that they are indexable.
-        const columns: (keyof (typeof tableData)[number])[] = Object.keys(rows[0])
+        const columns: (keyof (typeof providers)[number])[] = Object.keys(rows[0])
         let markdown = "| " + columns.join(" | ") + " |\n"
         markdown += "| " + Array(columns.length).fill("------").join(" | ") + " |\n"
         rows.forEach(row => {
@@ -154,8 +154,12 @@
 </script>
 
 <div class="z-0">
-    {#key resetTable}
-        <DataTable data={tableData} {onExport} {onCreate} {onEdit} {onDelete} hiddenColumns={["id"]} />
-    {/key}
+    {#if providers.length > 0}
+        {#key resetTable}
+            <DataTable data={providers} {onExport} {onCreate} {onEdit} {onDelete} hiddenColumns={["id"]} />
+        {/key}
+    {:else}
+        <p>Error: No providers found.</p>
+    {/if}
 </div>
 <LoadingBar hidden={!loading} />

@@ -8,19 +8,19 @@ CREATE TABLE users (
 );
 CREATE TABLE referral_languages (
     id SERIAL PRIMARY KEY,
-    name VARCHAR(255) NOT NULL
+    name VARCHAR(255) NOT NULL UNIQUE
 );
 CREATE TABLE referral_area_covered (
     id SERIAL PRIMARY KEY,
-    name VARCHAR(255) NOT NULL
+    name VARCHAR(255) NOT NULL UNIQUE
 );
 CREATE TABLE referral_services (
     id SERIAL PRIMARY KEY,
-    name VARCHAR(255) NOT NULL
+    name VARCHAR(255) NOT NULL UNIQUE
 );
 CREATE TABLE referral_providers (
     id SERIAL PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,
+    name VARCHAR(255) NOT NULL UNIQUE,
     address VARCHAR(255),
     phone VARCHAR(20),
     website VARCHAR(255),
@@ -29,7 +29,7 @@ CREATE TABLE referral_providers (
 );
 CREATE TABLE referral_presets (
     id SERIAL PRIMARY KEY,
-    name VARCHAR(255) NOT NULL
+    name VARCHAR(255) NOT NULL UNIQUE
 );
 -- Create junction tables with CASCADE
 CREATE TABLE providers_to_languages (

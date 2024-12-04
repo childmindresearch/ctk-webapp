@@ -1,5 +1,5 @@
 import { render, screen, fireEvent } from "@testing-library/svelte"
-import DataTable from "$lib/components/DataTable.svelte"
+import DataTable from "$lib/components/DataTable/DataTable.svelte"
 import { vi } from "vitest"
 
 class ResizeObserverMock {

@@ -14,7 +14,6 @@
         "test:unit": "vitest"
     },
     "devDependencies": {
-        "@cmi-dair/skeleton-themes": "^0.1.0",
         "@floating-ui/dom": "^1.6.7",
         "@playwright/test": "^1.45.1",
         "@skeletonlabs/skeleton": "^2.10.1",
@@ -64,6 +63,7 @@
         "printWidth": 120
     },
     "dependencies": {
+        "@cmi-dair/skeleton-themes": "^0.2.0",
         "@sveltejs/vite-plugin-svelte": "^4.0.0",
         "@vincjo/datatables": "^2.1.0",
         "dotenv": "^16.4.5",

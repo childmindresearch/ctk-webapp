@@ -14,22 +14,22 @@ export const referralProviders = pgTable("referral_providers", {
 
 export const referralPresets = pgTable("referral_presets", {
     id: serial("id").primaryKey(),
-    name: text("name").notNull()
+    name: text("name").notNull().unique()
 })
 
 export const referralServices = pgTable("referral_services", {
     id: serial("id").primaryKey(),
-    name: text("name").notNull()
+    name: text("name").notNull().unique()
 })
 
 export const referralLanguages = pgTable("referral_languages", {
     id: serial("id").primaryKey(),
-    name: text("name").notNull()
+    name: text("name").notNull().unique()
 })
 
 export const referralAreaCovered = pgTable("referral_area_covered", {
     id: serial("id").primaryKey(),
-    name: text("name").notNull()
+    name: text("name").notNull().unique()
 })
 
 // Relationships
