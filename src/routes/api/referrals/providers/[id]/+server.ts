@@ -5,18 +5,43 @@ import { json } from "@sveltejs/kit"
 import { eq } from "drizzle-orm"
 import { createInsertSchema } from "drizzle-zod"
 import { z } from "zod"
+import { putSchema, relationships } from "../utils"
 
 export async function PUT({ request, params }) {
     const id = Number(params.id)
     logger.info(`Modifying provider ${id}.`)
 
-    const schema = createInsertSchema(referralProviders)
-
     try {
-        const data = schema.parse(await request.json())
-        delete data.id // Ensure ID is not overwritten.
-        const newRow = await db.update(referralProviders).set(data).where(eq(referralProviders.id, id)).returning()
-        return json(newRow[0])
+        const validatedBody = putSchema.parse(await request.json())
+        const providerData = createInsertSchema(referralProviders).parse(validatedBody)
+        await db.transaction(async tx => {
+            await tx.update(referralProviders).set(providerData).where(eq(referralProviders.id, id))
+
+            await Promise.all(
+                relationships.map(async relation => {
+                    const schema = createInsertSchema(relation.junctionTable)
+                    const keys = schema.keyof().options
+                    const [otherKey] = keys.filter(key => key != "providerId")
+
+                    await tx.delete(relation.junctionTable).where(eq(relation.junctionTable.providerId, id))
+                    const postSchema = validatedBody[relation.bodyName].map(item => {
+                        return schema.parse({
+                            providerId: id,
+                            [otherKey]: item.id
+                        })
+                    })
+                    return tx.insert(relation.junctionTable).values(postSchema)
+                })
+            )
+        })
+        const newModel: {
+            [key: string]: string | boolean | number | undefined | null | { id: number; name: string }[]
+        } = providerData
+        newModel["languages"] = validatedBody.languages
+        newModel["services"] = validatedBody.services
+        newModel["areasCovered"] = validatedBody.areasCovered
+
+        return json(newModel)
     } catch (error) {
         if (error instanceof z.ZodError) {
             logger.warn("Invalid provider data.", { errors: error.errors })
@@ -33,7 +58,6 @@ export async function DELETE({ params }) {
     logger.info(`Deleting provider ${id}`)
 
     const deletedRow = await db.delete(referralProviders).where(eq(referralProviders.id, id)).returning()
-    console.log(deletedRow)
     if (deletedRow.length !== 0) {
         return json("OK")
     }

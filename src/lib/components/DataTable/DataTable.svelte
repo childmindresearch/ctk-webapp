@@ -8,6 +8,7 @@
     @param {Function} [onCreate] - Optional callback function when create button is clicked
     @param {Function} [onEdit] - Optional callback function when edit button is clicked, receives row data
     @param {Function} [onDelete] - Optional callback function when delete button is clicked, receives row data
+    @param {Function} [unpack] - Optional function uses to process row data into strings.
 
     Example:
     ```svelte
@@ -24,7 +25,7 @@
 <script lang="ts" generics="T extends Record<string, any>">
     import EditIcon from "$lib/icons/EditIcon.svelte"
     import TrashIcon from "$lib/icons/TrashIcon.svelte"
-    import { TableHandler, Datatable, ThSort, ThFilter, Th } from "@vincjo/datatables"
+    import { TableHandler, Datatable, ThSort, Th } from "@vincjo/datatables"
     import DataTableHeader from "./DataTableHeader.svelte"
     import DataTableFooter from "./DataTableFooter.svelte"
     import DataTableControls from "./DataTableControls.svelte"
@@ -36,14 +37,17 @@
         onCreate?: () => void
         onEdit?: (row: (typeof data)[number]) => void
         onDelete?: (row: (typeof data)[number]) => void
+        unpack?: (value: any) => { [key: string]: string }
     }
 
-    let { data, hiddenColumns, onExport, onCreate, onEdit, onDelete }: Props<T> = $props()
+    let { data, hiddenColumns, onExport, onCreate, onEdit, onDelete, unpack }: Props<T> = $props()
 
     const showControls = onEdit || onDelete
     const columnNames: (keyof T)[] = Object.keys(data[0])
 
-    let table = new TableHandler(data, { rowsPerPage: 10, selectBy: "id" })
+    let unpacked = unpack ? data.map(unpack) : data
+
+    let table = new TableHandler(unpacked, { rowsPerPage: 10, selectBy: "id" })
     let view = table.createView(
         columnNames.map((col, index) => {
             return {
@@ -90,8 +94,10 @@
                                         aria-label="edit"
                                         class="text-warning-600 hover:text-warning-300 transition-colors duration-150"
                                         onclick={() => {
-                                            // @ts-ignore
-                                            onEdit(row)
+                                            // @ts-expect-error id does exist on row.
+                                            const selectedRow = data.find(value => value["id"] == row.id)
+                                            if (!selectedRow) return
+                                            onEdit(selectedRow)
                                         }}
                                     >
                                         <EditIcon />
@@ -102,7 +108,6 @@
                                         aria-label="delete"
                                         class="text-error-600 hover:text-error-300 transition-colors duration-150"
                                         onclick={() => {
-                                            // @ts-ignore
                                             onDelete(row)
                                         }}
                                     >

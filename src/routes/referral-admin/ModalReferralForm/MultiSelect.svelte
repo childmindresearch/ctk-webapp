@@ -1,16 +1,15 @@
 <script lang="ts">
-    import FileIcon from "$lib/icons/FileIcon.svelte"
     import { getToastStore } from "@skeletonlabs/skeleton"
     import { onMount } from "svelte"
 
     type Props = {
         name: string
         endpoint: string
+        isSelected?: string[]
         onSelect: (arg0: { id: number; name: string; selected: boolean }[]) => void
     }
 
-    let { name, endpoint, onSelect }: Props = $props()
-    let showPost = $state(false)
+    let { name, endpoint, isSelected = [], onSelect }: Props = $props()
     let postValue = $state("")
 
     let selections: { id: number; name: string; selected: boolean }[] = $state([])
@@ -20,7 +19,7 @@
         const entries: { id: number; name: string }[] = await (await fetch(endpoint)).json()
         selections = entries
             .map(entry => {
-                return { id: entry.id, name: entry.name, selected: false }
+                return { id: entry.id, name: entry.name, selected: isSelected.includes(entry.name) }
             })
             .sort((a, b) => a.name.localeCompare(b.name))
     })
@@ -63,7 +62,7 @@
                 class="checkbox"
                 value={selection}
                 name={selection.name}
-                onclick={() => onSelect(selections.filter(s => s.selected))}
+                onchange={() => onSelect(selections.filter(s => s.selected))}
             />
             <label for={selection.name}>{selection.name} </label>
         </div>

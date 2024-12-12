@@ -10,7 +10,6 @@ export const POSTGRES_USE_SSL = env.POSTGRES_USE_SSL ? !(env.POSTGRES_USE_SSL.to
 export let DATABASE_URL = `postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}`
 if (POSTGRES_HOST === "localhost") {
     DATABASE_URL += "?ssl_mode=disable"
-    console.log(DATABASE_URL)
 }
 
 export const AZURE_FUNCTION_PYTHON_URL = env.AZURE_FUNCTION_PYTHON_URL

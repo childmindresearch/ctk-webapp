@@ -1,6 +1,5 @@
 <script lang="ts">
-    import type { referralAreaCovered, referralLanguages, referralServices } from "$lib/server/db/schema"
-    import { Autocomplete, getModalStore, InputChip } from "@skeletonlabs/skeleton"
+    import { getModalStore } from "@skeletonlabs/skeleton"
     import MultiSelect from "./MultiSelect.svelte"
 
     const modalStore = getModalStore()
@@ -12,22 +11,38 @@
     let takesInsurance: boolean = $state($modalStore[0].meta?.takesInsurance ?? false)
     let description: string = $state($modalStore[0].meta?.description ?? "")
 
-    const multiSelects = {
+    const multiSelectKeys = ["Languages", "Services", "Areas covered"] as const
+    const multiSelects: Record<(typeof multiSelectKeys)[number], string> = {
         Languages: "/api/referrals/languages",
         Services: "/api/referrals/services",
         "Areas covered": "/api/referrals/areas-covered"
     }
+    const idsSelected: Record<(typeof multiSelectKeys)[number], { id: number; name: string }[]> = {
+        Languages: $modalStore[0].meta?.languages ?? [],
+        Services: $modalStore[0].meta?.services ?? [],
+        "Areas covered": $modalStore[0].meta?.areasCovered ?? []
+    }
 
     function onSubmit() {
         if ($modalStore[0].response) {
-            $modalStore[0].response({ name, address, phone, website, takesInsurance, description })
+            $modalStore[0].response({
+                name,
+                address,
+                phone,
+                website,
+                takesInsurance,
+                description,
+                languages: idsSelected.Languages,
+                services: idsSelected.Services,
+                areasCovered: idsSelected["Areas covered"]
+            })
             modalStore.close()
         }
     }
 </script>
 
 {#if $modalStore[0]}
-    <div class="card fixed p-4 w-modal-wide space-y-4 max-h-[70vh] overflow-y-auto">
+    <div class="card fixed p-12 rounded-3xl w-modal-wide space-y-4 max-h-[70vh] overflow-y-auto">
         <form onsubmit={onSubmit}>
             <label>
                 Name
@@ -58,8 +73,13 @@
                 ></textarea>
             </label>
 
-            {#each Object.entries(multiSelects) as [name, endpoint]}
-                <MultiSelect {name} {endpoint} onSelect={v => console.log(v)} />
+            {#each multiSelectKeys as name}
+                <MultiSelect
+                    {name}
+                    endpoint={multiSelects[name]}
+                    isSelected={idsSelected[name].map(selection => selection.name)}
+                    onSelect={selection => (idsSelected[name] = selection)}
+                />
             {/each}
 
             <button class="btn variant-filled-primary" type="submit"> Submit </button>

@@ -8,7 +8,7 @@
     const toastStore = getToastStore()
     const modalStore = getModalStore()
 
-    let providers = $state(data.providers)
+    let providers = $state(data.data)
     let loading = $state(false)
 
     let resetTable = $state(false)
@@ -33,7 +33,9 @@
                 })
             })
             .then(async response => {
+                if (!response.ok) throw await response.text()
                 providers.push(await response.json())
+                resetTable = !resetTable
             })
             .catch(reason => {
                 toastStore.trigger({
@@ -44,7 +46,7 @@
     }
 
     async function onEdit(row: { id: number }) {
-        await new Promise<typeof row>(resolve => {
+        return await new Promise<typeof row>(resolve => {
             const modal: ModalSettings = {
                 type: "component",
                 component: "createReferral",
@@ -56,16 +58,15 @@
             }
             modalStore.trigger(modal)
         })
-            .then(async response => {
-                return await fetch(`/api/referrals/providers/${row.id}`, {
+            .then(async formData => {
+                const response = await fetch(`/api/referrals/providers/${row.id}`, {
                     method: "PUT",
-                    body: JSON.stringify(response)
+                    body: JSON.stringify(formData)
                 })
-            })
-            .then(async response => {
                 const index = providers.findIndex(tableRow => tableRow.id === row.id)
-                if (!index) return
+                if (index === -1) return
                 providers[index] = await response.json()
+                resetTable = !resetTable
             })
             .catch(reason => {
                 toastStore.trigger({
@@ -86,7 +87,6 @@
                     method: "DELETE"
                 })
                     .then(async response => {
-                        console.log(response)
                         if (!response.ok) throw await response.text()
                         providers = providers.filter(tableRow => tableRow.id !== row.id)
                         resetTable = !resetTable // Reactivity doesn't work well for deletions.
@@ -151,12 +151,24 @@
                 return
             })
     }
+
+    function unpack(row: (typeof providers)[number]) {
+        return Object.fromEntries(
+            Object.entries(row).map(entry => {
+                const [key, value] = entry
+                if (value instanceof Array) {
+                    return [key, value.map(v => v.name).join(", ")]
+                }
+                return [key, String(value)]
+            })
+        )
+    }
 </script>
 
 <div class="z-0">
     {#if providers.length > 0}
         {#key resetTable}
-            <DataTable data={providers} {onExport} {onCreate} {onEdit} {onDelete} hiddenColumns={["id"]} />
+            <DataTable data={providers} {onExport} {onCreate} {onEdit} {onDelete} {unpack} hiddenColumns={["id"]} />
         {/key}
     {:else}
         <p>Error: No providers found.</p>
