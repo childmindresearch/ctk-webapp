@@ -1,20 +1,10 @@
 import { db } from "$lib/server/db"
-import {
-    providersToAreasCovered,
-    providersToLanguages,
-    providersToServices,
-    referralAreaCovered,
-    referralLanguages,
-    referralProviders,
-    referralServices
-} from "$lib/server/db/schema"
+import { referralProviders } from "$lib/server/db/schema"
 import { logger } from "$lib/server/logging"
-import type { ExtendedProvider } from "$lib/server/types"
 import { json } from "@sveltejs/kit"
-import { eq } from "drizzle-orm"
 import { createInsertSchema } from "drizzle-zod"
 import { z } from "zod"
-import { postSchema, relationships } from "./utils"
+import { getExtendedProviders, postSchema, relationships } from "./utils"
 
 /**
  * Creates a provider in the database.
@@ -71,42 +61,8 @@ export async function POST({ request }) {
  */
 export async function GET() {
     logger.info("Geting all providers.")
-
     try {
-        const rows = await db
-            .select()
-            .from(referralProviders)
-            .leftJoin(providersToLanguages, eq(referralProviders.id, providersToLanguages.providerId))
-            .leftJoin(referralLanguages, eq(providersToLanguages.languageId, referralLanguages.id))
-            .leftJoin(providersToAreasCovered, eq(referralProviders.id, providersToAreasCovered.providerId))
-            .leftJoin(referralAreaCovered, eq(providersToAreasCovered.areaCoveredId, referralAreaCovered.id))
-            .leftJoin(providersToServices, eq(referralProviders.id, providersToServices.providerId))
-            .leftJoin(referralServices, eq(providersToServices.serviceId, referralServices.id))
-
-        const result = rows.reduce((acc: ExtendedProvider[], row) => {
-            const language = row.referral_languages
-            const service = row.referral_services
-            const areaCovered = row.referral_area_covered
-            const provider = row.referral_providers as ExtendedProvider
-
-            let index = acc.findIndex(p => p.id === provider.id)
-            if (index === -1) {
-                provider.languages = []
-                provider.services = []
-                provider.areasCovered = []
-                index = acc.push(provider) - 1
-            }
-
-            if (language && !acc[index].languages?.find(lang => lang.id === language.id))
-                acc[index].languages?.push(language)
-            if (service && !acc[index].services?.find(serv => serv.id === service.id))
-                acc[index].services?.push(service)
-            if (areaCovered && !acc[index].areasCovered?.find(area => area.id === areaCovered.id))
-                acc[index].areasCovered?.push(areaCovered)
-            return acc
-        }, [])
-
-        return json(result)
+        return getExtendedProviders()
     } catch (error) {
         logger.error("Failed to get providers.", { error })
         return json({ error: "Failed to get providers." }, { status: 500 })

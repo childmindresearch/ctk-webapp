@@ -19,7 +19,7 @@
     import "../app.postcss"
     import ModalSearchDecisionTree from "./templates/TemplatesDirectory/ModalSearchDecisionTree.svelte"
     import ModalDsmForm from "./dsm/ModalDsmForm.svelte"
-    import ModalReferralForm from "./referral-admin/ModalReferralForm/ModalReferralForm.svelte"
+    import ModalReferralForm from "./referrals/admin/providers/ModalReferralForm/ModalReferralForm.svelte"
 
     initializeStores()
     storePopup.set({ computePosition, autoUpdate, flip, shift, offset, arrow })

@@ -2,6 +2,7 @@
     import DataTable from "$lib/components/DataTable/DataTable.svelte"
     import LoadingBar from "$lib/components/LoadingBar.svelte"
     import { getModalStore, getToastStore, type ModalSettings, type ToastSettings } from "@skeletonlabs/skeleton"
+    import { unpackProviders } from "../../utils.js"
 
     let { data } = $props()
 
@@ -151,24 +152,20 @@
                 return
             })
     }
-
-    function unpack(row: (typeof providers)[number]) {
-        return Object.fromEntries(
-            Object.entries(row).map(entry => {
-                const [key, value] = entry
-                if (value instanceof Array) {
-                    return [key, value.map(v => v.name).join(", ")]
-                }
-                return [key, String(value)]
-            })
-        )
-    }
 </script>
 
 <div class="z-0">
     {#if providers.length > 0}
         {#key resetTable}
-            <DataTable data={providers} {onExport} {onCreate} {onEdit} {onDelete} {unpack} hiddenColumns={["id"]} />
+            <DataTable
+                data={providers}
+                {onExport}
+                {onCreate}
+                {onEdit}
+                {onDelete}
+                unpack={unpackProviders}
+                hiddenColumns={["id"]}
+            />
         {/key}
     {:else}
         <p>Error: No providers found.</p>

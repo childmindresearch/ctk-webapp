@@ -37,7 +37,7 @@
         onCreate?: () => void
         onEdit?: (row: (typeof data)[number]) => void
         onDelete?: (row: (typeof data)[number]) => void
-        unpack?: (value: any) => { [key: string]: string }
+        unpack?: (value: T) => { [K in keyof T]: string }
     }
 
     let { data, hiddenColumns, onExport, onCreate, onEdit, onDelete, unpack }: Props<T> = $props()
@@ -47,6 +47,7 @@
 
     let unpacked = unpack ? data.map(unpack) : data
 
+    // @ts-expect-error
     let table = new TableHandler(unpacked, { rowsPerPage: 10, selectBy: "id" })
     let view = table.createView(
         columnNames.map((col, index) => {
@@ -108,6 +109,7 @@
                                         aria-label="delete"
                                         class="text-error-600 hover:text-error-300 transition-colors duration-150"
                                         onclick={() => {
+                                            // @ts-expect-error
                                             onDelete(row)
                                         }}
                                     >
