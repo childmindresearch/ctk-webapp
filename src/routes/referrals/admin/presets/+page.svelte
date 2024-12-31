@@ -1,28 +1,105 @@
 <script lang="ts">
-    import DataTable from "$lib/components/DataTable/DataTable.svelte"
-    import LoadingBar from "$lib/components/LoadingBar.svelte"
-    import type { ExtendedProvider } from "$lib/server/types"
+    import DataTable from "$lib/components/DataTableOld/DataTable.svelte"
+    import { getModalStore, getToastStore, type ModalSettings } from "@skeletonlabs/skeleton"
     import { unpackProviders } from "../../utils.js"
 
     let { data } = $props()
-    let selected = $state(data.presets[0])
-    let providerPromise: Promise<ExtendedProvider[]> = $derived(getProviders(selected.id))
+    let presets = data.presets
+    let resetTable = $state(true)
 
-    async function getProviders(presetId: number) {
-        return await (await fetch(`/api/referrals/providers/presets/${presetId}`)).json()
+    const toastStore = getToastStore()
+    const modalStore = getModalStore()
+
+    async function onCreate() {
+        return await new Promise<(typeof presets)[number]>(resolve => {
+            const modal: ModalSettings = {
+                type: "component",
+                component: "createPreset",
+                title: `Create Preset`,
+                response: response => {
+                    if (!response) return
+                    resolve(response)
+                }
+            }
+            modalStore.trigger(modal)
+        })
+            .then(async response => {
+                return await fetch("/api/referrals/presets", {
+                    method: "POST",
+                    body: JSON.stringify(response)
+                })
+            })
+            .then(async response => {
+                if (!response.ok) throw await response.text()
+                presets.push(await response.json())
+                resetTable = !resetTable
+            })
+            .catch(reason => {
+                toastStore.trigger({
+                    message: `Could not create: ${reason}.`,
+                    background: "bg-error-500"
+                })
+            })
+    }
+
+    async function onEdit(row: { id: number }) {
+        return await new Promise<typeof row>(resolve => {
+            const modal: ModalSettings = {
+                type: "component",
+                component: "createPreset",
+                meta: row,
+                response: response => {
+                    if (!response) return
+                    resolve(response)
+                }
+            }
+            modalStore.trigger(modal)
+        })
+            .then(async formData => {
+                const response = await fetch(`/api/referrals/presets/${row.id}`, {
+                    method: "PUT",
+                    body: JSON.stringify(formData)
+                })
+                const index = presets.findIndex(tableRow => tableRow.id === row.id)
+                if (index === -1) return
+                presets[index] = await response.json()
+                resetTable = !resetTable
+            })
+            .catch(reason => {
+                toastStore.trigger({
+                    message: `Could not edit: ${reason}.`,
+                    background: "bg-error-500"
+                })
+            })
+    }
+
+    async function onDelete(row: { id: number; name: string }) {
+        const modal: ModalSettings = {
+            type: "confirm",
+            title: "Delete Referral",
+            body: `Are you sure you wish to delete ${row.name}?`,
+            response: async (response: boolean) => {
+                if (!response) return
+                await fetch(`/api/referrals/presets/${row.id}`, {
+                    method: "DELETE"
+                })
+                    .then(async response => {
+                        if (!response.ok) throw await response.text()
+                        presets = presets.filter(tableRow => tableRow.id !== row.id)
+                        resetTable = !resetTable // Reactivity doesn't work well for deletions.
+                    })
+                    .catch(reason => {
+                        toastStore.trigger({
+                            message: `Could not delete: ${reason}.`,
+                            background: "bg-error-500"
+                        })
+                    })
+            }
+        }
+        modalStore.trigger(modal)
     }
 </script>
 
-<select class="select" bind:value={selected}>
-    {#each data.presets as preset}
-        <option value={preset}>
-            {preset.name}
-        </option>
-    {/each}
-</select>
-
-{#await providerPromise}
-    <LoadingBar />
-{:then providers}
-    <DataTable data={providers} unpack={unpackProviders} />
-{/await}
+{#key resetTable}
+    <DataTable data={data.presets} unpack={unpackProviders} {onCreate} {onEdit} {onDelete} hiddenColumns={["id"]} />
+{/key}

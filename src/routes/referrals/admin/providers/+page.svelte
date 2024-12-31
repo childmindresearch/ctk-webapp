@@ -1,5 +1,5 @@
 <script lang="ts">
-    import DataTable from "$lib/components/DataTable/DataTable.svelte"
+    import DataTable from "$lib/components/DataTable.svelte"
     import LoadingBar from "$lib/components/LoadingBar.svelte"
     import { getModalStore, getToastStore, type ModalSettings, type ToastSettings } from "@skeletonlabs/skeleton"
     import { unpackProviders } from "../../utils.js"
@@ -18,7 +18,7 @@
         return await new Promise<(typeof providers)[number]>(resolve => {
             const modal: ModalSettings = {
                 type: "component",
-                component: "createReferral",
+                component: "createProvider",
                 title: `Create Referral`,
                 response: response => {
                     if (!response) return
@@ -50,7 +50,7 @@
         return await new Promise<typeof row>(resolve => {
             const modal: ModalSettings = {
                 type: "component",
-                component: "createReferral",
+                component: "createProvider",
                 meta: row,
                 response: response => {
                     if (!response) return
@@ -78,6 +78,7 @@
     }
 
     async function onDelete(row: { id: number; name: string }) {
+        console.log(row)
         const modal: ModalSettings = {
             type: "confirm",
             title: "Delete Referral",
@@ -156,17 +157,15 @@
 
 <div class="z-0">
     {#if providers.length > 0}
-        {#key resetTable}
-            <DataTable
-                data={providers}
-                {onExport}
-                {onCreate}
-                {onEdit}
-                {onDelete}
-                unpack={unpackProviders}
-                hiddenColumns={["id"]}
-            />
-        {/key}
+        <DataTable
+            data={providers}
+            {onExport}
+            {onCreate}
+            {onEdit}
+            {onDelete}
+            unpack={unpackProviders}
+            hiddenColumns={["id"]}
+        />
     {:else}
         <p>Error: No providers found.</p>
     {/if}

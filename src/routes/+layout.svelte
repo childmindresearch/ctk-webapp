@@ -19,13 +19,15 @@
     import "../app.postcss"
     import ModalSearchDecisionTree from "./templates/TemplatesDirectory/ModalSearchDecisionTree.svelte"
     import ModalDsmForm from "./dsm/ModalDsmForm.svelte"
-    import ModalReferralForm from "./referrals/admin/providers/ModalReferralForm/ModalReferralForm.svelte"
+    import ModalProviderForm from "./referrals/admin/providers/ModalProviderForm.svelte"
+    import ModalPresetForm from "./referrals/admin/presets/ModalPresetForm.svelte"
 
     initializeStores()
     storePopup.set({ computePosition, autoUpdate, flip, shift, offset, arrow })
 
     const modalRegistry: Record<string, ModalComponent> = {
-        createReferral: { ref: ModalReferralForm },
+        createProvider: { ref: ModalProviderForm },
+        createPreset: { ref: ModalPresetForm },
         dsmForm: { ref: ModalDsmForm },
         markdown: { ref: ModalMarkdown },
         searchDecisionTree: { ref: ModalSearchDecisionTree }

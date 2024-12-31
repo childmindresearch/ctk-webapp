@@ -8,36 +8,10 @@ import {
     referralProviders,
     referralServices
 } from "$lib/server/db/schema"
-import { logger } from "$lib/server/logging"
 import type { ExtendedProvider } from "$lib/server/types"
-import { json } from "@sveltejs/kit"
 import { eq } from "drizzle-orm"
-import { z } from "zod"
 
-const relationshipItemSchema = z.object({
-    id: z.number(),
-    name: z.string()
-})
-
-export const postSchema = z.object({
-    name: z.string(),
-    address: z.string(),
-    phone: z.string(),
-    website: z.string(),
-    takesInsurance: z.boolean(),
-    description: z.string(),
-    languages: z.array(relationshipItemSchema),
-    areasCovered: z.array(relationshipItemSchema),
-    services: z.array(relationshipItemSchema)
-})
-
-export const putSchema = postSchema
-
-export const relationships: {
-    junctionTable: any
-    mainTable: any
-    bodyName: "languages" | "areasCovered" | "services"
-}[] = [
+export const relationships = [
     {
         junctionTable: providersToLanguages,
         mainTable: referralLanguages,
@@ -53,7 +27,7 @@ export const relationships: {
         mainTable: referralAreaCovered,
         bodyName: "areasCovered"
     }
-]
+] as const
 
 export async function getExtendedProviders(ids: number[] | undefined = undefined) {
     const rows = await db

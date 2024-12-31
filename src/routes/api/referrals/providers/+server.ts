@@ -4,7 +4,8 @@ import { logger } from "$lib/server/logging"
 import { json } from "@sveltejs/kit"
 import { createInsertSchema } from "drizzle-zod"
 import { z } from "zod"
-import { getExtendedProviders, postSchema, relationships } from "./utils"
+import { getExtendedProviders, relationships } from "./utils"
+import { postSchemaProvider } from "./schemas"
 
 /**
  * Creates a provider in the database.
@@ -15,7 +16,7 @@ export async function POST({ request }) {
     logger.info("Creating a provider.")
 
     try {
-        const validatedBody = postSchema.parse(await request.json())
+        const validatedBody = postSchemaProvider.parse(await request.json())
         const providerData = createInsertSchema(referralProviders).parse(validatedBody)
 
         await db.transaction(async tx => {
@@ -62,7 +63,7 @@ export async function POST({ request }) {
 export async function GET() {
     logger.info("Geting all providers.")
     try {
-        return getExtendedProviders()
+        return json(await getExtendedProviders())
     } catch (error) {
         logger.error("Failed to get providers.", { error })
         return json({ error: "Failed to get providers." }, { status: 500 })

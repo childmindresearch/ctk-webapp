@@ -1,8 +1,8 @@
 import { db } from "$lib/server/db"
 import {
-    providersToAreasCovered,
-    providersToLanguages,
-    providersToServices,
+    presetsToAreasCovered,
+    presetsToLanguages,
+    presetsToServices,
     referralAreaCovered,
     referralLanguages,
     referralPresets,
@@ -12,6 +12,59 @@ import { logger } from "$lib/server/logging"
 import type { ExtendedPreset } from "$lib/server/types"
 import { json } from "@sveltejs/kit"
 import { eq } from "drizzle-orm"
+import { postSchemaPreset } from "./schemas.js"
+import { relationships } from "./utils.js"
+import { createInsertSchema } from "drizzle-zod"
+import { z } from "zod"
+
+/**
+ * Creates a preset in the database.
+ * @param {Request} request - The request, see postSchema for the body.
+ * @returns The created provider along with its relationships.
+ */
+export async function POST({ request }) {
+    logger.info("Creating a preset.")
+
+    try {
+        const validatedBody = postSchemaPreset.parse(await request.json())
+        const presetData = createInsertSchema(referralPresets).parse(validatedBody)
+
+        await db.transaction(async tx => {
+            const [createdPreset] = await tx.insert(referralPresets).values(presetData).returning()
+
+            await Promise.all(
+                relationships.map(async relation => {
+                    const schema = createInsertSchema(relation.junctionTable)
+                    const keys = schema.keyof().options
+                    const [otherKey] = keys.filter(key => key != "presetId")
+                    const postSchema = validatedBody[relation.bodyName].map(item => {
+                        return schema.parse({
+                            presetId: createdPreset.id,
+                            [otherKey]: item.id
+                        })
+                    })
+                    return tx.insert(relation.junctionTable).values(postSchema)
+                })
+            )
+        })
+
+        const newModel: {
+            [key: string]: string | boolean | number | undefined | null | { id: number; name: string }[]
+        } = presetData
+        newModel["languages"] = validatedBody.languages
+        newModel["services"] = validatedBody.services
+        newModel["areasCovered"] = validatedBody.areasCovered
+
+        return json(newModel)
+    } catch (error) {
+        if (error instanceof z.ZodError) {
+            logger.warn("Invalid preset data.", { errors: error.errors })
+            return json({ errors: error.errors }, { status: 400 })
+        }
+        logger.error("Failed to create preset.", { error })
+        return json({ error: "Failed to create preset." }, { status: 500 })
+    }
+}
 
 /**
  *
@@ -24,12 +77,12 @@ export async function GET() {
         const rows = await db
             .select()
             .from(referralPresets)
-            .leftJoin(providersToLanguages, eq(referralPresets.id, providersToLanguages.providerId))
-            .leftJoin(referralLanguages, eq(providersToLanguages.languageId, referralLanguages.id))
-            .leftJoin(providersToAreasCovered, eq(referralPresets.id, providersToAreasCovered.providerId))
-            .leftJoin(referralAreaCovered, eq(providersToAreasCovered.areaCoveredId, referralAreaCovered.id))
-            .leftJoin(providersToServices, eq(referralPresets.id, providersToServices.providerId))
-            .leftJoin(referralServices, eq(providersToServices.serviceId, referralServices.id))
+            .leftJoin(presetsToLanguages, eq(referralPresets.id, presetsToLanguages.presetId))
+            .leftJoin(referralLanguages, eq(presetsToLanguages.languageId, referralLanguages.id))
+            .leftJoin(presetsToAreasCovered, eq(referralPresets.id, presetsToAreasCovered.presetId))
+            .leftJoin(referralAreaCovered, eq(presetsToAreasCovered.areaCoveredId, referralAreaCovered.id))
+            .leftJoin(presetsToServices, eq(referralPresets.id, presetsToServices.presetId))
+            .leftJoin(referralServices, eq(presetsToServices.serviceId, referralServices.id))
 
         const result = rows.reduce((acc: ExtendedPreset[], row) => {
             const language = row.referral_languages
@@ -56,7 +109,7 @@ export async function GET() {
 
         return json(result)
     } catch (error) {
-        logger.error("Failed to get providers.", { error })
-        return json({ error: "Failed to get providers." }, { status: 500 })
+        logger.error("Failed to get presets.", { error })
+        return json({ error: "Failed to get presets." }, { status: 500 })
     }
 }

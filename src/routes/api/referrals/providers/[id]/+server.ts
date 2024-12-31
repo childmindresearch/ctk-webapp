@@ -5,14 +5,15 @@ import { json } from "@sveltejs/kit"
 import { eq } from "drizzle-orm"
 import { createInsertSchema } from "drizzle-zod"
 import { z } from "zod"
-import { putSchema, relationships } from "../utils"
+import { relationships } from "../utils"
+import { putSchemaProvider } from "../schemas"
 
 export async function PUT({ request, params }) {
     const id = Number(params.id)
     logger.info(`Modifying provider ${id}.`)
 
     try {
-        const validatedBody = putSchema.parse(await request.json())
+        const validatedBody = putSchemaProvider.parse(await request.json())
         const providerData = createInsertSchema(referralProviders).parse(validatedBody)
         await db.transaction(async tx => {
             await tx.update(referralProviders).set(providerData).where(eq(referralProviders.id, id))
