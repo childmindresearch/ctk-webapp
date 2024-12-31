@@ -15,7 +15,6 @@ export async function GET({ request, params, fetch }) {
             }
         })
         .catch(error => {
-            console.log(error)
             logger.error(`Error getting intake with id ${id}: ${error}`)
             return new Response(error, { status: 500 })
         })

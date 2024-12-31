@@ -1,3 +1,5 @@
+.env.local
+.env.azure
 .vscode
 .idea
 
