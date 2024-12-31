@@ -14,4 +14,4 @@ The deployment of this application is handled by the [CTK-Orchestrator repositor
 
 The application is configured using environment variables. The following environment variables are used:
 
--   `VITE_API_URL`: The URL of the backend API. Defaults to `http://localhost:8000`.
+- `VITE_API_URL`: The URL of the backend API. Defaults to `http://localhost:8000`.
