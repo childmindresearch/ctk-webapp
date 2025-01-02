@@ -64,5 +64,10 @@
     "dependencies": {
         "@sveltejs/vite-plugin-svelte": "^4.0.0",
         "@vincjo/datatables": "^2.1.0"
+    },
+    "overrides": {
+        "svelte-markdown": {
+            "svelte": "^5.0.0"
+        }
     }
 }
