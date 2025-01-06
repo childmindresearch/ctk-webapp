@@ -11,7 +11,7 @@ export async function POST({ fetch, request }) {
     const text = form.get("text")
     const rules = form.get("rules")
 
-    return await fetch(`${AZURE_FUNCTION_PYTHON_URL}/language-tool/`, {
+    return await fetch(`${AZURE_FUNCTION_PYTHON_URL}/language-tool`, {
         method: "POST",
         headers: headers,
         body: JSON.stringify({
