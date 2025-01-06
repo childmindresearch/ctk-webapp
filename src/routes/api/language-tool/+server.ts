@@ -1,23 +1,15 @@
 import { logger } from "$lib/server/logging"
-import { AZURE_FUNCTION_PYTHON_KEY, AZURE_FUNCTION_PYTHON_URL } from "$lib/server/environment"
+import { AZURE_FUNCTION_PYTHON_URL } from "$lib/server/environment"
 
 export async function POST({ fetch, request }) {
     logger.info("Running LanguageTool")
-    const headers = new Headers({
-        "x-functions-key": AZURE_FUNCTION_PYTHON_KEY || ""
-    })
-
-    const form = await request.formData()
-    const text = form.get("text")
-    const rules = form.get("rules")
-
+    const body = await request.text()
     return await fetch(`${AZURE_FUNCTION_PYTHON_URL}/language-tool`, {
         method: "POST",
-        headers: headers,
-        body: JSON.stringify({
-            text: text,
-            rules: rules
-        })
+        body: body,
+        headers: {
+            "Content-Type": "application/json"
+        }
     })
         .then(async response => {
             if (response.ok && response.body) {
