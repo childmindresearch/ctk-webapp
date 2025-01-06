@@ -18,7 +18,7 @@ export async function POST({ fetch, request }) {
     }
     const body = JSON.stringify({ system_prompt: systemPrompt, user_prompt: userPrompt, model: model })
 
-    return await fetch(`${env.AZURE_FUNCTION_PYTHON_URL}/llm/`, {
+    return await fetch(`${env.AZURE_FUNCTION_PYTHON_URL}/llm`, {
         method: "POST",
         headers: headers,
         body
