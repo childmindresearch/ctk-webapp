@@ -25,7 +25,7 @@ export async function POST({ fetch, request }) {
         })
     }
 
-    return await fetch(`${AZURE_FUNCTION_PYTHON_URL}/markdown2docx/`, {
+    return await fetch(`${AZURE_FUNCTION_PYTHON_URL}/markdown2docx`, {
         method: "POST",
         headers: headers,
         body: body
