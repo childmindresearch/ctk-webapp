@@ -50,7 +50,7 @@ export async function submitMarkdownToDocx(markdown: string, rules: string[]) {
         if (!languageToolResponse.ok) {
             throw new Error(await languageToolResponse.text())
         }
-        text = await languageToolResponse.text()
+        text = await languageToolResponse.json()
     }
 
     text = giveMarkdownUrlsHyperlinks(text)
