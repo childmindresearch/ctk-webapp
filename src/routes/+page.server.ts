@@ -1,5 +1,5 @@
 import { redirect } from "@sveltejs/kit"
 
 export function load() {
-    redirect(308, "/templates")
+    redirect(301, "https://cliniciantoolkit.childmind.org")
 }
