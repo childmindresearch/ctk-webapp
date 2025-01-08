@@ -98,7 +98,7 @@
         bind:value={searchString}
     />
 
-    <button tabindex="-1" class="btn variant-filled-primary" onclick={exportToClipboard}>
+    <button tabindex="-1" class="btn variant-filled-primary" onclick={exportToClipboard} data-testid="copyButton">
         <span>
             <i class="fas fa-copy"></i>
             Copy

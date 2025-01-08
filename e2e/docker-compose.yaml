@@ -1,0 +1,28 @@
+services:
+    api:
+        image: cliniciantoolkit.azurecr.io/ctk-functions:main
+        platform: linux/amd64
+        ports:
+            - "8000:8000"
+        env_file:
+            - .env
+        depends_on:
+            - postgres
+            - languagetool
+
+    postgres:
+        image: postgres
+        platform: linux/amd64
+        environment:
+            POSTGRES_USER: postgres
+            POSTGRES_PASSWORD: password
+        ports:
+            - "5432:5432"
+        volumes:
+            - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+            - ./postgres-data:/var/lib/postgresql/data
+
+    languagetool:
+        image: erikvl87/languagetool
+        ports:
+            - "8010:8010"
