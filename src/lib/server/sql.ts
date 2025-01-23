@@ -5,7 +5,7 @@ import {
     POSTGRES_PASSWORD,
     POSTGRES_DB,
     POSTGRES_PORT,
-    POSTGRES_USE_SSL
+    POSTGRES_SSL
 } from "./environment"
 
 const { Pool } = pkg
@@ -15,7 +15,7 @@ const config = {
     password: POSTGRES_PASSWORD,
     database: POSTGRES_DB,
     port: Number(POSTGRES_PORT),
-    ssl: POSTGRES_USE_SSL
+    ssl: POSTGRES_SSL
 }
 
 export const pool = new Pool(config)

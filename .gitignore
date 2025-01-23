@@ -1,6 +1,8 @@
-.env.local
-.env.azure
+./**/.env*
 .vscode
+.idea
+.env*
+!.env.example
 .idea
 
 settings.json

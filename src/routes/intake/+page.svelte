@@ -82,8 +82,8 @@
     </div>
 
     <form class="space-y-2">
-        <input class="input w-72" placeholder="MRN" bind:value={redcapSurveyId} />
+        <input class="input w-72" placeholder="MRN" bind:value={redcapSurveyId} data-testid="intakeInput" />
         <br />
-        <button class="btn variant-filled-primary" onclick={onSubmit} disabled={isLoading}> Submit </button>
+        <button class="btn variant-filled-primary" onclick={onSubmit} disabled={isLoading} data-testid="intakeSubmit"> Submit </button>
     </form>
 {/if}

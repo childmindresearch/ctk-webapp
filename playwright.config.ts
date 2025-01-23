@@ -5,10 +5,11 @@ const config: PlaywrightTestConfig = {
         command: "npm run build && npm run preview",
         port: 4173
     },
-    testDir: "integration_tests",
+    testDir: "./e2e/tests/",
     testMatch: /(.+\.)?(test|spec)\.[jt]s/,
     use: {
-        video: "on"
+        video: "on",
+        permissions: ["clipboard-read", "clipboard-write"]
     }
 }
 

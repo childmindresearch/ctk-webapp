@@ -1,12 +1,8 @@
-import { env } from "$env/dynamic/private"
 import { logger } from "$lib/server/logging"
-import { AZURE_FUNCTION_PYTHON_KEY } from "$lib/server/environment"
+import { AZURE_FUNCTION_PYTHON_URL } from "$lib/server/environment"
 
 export async function POST({ fetch, request }) {
     logger.info("Making LLM request.")
-    const headers = new Headers({
-        "x-functions-key": AZURE_FUNCTION_PYTHON_KEY
-    })
     const formData = await request.formData()
 
     const systemPrompt = formData.get("systemPrompt")
@@ -18,9 +14,8 @@ export async function POST({ fetch, request }) {
     }
     const body = JSON.stringify({ system_prompt: systemPrompt, user_prompt: userPrompt, model: model })
 
-    return await fetch(`${env.AZURE_FUNCTION_PYTHON_URL}/llm/`, {
+    return await fetch(`${AZURE_FUNCTION_PYTHON_URL}/llm`, {
         method: "POST",
-        headers: headers,
         body
     })
         .then(async response => {

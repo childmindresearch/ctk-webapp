@@ -4,6 +4,7 @@ on:
     push:
         branches:
             - main
+            - development
     pull_request:
 
 env:
@@ -28,16 +29,10 @@ jobs:
                   npm install --legacy-peer-deps
             - name: Run tests
               run: |
-                  npm run test
-            - uses: actions/upload-artifact@v4
-              if: always()
-              with:
-                  name: video-files
-                  path: test-results/**/*.webm
+                  npm run test:unit
 
     lint:
         runs-on: ubuntu-latest
-
         steps:
             - uses: actions/checkout@v4
             - name: Use Node.js

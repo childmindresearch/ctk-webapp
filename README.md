@@ -1,6 +1,6 @@
 # Clinician Toolkit Frontend
 
-This repository contains the frontend code for the clinician toolkit. It is a Svelte application that uses the [Flowbite](https://flowbite-svelte.com/) component library. It is deployed as a Docker container.
+This repository contains the frontend code for the clinician toolkit. It is a SvelteKit application that is deployed as a Docker container. It is part of a greater set of Clinician Toolkit repositories, see the [build repository](https://github.com/childmindresearch/ctk-build) for the overall overview
 
 ## Getting Started
 
@@ -8,10 +8,8 @@ To get started, clone this repository and run `npm install` to install the depen
 
 ## Deployment
 
-The deployment of this application is handled by the [CTK-Orchestrator repository](https://github.com/childmindresearch/ctk-orchestrator). On each push to main, this repository will be built and deployed to the Github Container Registry.
+The deployment of this application is handled by the [CTK-Build repository](https://github.com/childmindresearch/ctk-build). On each push to main, a new image will be built and the end-to-end tests will run in the aforementioned repository.
 
 ## Settings
 
-The application is configured using environment variables. The following environment variables are used:
-
-- `VITE_API_URL`: The URL of the backend API. Defaults to `http://localhost:8000`.
+The application is configured using environment variables. See `.env.example` for an up-to-date list of the required environment variables.

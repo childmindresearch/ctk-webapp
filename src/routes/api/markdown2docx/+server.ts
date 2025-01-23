@@ -1,34 +1,19 @@
 import { logger } from "$lib/server/logging"
-import { AZURE_FUNCTION_PYTHON_KEY, AZURE_FUNCTION_PYTHON_URL } from "$lib/server/environment"
+import { AZURE_FUNCTION_PYTHON_URL } from "$lib/server/environment"
 
 export async function POST({ fetch, request }) {
     logger.info("Converting markdown to docx")
-    const headers = new Headers({
-        "x-functions-key": AZURE_FUNCTION_PYTHON_KEY || ""
-    })
 
-    const formData = await request.formData()
-    const markdown = formData.get("markdown")
-    if (!markdown) {
-        return new Response(null, { status: 400 })
-    }
-    const formatting = formData.get("formatting")
-    let body: string
-    if (!formatting) {
-        body = JSON.stringify({
-            markdown
-        })
-    } else {
-        body = JSON.stringify({
-            markdown,
-            formatting
-        })
-    }
-
-    return await fetch(`${AZURE_FUNCTION_PYTHON_URL}/markdown2docx/`, {
+    const body = JSON.parse(await request.text())
+    return await fetch(`${AZURE_FUNCTION_PYTHON_URL}/markdown2docx`, {
         method: "POST",
-        headers: headers,
-        body: body
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            markdown: body.markdown,
+            formatting: body.formatting
+        })
     })
         .then(async response => {
             if (response.ok && response.body) {

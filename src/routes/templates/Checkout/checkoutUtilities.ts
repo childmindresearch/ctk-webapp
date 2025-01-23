@@ -35,35 +35,33 @@ export function getTemplateValues(text: string): TemplateValue[] {
 }
 
 export async function submitMarkdownToDocx(markdown: string, rules: string[]) {
-    const languageToolForm = new FormData()
-    languageToolForm.append("text", markdown)
-    languageToolForm.append("rules", JSON.stringify(rules))
-
     let text: string
     if (rules.length === 0) {
         text = markdown
     } else {
         const languageToolResponse = await fetch("/api/language-tool", {
             method: "POST",
-            body: languageToolForm
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ text: markdown, rules })
         })
 
         if (!languageToolResponse.ok) {
             throw new Error(await languageToolResponse.text())
         }
-        text = await languageToolResponse.text()
+        text = await languageToolResponse.json()
     }
 
     text = giveMarkdownUrlsHyperlinks(text)
     // Pandoc does not support tabs. We use |t as a workaround.
     const textWithEncodedTab = text.replace(/\t/g, "|t")
-    const markdown2DocxForm = new FormData()
-    markdown2DocxForm.append("markdown", textWithEncodedTab)
-    markdown2DocxForm.append("formatting", JSON.stringify({ space_before: 0, space_after: 0 }))
-
     const docxResponse = await fetch("/api/markdown2docx", {
         method: "POST",
-        body: markdown2DocxForm
+        body: JSON.stringify({
+            markdown: textWithEncodedTab,
+            formatting: { space_before: 0, space_after: 0 }
+        })
     })
     if (!docxResponse.ok) {
         throw new Error(await docxResponse.text())
