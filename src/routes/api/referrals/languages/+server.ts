@@ -25,7 +25,7 @@ export async function POST({ request }) {
 }
 
 export async function GET() {
-    logger.info("Geting all languages.")
+    logger.info("Getting all languages.")
     try {
         const rows = await db.query.referralLanguages.findMany()
         return json(rows)

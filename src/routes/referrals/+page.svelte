@@ -4,17 +4,14 @@
 
     let { data } = $props()
 
-    let loading = false
     const toastStore = getToastStore()
 
     async function onSubmit(event: Event) {
-        console.log(event)
         const id = 1
         const providers = (await (await fetch(`/api/referrals/providers/presets/${id}`)).json()) as ExtendedProvider[]
         console.log(providers)
         if (providers.length === 0) return
 
-        loading = true
         const columns: (keyof (typeof providers)[number])[] = Object.keys(providers[0])
         let markdown = "| " + columns.join(" | ") + " |\n"
         markdown += "| " + Array(columns.length).fill("------").join(" | ") + " |\n"
@@ -22,12 +19,9 @@
             markdown += "| " + columns.map(col => row[col]).join(" | ") + " |\n"
         })
 
-        let markdown2docxForm = new FormData()
-        markdown2docxForm.append("markdown", markdown)
-
         await fetch("/api/markdown2docx", {
             method: "POST",
-            body: markdown2docxForm
+            body: JSON.stringify({ markdown })
         })
             .then(async response => {
                 if (response.ok) {
@@ -38,7 +32,6 @@
                     a.download = "referrals.docx"
                     a.click()
                     URL.revokeObjectURL(url)
-                    loading = false
                     return
                 }
                 const toast: ToastSettings = {
@@ -46,7 +39,6 @@
                     background: "variant-filled-error"
                 }
                 toastStore.trigger(toast)
-                loading = false
                 return
             })
             .catch(error => {
@@ -55,19 +47,18 @@
                     background: "variant-filled-error"
                 }
                 toastStore.trigger(toast)
-                loading = false
                 return
             })
     }
 </script>
 
 <form onsubmit={onSubmit}>
-    <select>
+    <select class="input max-w-72">
         {#each data.presets as preset}
             <option value={preset}>
                 {preset.name}
             </option>
         {/each}
     </select>
-    <button class="btn" type="submit"> Export </button>
+    <button class="btn variant-filled-primary" type="submit"> Export </button>
 </form>

@@ -50,16 +50,17 @@
     }
 
     const { data, hiddenColumns, onExport, onCreate, onEdit, onDelete, unpack = defaultUnpack }: Props<T> = $props()
+
+    const paginationOptions = [5, 10, 20, 50] as const
+    let currentPage = $state(0)
+    let nRowsPerPage: (typeof paginationOptions)[number] = $state(10)
+
+    const showControls = onEdit || onDelete
+
     let globalSearch = $state("")
     let searched = $derived(applyFilters(data))
     let paginated = $derived(applyPagination(searched))
-    const showControls = onEdit || onDelete
-
-    const paginationOptions = [5, 10, 20, 50] as const
-    let nRowsPerPage: (typeof paginationOptions)[number] = $state(10)
-    let currentPage = $state(0)
     let maxPages = $derived(Math.ceil(searched.length / nRowsPerPage))
-    $inspect(maxPages).with(console.log)
 
     const columns = (Object.keys(data[0]) as (keyof T)[]).filter(name => !hiddenColumns?.includes(name))
 
@@ -92,7 +93,7 @@
     }
 </script>
 
-<div>
+<div class="pb-2">
     <input class="input max-w-96" type="search" bind:value={globalSearch} placeholder="Search" />
     <select bind:value={nRowsPerPage}>
         {#each paginationOptions as num}
@@ -153,14 +154,22 @@
     </tbody>
 </table>
 
-<div class="space-x-2">
-    {#each Array(maxPages).keys() as val}
-        <button
-            class:variant-filled-secondary={currentPage === val}
-            class="btn variant-filled-primary"
-            onclick={() => (currentPage = val)}
-        >
-            {val + 1}
+<div class="pt-2 flex w-full justify-between">
+    {#if onCreate}
+        <button class="btn variant-filled-primary" onclick={onCreate}>
+            Create
         </button>
-    {/each}
+    {/if}
+
+    <div class="space-x-2">
+        {#each Array(maxPages).keys() as val}
+            <button
+                class:variant-filled-secondary={currentPage === val}
+                class="btn variant-filled-primary"
+                onclick={() => (currentPage = val)}
+            >
+                {val + 1}
+            </button>
+        {/each}
+    </div>
 </div>

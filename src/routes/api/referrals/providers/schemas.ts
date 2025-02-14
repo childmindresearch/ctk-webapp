@@ -13,7 +13,6 @@ export const postSchemaProvider = z.object({
     takesInsurance: z.boolean(),
     description: z.string(),
     languages: z.array(relationshipItemSchema),
-    areasCovered: z.array(relationshipItemSchema),
     services: z.array(relationshipItemSchema)
 })
 

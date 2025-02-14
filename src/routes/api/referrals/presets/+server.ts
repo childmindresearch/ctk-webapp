@@ -1,9 +1,7 @@
 import { db } from "$lib/server/db"
 import {
-    presetsToAreasCovered,
     presetsToLanguages,
     presetsToServices,
-    referralAreaCovered,
     referralLanguages,
     referralPresets,
     referralServices
@@ -53,7 +51,6 @@ export async function POST({ request }) {
         } = presetData
         newModel["languages"] = validatedBody.languages
         newModel["services"] = validatedBody.services
-        newModel["areasCovered"] = validatedBody.areasCovered
 
         return json(newModel)
     } catch (error) {
@@ -71,7 +68,7 @@ export async function POST({ request }) {
  * @returns Returns all presets in the database, joined with their languages, services, and areas covered.
  */
 export async function GET() {
-    logger.info("Geting all presets.")
+    logger.info("Getting all presets.")
 
     try {
         const rows = await db
@@ -79,22 +76,18 @@ export async function GET() {
             .from(referralPresets)
             .leftJoin(presetsToLanguages, eq(referralPresets.id, presetsToLanguages.presetId))
             .leftJoin(referralLanguages, eq(presetsToLanguages.languageId, referralLanguages.id))
-            .leftJoin(presetsToAreasCovered, eq(referralPresets.id, presetsToAreasCovered.presetId))
-            .leftJoin(referralAreaCovered, eq(presetsToAreasCovered.areaCoveredId, referralAreaCovered.id))
             .leftJoin(presetsToServices, eq(referralPresets.id, presetsToServices.presetId))
             .leftJoin(referralServices, eq(presetsToServices.serviceId, referralServices.id))
 
         const result = rows.reduce((acc: ExtendedPreset[], row) => {
             const language = row.referral_languages
             const service = row.referral_services
-            const areaCovered = row.referral_area_covered
             const preset = row.referral_presets as ExtendedPreset
 
             let index = acc.findIndex(p => p.id === preset.id)
             if (index === -1) {
                 preset.languages = []
                 preset.services = []
-                preset.areasCovered = []
                 index = acc.push(preset) - 1
             }
 
@@ -102,8 +95,6 @@ export async function GET() {
                 acc[index].languages?.push(language)
             if (service && !acc[index].services?.find(serv => serv.id === service.id))
                 acc[index].services?.push(service)
-            if (areaCovered && !acc[index].areasCovered?.find(area => area.id === areaCovered.id))
-                acc[index].areasCovered?.push(areaCovered)
             return acc
         }, [])
 

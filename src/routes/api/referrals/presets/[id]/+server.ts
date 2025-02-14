@@ -41,7 +41,6 @@ export async function PUT({ params, request }) {
         } = presetData
         newModel["languages"] = validatedBody.languages
         newModel["services"] = validatedBody.services
-        newModel["areasCovered"] = validatedBody.areasCovered
 
         return json(newModel)
     } catch (error) {

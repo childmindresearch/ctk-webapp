@@ -25,7 +25,7 @@ export async function POST({ request }) {
 }
 
 export async function GET() {
-    logger.info("Geting all services.")
+    logger.info("Getting all services.")
     try {
         const rows = await db.query.referralServices.findMany()
         return json(rows)

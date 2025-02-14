@@ -43,7 +43,6 @@ export async function POST({ request }) {
         } = providerData
         newModel["languages"] = validatedBody.languages
         newModel["services"] = validatedBody.services
-        newModel["areasCovered"] = validatedBody.areasCovered
 
         return json(newModel)
     } catch (error) {
@@ -61,7 +60,7 @@ export async function POST({ request }) {
  * @returns Returns all providers in the database, joined with their languages, services, and areas covered.
  */
 export async function GET() {
-    logger.info("Geting all providers.")
+    logger.info("Getting all providers.")
     try {
         return json(await getExtendedProviders())
     } catch (error) {

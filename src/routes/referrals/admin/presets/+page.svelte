@@ -1,11 +1,13 @@
 <script lang="ts">
-    import DataTable from "$lib/components/DataTableOld/DataTable.svelte"
+    import DataTable from "$lib/components/DataTable.svelte"
     import { getModalStore, getToastStore, type ModalSettings } from "@skeletonlabs/skeleton"
     import { unpackProviders } from "../../utils.js"
 
     let { data } = $props()
     let presets = data.presets
     let resetTable = $state(true)
+
+    console.log(presets)
 
     const toastStore = getToastStore()
     const modalStore = getModalStore()

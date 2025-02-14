@@ -8,7 +8,6 @@ const relationshipItemSchema = z.object({
 export const postSchemaPreset = z.object({
     name: z.string(),
     languages: z.array(relationshipItemSchema),
-    areasCovered: z.array(relationshipItemSchema),
     services: z.array(relationshipItemSchema)
 })
 

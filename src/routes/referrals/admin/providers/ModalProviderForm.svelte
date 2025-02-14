@@ -11,16 +11,14 @@
     let takesInsurance: boolean = $state($modalStore[0].meta?.takesInsurance ?? false)
     let description: string = $state($modalStore[0].meta?.description ?? "")
 
-    const multiSelectKeys = ["Languages", "Services", "Areas covered"] as const
+    const multiSelectKeys = ["Languages", "Services"] as const
     const multiSelects: Record<(typeof multiSelectKeys)[number], string> = {
         Languages: "/api/referrals/languages",
         Services: "/api/referrals/services",
-        "Areas covered": "/api/referrals/areas-covered"
     }
     const idsSelected: Record<(typeof multiSelectKeys)[number], { id: number; name: string }[]> = {
         Languages: $modalStore[0].meta?.languages ?? [],
         Services: $modalStore[0].meta?.services ?? [],
-        "Areas covered": $modalStore[0].meta?.areasCovered ?? []
     }
 
     function onSubmit() {
@@ -34,7 +32,6 @@
                 description,
                 languages: idsSelected.Languages,
                 services: idsSelected.Services,
-                areasCovered: idsSelected["Areas covered"]
             })
             modalStore.close()
         }
