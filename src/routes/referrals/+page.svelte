@@ -5,23 +5,25 @@
     let { data } = $props()
 
     const toastStore = getToastStore()
+    let selectedPreset = $state(data.presets[0])
 
-    async function onSubmit(event: Event) {
-        const id = 1
-        const providers = (await (await fetch(`/api/referrals/providers/presets/${id}`)).json()) as ExtendedProvider[]
-        console.log(providers)
+    async function onSubmit() {
+        const providers = (await (await fetch(`/api/referrals/providers/presets/${selectedPreset.id}`)).json()) as ExtendedProvider[]
         if (providers.length === 0) return
 
-        const columns: (keyof (typeof providers)[number])[] = Object.keys(providers[0])
-        let markdown = "| " + columns.join(" | ") + " |\n"
-        markdown += "| " + Array(columns.length).fill("------").join(" | ") + " |\n"
-        providers.forEach(row => {
-            markdown += "| " + columns.map(col => row[col]).join(" | ") + " |\n"
-        })
+        let title = selectedPreset.name
+        const columns = ["name", "address", "phone", "description"] as const;
+        const headers = ["Name", "Address", "Phone", "Description"] as const;
+        const row_data = [
+            headers,
+            ...providers.map(prov =>
+                columns.map(col => prov[col] ?? "")
+            )
+        ];
 
-        await fetch("/api/markdown2docx", {
+        await fetch("/api/referrals/document", {
             method: "POST",
-            body: JSON.stringify({ markdown })
+            body: JSON.stringify({ title, row_data })
         })
             .then(async response => {
                 if (response.ok) {
@@ -52,8 +54,16 @@
     }
 </script>
 
+{#if data.user?.is_admin}
+    <h4 class="h4">Admin Tools</h4>
+    <a class="btn variant-filled-primary" href="/referrals/admin/presets">Modify presets</a>
+    <a class="btn variant-filled-primary" href="/referrals/admin/providers">Modify providers</a>
+    <hr class="my-2"/>
+{/if}
+
+<h4 class="h4">Referral Documents</h4>
 <form onsubmit={onSubmit}>
-    <select class="input max-w-72">
+    <select class="input max-w-72" bind:value={selectedPreset}>
         {#each data.presets as preset}
             <option value={preset}>
                 {preset.name}

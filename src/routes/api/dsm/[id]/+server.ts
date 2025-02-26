@@ -4,7 +4,7 @@ import { pool, type SqlDsmCodeSchema } from "$lib/server/sql"
 export async function PUT({ params, request }) {
     const id = params.id
     const { code, label } = await request.json()
-    logger.info("Editting DSM Code")
+    logger.info("Editing DSM Code")
     return await pool
         .connect()
         .then(async client => {

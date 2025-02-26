@@ -4,7 +4,6 @@
     Props:
     @param {T[]} data - Array of objects to display in the table
     @param {(keyof T)[]} [hiddenColumns] - Optional array of column keys to hide from display
-    @param {Function} onExport - Optional callback function when export button is clicked, receives current table data
     @param {Function} [onCreate] - Optional callback function when create button is clicked
     @param {Function} [onEdit] - Optional callback function when edit button is clicked, receives row data
     @param {Function} [onDelete] - Optional callback function when delete button is clicked, receives row data
@@ -15,7 +14,6 @@
     <DataTable
         data={myData}
         hiddenColumns={['id']}
-        onExport={(data) => handleExport(data)}
         onCreate={() => handleCreate()}
         onEdit={(row) => handleEdit(row)}
         onDelete={(row) => handleDelete(row)}
@@ -25,15 +23,14 @@
 <script lang="ts" generics="T extends Record<string, any>">
     import EditIcon from "$lib/icons/EditIcon.svelte"
     import TrashIcon from "$lib/icons/TrashIcon.svelte"
-    import DataTableHeader from "./DataTableOld/DataTableHeader.svelte"
-    import DataTableFooter from "./DataTableOld/DataTableFooter.svelte"
-    import DataTableControls from "./DataTableOld/DataTableControls.svelte"
     import { flip } from "svelte/animate"
+    import SortBothArrows from "$lib/icons/SortBothArrows.svelte"
+    import SortDownArrow from "$lib/icons/SortDownArrow.svelte"
+    import SortUpArrow from "$lib/icons/SortUpArrow.svelte"
 
     type Props<T extends Record<string, any>> = {
         data: T[]
         hiddenColumns?: readonly (keyof T)[]
-        onExport?: (rows: typeof data) => void
         onCreate?: () => void
         onEdit?: (row: (typeof data)[number]) => void
         onDelete?: (row: (typeof data)[number]) => void
@@ -49,20 +46,29 @@
         ) as { [K in keyof T]: string }
     }
 
-    const { data, hiddenColumns, onExport, onCreate, onEdit, onDelete, unpack = defaultUnpack }: Props<T> = $props()
+    const { data, hiddenColumns, onCreate, onEdit, onDelete, unpack = defaultUnpack }: Props<T> = $props()
 
     const paginationOptions = [5, 10, 20, 50] as const
     let currentPage = $state(0)
     let nRowsPerPage: (typeof paginationOptions)[number] = $state(10)
+    let sortKey: keyof T | null = $state(null)
+    let sortDirection: -1 | 0 | 1 = $state(0)
 
     const showControls = onEdit || onDelete
 
     let globalSearch = $state("")
     let searched = $derived(applyFilters(data))
-    let paginated = $derived(applyPagination(searched))
+    let sorted = $derived(applySort(searched, sortKey, sortDirection))
+    let paginated = $derived(applyPagination(sorted))
     let maxPages = $derived(Math.ceil(searched.length / nRowsPerPage))
 
     const columns = (Object.keys(data[0]) as (keyof T)[]).filter(name => !hiddenColumns?.includes(name))
+
+    function applySort(data: { [K in keyof T]: string }[], key: keyof T | null, direction: -1 | 0 | 1) {
+        if (key === null) return data
+        if (direction === 0) return data
+        return data.toSorted((a, b) => (a[key] > b[key] ? -1 : 1) * direction)
+    }
 
     function titleCase(str: string) {
         return str
@@ -74,7 +80,6 @@
     function applyFilters(data: T[]) {
         let selected = data.map(unpack)
 
-        // Search
         if (globalSearch) {
             selected = selected.filter(row => {
                 const rowString = Object.values(row).reduce(
@@ -108,7 +113,25 @@
                 <td>Controls</td>
             {/if}
             {#each columns as name}
-                <td>{titleCase((name as string).replace("_", " "))}</td>
+                <td
+                    >{titleCase((name as string).replace("_", " "))}
+
+                    <button
+                        onclick={() => {
+                            sortKey = name
+                            sortDirection -= 1
+                            if (sortDirection === -2) sortDirection = 1
+                        }}
+                    >
+                        {#if sortKey !== name || sortDirection === 0}
+                            <SortBothArrows />
+                        {:else if sortDirection === -1}
+                            <SortDownArrow />
+                        {:else}
+                            <SortUpArrow />
+                        {/if}
+                    </button>
+                </td>
             {/each}
         </tr>
     </thead>
@@ -156,9 +179,7 @@
 
 <div class="pt-2 flex w-full justify-between">
     {#if onCreate}
-        <button class="btn variant-filled-primary" onclick={onCreate}>
-            Create
-        </button>
+        <button class="btn variant-filled-primary" onclick={onCreate}> Create </button>
     {/if}
 
     <div class="space-x-2">

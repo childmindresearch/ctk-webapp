@@ -14,11 +14,11 @@
     const multiSelectKeys = ["Languages", "Services"] as const
     const multiSelects: Record<(typeof multiSelectKeys)[number], string> = {
         Languages: "/api/referrals/languages",
-        Services: "/api/referrals/services",
+        Services: "/api/referrals/services"
     }
     const idsSelected: Record<(typeof multiSelectKeys)[number], { id: number; name: string }[]> = {
         Languages: $modalStore[0].meta?.languages ?? [],
-        Services: $modalStore[0].meta?.services ?? [],
+        Services: $modalStore[0].meta?.services ?? []
     }
 
     function onSubmit() {
@@ -31,7 +31,7 @@
                 takesInsurance,
                 description,
                 languages: idsSelected.Languages,
-                services: idsSelected.Services,
+                services: idsSelected.Services
             })
             modalStore.close()
         }

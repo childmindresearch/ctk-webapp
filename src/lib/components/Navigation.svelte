@@ -7,6 +7,7 @@
         { name: "DSM Codes", href: "/dsm" },
         { name: "Intake", href: "/intake" },
         { name: "Summarization", href: "/summarization" },
+        { name: "Referrals", href: "/referrals" },
         { name: "Templates", href: "/templates" }
     ]
 

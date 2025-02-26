@@ -1,9 +1,7 @@
 import { db } from "$lib/server/db"
 import {
-    presetsToAreasCovered,
     presetsToLanguages,
     presetsToServices,
-    providersToAreasCovered,
     providersToLanguages,
     providersToServices,
     referralPresets,
@@ -27,11 +25,9 @@ export async function GET({ params }) {
             .from(referralPresets)
             .where(eq(referralPresets.id, id))
             .leftJoin(presetsToLanguages, eq(referralPresets.id, presetsToLanguages.presetId))
-            .leftJoin(presetsToAreasCovered, eq(referralPresets.id, presetsToAreasCovered.presetId))
             .leftJoin(presetsToServices, eq(referralPresets.id, presetsToServices.presetId))
 
         const languageIds = presetRequirements.map(r => r.presets_to_languages?.languageId).filter(Boolean)
-        const areaIds = presetRequirements.map(r => r.presets_to_areas_covered?.areaCoveredId).filter(Boolean)
         const serviceIds = presetRequirements.map(r => r.presets_to_services?.serviceId).filter(Boolean)
 
         const conditions = []
@@ -46,23 +42,6 @@ export async function GET({ params }) {
                                 eq(providersToLanguages.providerId, referralProviders.id),
                                 // @ts-expect-error
                                 inArray(providersToLanguages.languageId, languageIds)
-                            )
-                        )
-                )
-            )
-        }
-
-        if (areaIds.length > 0) {
-            conditions.push(
-                exists(
-                    db
-                        .select()
-                        .from(providersToAreasCovered)
-                        .where(
-                            and(
-                                eq(providersToAreasCovered.providerId, referralProviders.id),
-                                // @ts-expect-error
-                                inArray(providersToAreasCovered.areaCoveredId, areaIds)
                             )
                         )
                 )
