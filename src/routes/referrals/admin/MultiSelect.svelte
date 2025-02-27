@@ -5,11 +5,12 @@
     type Props = {
         name: string
         endpoint: string
+        allowCreate: boolean
         isSelected?: string[]
         onSelect: (arg0: { id: number; name: string; selected: boolean }[]) => void
     }
 
-    let { name, endpoint, isSelected = [], onSelect }: Props = $props()
+    let { name, endpoint, allowCreate = false, isSelected = [], onSelect }: Props = $props()
     let postValue = $state("")
 
     let selections: { id: number; name: string; selected: boolean }[] = $state([])
@@ -48,10 +49,12 @@
 <p>
     {name}
 </p>
-<span>
-    <input class="input w-64" bind:value={postValue} name="name" placeholder="Add New" />
-    <button class="btn variant-filled-primary" onclick={onPost}> Add </button>
-</span>
+{#if allowCreate}
+    <span>
+        <input class="input w-64" bind:value={postValue} name="name" placeholder="Add New" />
+        <button class="btn variant-filled-primary" onclick={onPost}> Add </button>
+    </span>
+{/if}
 
 <div class="grid grid-cols-4 mt-2">
     {#each selections as selection}
