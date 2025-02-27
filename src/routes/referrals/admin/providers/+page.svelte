@@ -1,7 +1,7 @@
 <script lang="ts">
     import DataTable from "$lib/components/DataTable.svelte"
     import LoadingBar from "$lib/components/LoadingBar.svelte"
-    import { getModalStore, getToastStore, type ModalSettings, type ToastSettings } from "@skeletonlabs/skeleton"
+    import { getModalStore, getToastStore, type ModalSettings } from "@skeletonlabs/skeleton"
     import { unpackProviders } from "../../utils.js"
 
     let { data } = $props()
@@ -11,8 +11,6 @@
 
     let providers = $state(data.data)
     let loading = $state(false)
-
-    let resetTable = $state(false)
 
     async function onCreate() {
         return await new Promise<(typeof providers)[number]>(resolve => {
@@ -36,7 +34,6 @@
             .then(async response => {
                 if (!response.ok) throw await response.text()
                 providers.push(await response.json())
-                resetTable = !resetTable
             })
             .catch(reason => {
                 toastStore.trigger({
@@ -67,7 +64,6 @@
                 const index = providers.findIndex(tableRow => tableRow.id === row.id)
                 if (index === -1) return
                 providers[index] = await response.json()
-                resetTable = !resetTable
             })
             .catch(reason => {
                 toastStore.trigger({
@@ -78,7 +74,6 @@
     }
 
     async function onDelete(row: { id: number; name: string }) {
-        console.log(row)
         const modal: ModalSettings = {
             type: "confirm",
             title: "Delete Referral",
@@ -91,7 +86,6 @@
                     .then(async response => {
                         if (!response.ok) throw await response.text()
                         providers = providers.filter(tableRow => tableRow.id !== row.id)
-                        resetTable = !resetTable // Reactivity doesn't work well for deletions.
                     })
                     .catch(reason => {
                         toastStore.trigger({
@@ -103,69 +97,11 @@
         }
         modalStore.trigger(modal)
     }
-
-    async function onExport(rows: Record<string, any>[]) {
-        if (rows.length === 0) return
-
-        loading = true
-        // @ts-expect-error - we know all columns exist on these rows and that they are indexable.
-        const columns: (keyof (typeof providers)[number])[] = Object.keys(rows[0])
-        let markdown = "| " + columns.join(" | ") + " |\n"
-        markdown += "| " + Array(columns.length).fill("------").join(" | ") + " |\n"
-        rows.forEach(row => {
-            markdown += "| " + columns.map(col => row[col]).join(" | ") + " |\n"
-        })
-
-        let markdown2docxForm = new FormData()
-        markdown2docxForm.append("markdown", markdown)
-
-        await fetch("/api/markdown2docx", {
-            method: "POST",
-            body: markdown2docxForm
-        })
-            .then(async response => {
-                if (response.ok) {
-                    const blob = await response.blob()
-                    const url = URL.createObjectURL(blob)
-                    const a = document.createElement("a")
-                    a.href = url
-                    a.download = "referrals.docx"
-                    a.click()
-                    URL.revokeObjectURL(url)
-                    loading = false
-                    return
-                }
-                const toast: ToastSettings = {
-                    message: "There was a problem connecting to the server.",
-                    background: "variant-filled-error"
-                }
-                toastStore.trigger(toast)
-                loading = false
-                return
-            })
-            .catch(error => {
-                const toast: ToastSettings = {
-                    message: `There was a interpreting the server response: ${error}.`,
-                    background: "variant-filled-error"
-                }
-                toastStore.trigger(toast)
-                loading = false
-                return
-            })
-    }
 </script>
 
 <div class="z-0">
     {#if providers.length > 0}
-        <DataTable
-            data={providers}
-            {onExport}
-            {onCreate}
-            {onEdit}
-            {onDelete}
-            unpack={unpackProviders}
-            hiddenColumns={["id"]}
-        />
+        <DataTable data={providers} {onCreate} {onEdit} {onDelete} unpack={unpackProviders} hiddenColumns={["id"]} />
     {:else}
         <p>Error: No providers found.</p>
     {/if}

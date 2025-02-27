@@ -74,6 +74,7 @@
                 <MultiSelect
                     {name}
                     endpoint={multiSelects[name]}
+                    allowCreate={true}
                     isSelected={idsSelected[name].map(selection => selection.name)}
                     onSelect={selection => (idsSelected[name] = selection)}
                 />
