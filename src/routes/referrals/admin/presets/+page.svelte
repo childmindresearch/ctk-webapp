@@ -4,10 +4,8 @@
     import { unpackProviders } from "../../utils.js"
 
     let { data } = $props()
-    let presets = data.presets
+    let presets = $state(data.presets)
     let resetTable = $state(true)
-
-    console.log(presets)
 
     const toastStore = getToastStore()
     const modalStore = getModalStore()
@@ -103,5 +101,5 @@
 </script>
 
 {#key resetTable}
-    <DataTable data={data.presets} unpack={unpackProviders} {onCreate} {onEdit} {onDelete} hiddenColumns={["id"]} />
+    <DataTable data={presets} unpack={unpackProviders} {onCreate} {onEdit} {onDelete} hiddenColumns={["id"]} />
 {/key}

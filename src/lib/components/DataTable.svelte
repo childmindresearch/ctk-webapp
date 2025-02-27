@@ -106,7 +106,7 @@
         {/each}
     </select>
 </div>
-<table class="table table-hover overflow-x-auto">
+<table class="table-fixed table table-hover overflow-x-auto">
     <thead>
         <tr>
             {#if showControls}
@@ -138,7 +138,7 @@
 
     <tbody>
         {#each paginated as row (row.id)}
-            <tr animate:flip={{ duration: 200 }}>
+            <tr animate:flip={{ duration: 350 }}>
                 {#if showControls}
                     <td>
                         <div class="text-center space-x-2">
@@ -170,7 +170,7 @@
                     </td>
                 {/if}
                 {#each columns as column}
-                    <td> {row[column]} </td>
+                    <td class="break-words"> {row[column]} </td>
                 {/each}
             </tr>
         {/each}
