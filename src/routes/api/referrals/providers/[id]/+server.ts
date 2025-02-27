@@ -40,7 +40,7 @@ export async function PUT({ request, params }) {
         } = providerData
         newModel["languages"] = validatedBody.languages
         newModel["services"] = validatedBody.services
-        newModel["areasCovered"] = validatedBody.areasCovered
+        newModel["id"] = id
 
         return json(newModel)
     } catch (error) {
