@@ -19,7 +19,7 @@ export async function POST({ request }) {
         const validatedBody = postSchemaProvider.parse(await request.json())
         const providerData = createInsertSchema(referralProviders).parse(validatedBody)
 
-        await db.transaction(async tx => {
+        const createdProvider = await db.transaction(async tx => {
             const [createdProvider] = await tx.insert(referralProviders).values(providerData).returning()
 
             await Promise.all(
@@ -36,11 +36,12 @@ export async function POST({ request }) {
                     return tx.insert(relation.junctionTable).values(postSchema)
                 })
             )
+            return createdProvider
         })
 
         const newModel: {
             [key: string]: string | boolean | number | undefined | null | { id: number; name: string }[]
-        } = providerData
+        } = createdProvider
         newModel["languages"] = validatedBody.languages
         newModel["services"] = validatedBody.services
 
