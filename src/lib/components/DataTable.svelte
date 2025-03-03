@@ -67,7 +67,7 @@
     function applySort(data: { [K in keyof T]: string }[], key: keyof T | null, direction: -1 | 0 | 1) {
         if (key === null) return data
         if (direction === 0) return data
-        return data.toSorted((a, b) => (a[key] > b[key] ? -1 : 1) * direction)
+        return data.toSorted((a, b) => (a[key].toLowerCase() > b[key].toLowerCase() ? -1 : 1) * direction)
     }
 
     function titleCase(str: string) {
