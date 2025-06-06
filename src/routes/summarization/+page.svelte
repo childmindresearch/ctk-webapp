@@ -7,7 +7,6 @@
     let file: FileList
     let loading = false
 
-    const model = "anthropic.claude-3-5-sonnet-20241022-v2:0"
     const toastStore = getToastStore()
 
     async function docxToText(docx: File) {
@@ -41,7 +40,6 @@
         const form = new FormData()
         form.append("userPrompt", userPrompt)
         form.append("systemPrompt", systemPrompt)
-        form.append("model", model)
 
         loading = true
         const response = await fetch("/api/llm", {
@@ -50,7 +48,7 @@
         })
             .then(async response => {
                 if (response.ok) {
-                    return await response.text()
+                    return await response.json()
                 }
                 const toast: ToastSettings = {
                     message: "There was a problem connecting to the server.",
@@ -72,11 +70,14 @@
             loading = false
             return
         }
-        let markdown2docxForm = new FormData()
-        markdown2docxForm.append("markdown", response)
+
+        const formData = new FormData()
+        formData.append("markdown", response)
+        formData.append("formatting", JSON.stringify({}))
+
         return await fetch("/api/markdown2docx", {
             method: "POST",
-            body: markdown2docxForm
+            body: formData
         })
             .then(async response => {
                 if (response.ok) {
