@@ -7,15 +7,17 @@ export async function POST({ fetch, request }) {
 
     const systemPrompt = formData.get("systemPrompt")
     const userPrompt = formData.get("userPrompt")
-    const model = formData.get("model") || "gpt-4o"
 
     if (!systemPrompt || !userPrompt) {
         return new Response("System or user prompt not found.", { status: 400 })
     }
-    const body = JSON.stringify({ system_prompt: systemPrompt, user_prompt: userPrompt, model: model })
+    const body = JSON.stringify({ system_prompt: systemPrompt, user_prompt: userPrompt })
 
     return await fetch(`${AZURE_FUNCTION_PYTHON_URL}/llm`, {
         method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
         body
     })
         .then(async response => {

@@ -6,6 +6,7 @@
     const pages = [
         { name: "DSM Codes", href: "/dsm" },
         { name: "Intake", href: "/intake" },
+        { name: "Pyrite Reports (Alpha)", href: "/pyrite" },
         { name: "Summarization", href: "/summarization" },
         { name: "Referrals", href: "/referrals" },
         { name: "Templates", href: "/templates" }

@@ -23,7 +23,7 @@ services:
             - .env
         volumes:
             - ./postgresql:/var/lib/postgresql/data
-            - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+            - ./e2e/init.sql:/docker-entrypoint-initdb.d/init.sql
         networks:
             - default
 
