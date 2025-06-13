@@ -67,7 +67,10 @@
     {#if providers.length > 0}
         <DataTable data={unpackedProviders} {onCreate} {onDelete} idColumn="id" hiddenColumns={["id"]} />
     {:else}
-        <p>Error: No providers found.</p>
+        <p>No providers found.</p>
+        <button onclick={onCreate} class="btn variant-filled-secondary">
+            <span>Create</span>
+        </button>
     {/if}
 </div>
 <LoadingBar hidden={!loading} />
