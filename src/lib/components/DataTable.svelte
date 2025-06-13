@@ -3,17 +3,16 @@
 
     Props:
     @param {T[]} data - Array of objects to display in the table
-    @param {Function} onExport - Callback function when export button is clicked, receives current table data
     @param {(keyof T)[]} [hiddenColumns] - Optional array of column keys to hide from display
     @param {Function} [onCreate] - Optional callback function when create button is clicked
     @param {Function} [onEdit] - Optional callback function when edit button is clicked, receives row data
     @param {Function} [onDelete] - Optional callback function when delete button is clicked, receives row data
+    @param {Function} [unpack] - Optional function uses to process row data into strings.
 
     Example:
     ```svelte
     <DataTable
         data={myData}
-        onExport={(data) => handleExport(data)}
         hiddenColumns={['id']}
         onCreate={() => handleCreate()}
         onEdit={(row) => handleEdit(row)}
@@ -21,37 +20,56 @@
     />
     ```
 -->
-<script lang="ts">
+<script lang="ts" generics="T extends Record<string, any>">
     import EditIcon from "$lib/icons/EditIcon.svelte"
     import TrashIcon from "$lib/icons/TrashIcon.svelte"
-    import { TableHandler, Datatable, ThSort, ThFilter, Th } from "@vincjo/datatables"
+    import { flip } from "svelte/animate"
+    import SortBothArrows from "$lib/icons/SortBothArrows.svelte"
+    import SortDownArrow from "$lib/icons/SortDownArrow.svelte"
+    import SortUpArrow from "$lib/icons/SortUpArrow.svelte"
 
-    type Props<T extends Record<string, string | number | string[]>> = {
+    type Props<T extends Record<string, any>> = {
         data: T[]
-        hiddenColumns?: (keyof T)[]
-        onExport?: (data: T[]) => void
-        onCreate?: () => T
-        onEdit?: (row: T) => void
-        onDelete?: (row: T) => void
+        idColumn: string
+        hiddenColumns?: readonly (keyof T)[]
+        onCreate?: () => void
+        onEdit?: (row: (typeof data)[number]) => void
+        onDelete?: (row: (typeof data)[number]) => void
+        unpack?: (value: T) => { [K in keyof T]: string }
     }
 
-    let { data, hiddenColumns, onExport, onCreate, onEdit, onDelete }: Props<Record<string, string | number>> = $props()
+    function defaultUnpack<T extends Record<string, unknown>>(row: T) {
+        return Object.fromEntries(
+            Object.entries(row).map(entry => {
+                const [key, value] = entry
+                return [key, String(value)]
+            })
+        ) as { [K in keyof T]: string }
+    }
 
-    type DataItem = (typeof data)[number]
-    const columnNames: (keyof DataItem)[] = Object.keys(data[0])
+    const { data, idColumn, hiddenColumns, onCreate, onEdit, onDelete, unpack = defaultUnpack }: Props<T> = $props()
 
-    let table = new TableHandler(data, { rowsPerPage: 10, selectBy: "id" })
-    const view = table.createView(
-        columnNames.map((col, index) => {
-            return {
-                index: index + (onEdit || onDelete ? 1 : 0), // +1 to skip the controls column.
-                name: col,
-                isVisible: !hiddenColumns?.find(c => c === col)
-            }
-        })
-    )
+    const paginationOptions = [5, 10, 20, 50] as const
+    let currentPage = $state(0)
+    let nRowsPerPage: (typeof paginationOptions)[number] = $state(10)
+    let sortKey: keyof T | null = $state(null)
+    let sortDirection: -1 | 0 | 1 = $state(0)
 
-    const search = table.createSearch()
+    const showControls = onEdit || onDelete
+
+    let globalSearch = $state("")
+    let searched = $derived(applyFilters(data))
+    let sorted = $derived(applySort(searched, sortKey, sortDirection))
+    let paginated = $derived(applyPagination(sorted))
+    let maxPages = $derived(Math.ceil(searched.length / nRowsPerPage))
+
+    const columns = (Object.keys(data[0]) as (keyof T)[]).filter(name => !hiddenColumns?.includes(name))
+
+    function applySort(data: { [K in keyof T]: string }[], key: keyof T | null, direction: -1 | 0 | 1) {
+        if (key === null) return data
+        if (direction === 0) return data
+        return data.toSorted((a, b) => (a[key].toLowerCase() > b[key].toLowerCase() ? -1 : 1) * direction)
+    }
 
     function titleCase(str: string) {
         return str
@@ -59,105 +77,121 @@
             .map(s => s.charAt(0).toUpperCase() + s.substring(1))
             .join(" ")
     }
+
+    function applyFilters(data: T[]) {
+        let selected = data.map(unpack)
+
+        if (globalSearch) {
+            selected = selected.filter(row => {
+                const rowString = Object.values(row).reduce(
+                    (accumulator, value) => accumulator + " " + String(value),
+                    ""
+                )
+                return rowString.includes(globalSearch)
+            })
+        }
+        return selected
+    }
+
+    function applyPagination(data: { [K in keyof T]: string }[]) {
+        const skip = nRowsPerPage * currentPage
+        return data.slice(skip, skip + nRowsPerPage)
+    }
 </script>
 
-<div class="mb-1 w-full flex">
-    <input
-        class="input max-w-48"
-        type="text"
-        placeholder="Search"
-        bind:value={search.value}
-        oninput={() => search.set()}
-    />
-    <div class="ml-auto">
-        Rows per page
-        <select class="select w-16" bind:value={table.rowsPerPage} onchange={() => table.setPage(1)}>
-            {#each [5, 10, 20, 50] as option}
-                <option value={option}>{option}</option>
-            {/each}
-        </select>
-    </div>
+<div class="pb-2">
+    <input class="input max-w-96" type="search" bind:value={globalSearch} placeholder="Search" />
+    <select bind:value={nRowsPerPage}>
+        {#each paginationOptions as num}
+            <option value={num}>{num}</option>
+        {/each}
+    </select>
 </div>
+<table class="table-fixed table table-hover overflow-x-auto">
+    <thead>
+        <tr>
+            {#if showControls}
+                <td>Controls</td>
+            {/if}
+            {#each columns as name}
+                <td
+                    >{titleCase((name as string).replace("_", " "))}
 
-<Datatable {table}>
-    <table>
-        <thead>
-            <tr>
-                {#if onEdit || onDelete}
-                    <Th><strong>Controls</strong></Th>
-                {/if}
-                {#each view.columns as column}
-                    <ThSort {table} field={column.name as string}>
-                        {titleCase((column.name as string).replace("_", " "))}
-                    </ThSort>
-                {/each}
-            </tr>
-            <tr>
-                {#if onEdit || onDelete}
-                    <Th />
-                {/if}
-                {#each view.columns as column}
-                    <ThFilter {table} field={column.name as string} />
-                {/each}
-            </tr>
-        </thead>
+                    <button
+                        onclick={() => {
+                            sortKey = name
+                            sortDirection -= 1
+                            if (sortDirection === -2) sortDirection = 1
+                        }}
+                    >
+                        {#if sortKey !== name || sortDirection === 0}
+                            <SortBothArrows />
+                        {:else if sortDirection === -1}
+                            <SortDownArrow />
+                        {:else}
+                            <SortUpArrow />
+                        {/if}
+                    </button>
+                </td>
+            {/each}
+        </tr>
+    </thead>
 
-        <tbody>
-            {#each table.rows as row}
-                <tr>
-                    {#if onEdit || onDelete}
-                        <td>
-                            <div class="text-center space-x-2">
+    <tbody>
+        {#each paginated as row (row[idColumn])}
+            <tr animate:flip={{ duration: 350 }}>
+                {#if showControls}
+                    <td>
+                        <div class="text-center space-x-2">
+                            {#if onEdit}
                                 <button
                                     aria-label="edit"
                                     class="text-warning-600 hover:text-warning-300 transition-colors duration-150"
                                     onclick={() => {
-                                        if (onEdit) onEdit(row)
+                                        const target = data.find(dataRow => dataRow.id == row.id)
+                                        if (target) onEdit(target)
                                     }}
                                 >
                                     <EditIcon />
                                 </button>
+                            {/if}
+                            {#if onDelete}
                                 <button
                                     aria-label="delete"
                                     class="text-error-600 hover:text-error-300 transition-colors duration-150"
                                     onclick={() => {
-                                        if (onDelete) onDelete(row)
+                                        const target = data.find(dataRow => dataRow.id == row.id)
+                                        if (target) onDelete(target)
                                     }}
                                 >
                                     <TrashIcon />
                                 </button>
-                            </div>
-                        </td>
-                    {/if}
-                    {#each columnNames as column}
-                        <td>{row[column]}</td>
-                    {/each}
-                </tr>
-            {/each}
-        </tbody>
-    </table>
-</Datatable>
+                            {/if}
+                        </div>
+                    </td>
+                {/if}
+                {#each columns as column}
+                    <td class="break-words"> {row[column]} </td>
+                {/each}
+            </tr>
+        {/each}
+    </tbody>
+</table>
 
-<div class="mt-1 w-full flex">
-    <div class="space-x-1">
-        {#if onCreate}
-            <button aria-label="create" class="btn variant-filled-primary" onclick={onCreate}> Create </button>
-        {/if}
-        {#if onExport}
-            <button aria-label="export" class="btn variant-filled-primary" onclick={() => onExport([...table.allRows])}>
-                Export
-            </button>
-        {/if}
-    </div>
+<div class="pt-2 flex w-full justify-between">
+    {#if onCreate}
+        <button class="btn variant-filled-primary" onclick={onCreate}> Create </button>
+    {/if}
 
-    <div class="flex space-x-1 ml-auto">
-        <p class="my-auto">Showing {table.rowCount.start} to {table.rowCount.end} of {table.rowCount.total} rows</p>
-        {#each table.pagesWithEllipsis as page}
+    <div class="space-x-2">
+        {#each Array(maxPages).keys() as val}
             <button
-                onclick={() => table.setPage(page)}
-                class="btn {page === table.currentPage ? 'bg-primary-300' : 'bg-surface-800'}"
-                type="button">{page ?? "..."}</button
+                class:variant-filled-secondary={currentPage === val}
+                class="btn variant-filled-primary"
+                onclick={() => (currentPage = val)}
             >
+                {val + 1}
+            </button>
         {/each}
     </div>
 </div>

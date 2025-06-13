@@ -1,0 +1,69 @@
+\c ctk;
+
+-- Templates and DSM codes
+CREATE TABLE users (
+    id SERIAL PRIMARY KEY,
+    email VARCHAR(255) NOT NULL,
+    is_admin BOOLEAN
+);
+CREATE TABLE dsm_codes (
+    id SERIAL PRIMARY KEY,
+    code VARCHAR(255) NOT NULL,
+    label VARCHAR(255) NOT NULL
+);
+CREATE TABLE templates (
+    id SERIAL PRIMARY KEY ,
+    text VARCHAR(8000) NOT NULL,
+    parent_id INTEGER,
+    priority INTEGER NOT NULL
+);
+
+INSERT INTO users (email, is_admin) VALUES
+    ('development.user.admin@example.com', true);
+INSERT INTO dsm_codes (code, label) VALUES
+    ('304.30/F12.20', 'Severe Cannabis Use Disorder'),
+    ('300.23/F40.10', 'Social Anxiety Disorder');
+INSERT INTO templates (id, text, parent_id, priority) VALUES
+    (1, 'Root', NULL, 0),
+    (2, 'Directory', 1, 0),
+    (3, 'Leaf', 2, 0);
+
+-- Referral network tables
+CREATE TABLE provider (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(500) NOT NULL
+);
+
+CREATE TABLE provider_address (
+    id SERIAL PRIMARY KEY,
+    provider_id INTEGER NOT NULL REFERENCES provider(id) ON DELETE CASCADE,
+    is_remote BOOLEAN,
+    location VARCHAR(255),
+    address_line1 VARCHAR(255),
+    address_line2 VARCHAR(255),
+    city VARCHAR(100),
+    state VARCHAR(50),
+    zip_code VARCHAR(20),
+    contacts VARCHAR(255)[]
+);
+
+
+
+-- UPDATED: Insert providers without primary_id
+INSERT INTO provider (name) VALUES
+('NYC Child Study Center'),
+('Brooklyn Family Therapy Associates'),
+('Queens Developmental Services');
+
+
+-- Rest of the inserts remain the same
+INSERT INTO provider_address (provider_id, location, is_remote, address_line1, address_line2, city, state, zip_code, contacts) VALUES
+-- NYC Child Study Center addresses
+(1, 'Manhattan', FALSE, '1 Park Avenue', '7th Floor', 'New York', 'NY', '10016', ARRAY['+1 438 529 4420', 'info@nycchildstudy.org', 'www.nycchildstudy.org']),
+(1, 'Manhattan', FALSE, '315 E 62nd Street', '5th Floor', 'New York', 'NY', '10065', ARRAY['+1 212 224 1350', 'uppereast@nycchildstudy.org']),
+-- Brooklyn Family Therapy Associates
+(2, 'Brooklyn', FALSE, '26 Court Street', 'Suite 1808', 'Brooklyn', 'NY', '11242', ARRAY['+1 718 555 0123', 'courtst@brooklynfta.com', 'www.brooklynfamilytherapy.org']),
+(2, 'Brookyln', FALSE, '142 Joralemon Street', 'Suite 11C', 'Brooklyn', 'NY', '11201', ARRAY['+1 718 555 0124', 'joralemon@brooklynfta.com']),
+-- Queens Developmental Services
+(3, 'Space', FALSE, '104-70 Queens Boulevard', 'Floor 2', 'Forest Hills', 'NY', '11375', ARRAY['+1 718 555 0200', 'intake@queensdev.org', 'www.queensdevelopmental.org']),
+(3, 'Space', TRUE, NULL, NULL, NULL, NULL, NULL, ARRAY['+1 718 555 0201', 'telehealth@queensdev.org', 'portal.queensdevelopmental.org']);

@@ -2,29 +2,17 @@ import { logger } from "$lib/server/logging"
 import { AZURE_FUNCTION_PYTHON_URL } from "$lib/server/environment"
 
 export async function POST({ fetch, request }) {
-    logger.info("Converting markdown to docx")
+    logger.info("Creating referral table document")
 
-    const formData = await request.formData()
-
-    let formatting = {}
-    const formattingValue = formData.get("formatting")
-    if (formattingValue && typeof formattingValue === "string") {
-        try {
-            formatting = JSON.parse(formattingValue)
-        } catch (e) {
-            logger.warn("Failed to parse formatting, using default")
-            formatting = {}
-        }
-    }
-
-    return await fetch(`${AZURE_FUNCTION_PYTHON_URL}/markdown2docx`, {
+    const body = JSON.parse(await request.text())
+    return await fetch(`${AZURE_FUNCTION_PYTHON_URL}/referral_table_docx`, {
         method: "POST",
         headers: {
             "Content-Type": "application/json"
         },
         body: JSON.stringify({
-            markdown: formData.get("markdown"),
-            formatting: formatting
+            title: body.title,
+            row_data: body.row_data
         })
     })
         .then(async response => {
