@@ -25,7 +25,8 @@ const ProviderAddressSchema = z.object({
     addressLine2: z.string().optional(),
     city: z.string().optional(),
     state: z.string().optional(),
-    zipCode: z.string().optional()
+    zipCode: z.string().optional(),
+    contacts: z.array(z.string())
 })
 
 const ProviderLocationInputSchema = z.object({

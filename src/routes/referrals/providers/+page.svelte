@@ -1,6 +1,5 @@
 <script lang="ts">
     import DataTable from "$lib/components/DataTable.svelte"
-    import LoadingBar from "$lib/components/LoadingBar.svelte"
     import { unpackProviders } from "../utils.js"
     import { getModalStore, getToastStore, type ModalSettings } from "@skeletonlabs/skeleton"
 
@@ -11,7 +10,6 @@
 
     let providers = $state(data.data)
     let unpackedProviders = $derived(providers.map(unpackProviders))
-    let loading = $state(false)
 
     async function onCreate() {
         const modal: ModalSettings = {
@@ -48,7 +46,7 @@
         const modal: ModalSettings = {
             type: "confirm",
             title: `Delete DSM Code`,
-            body: `Are you sure you wish to delete "${row.Name}"?`,
+            body: `Are you sure you wish to delete "${row.name}"?`,
             response: async response => {
                 if (!response) return
                 await fetch(`/api/referrals/providers/${row.id}`, { method: "DELETE" }).then(response => {
@@ -77,7 +75,7 @@
             component: "modalProvider",
             title: "Update Provider",
             meta: {
-                name: row.Name,
+                name: row.name,
                 addresses: provider?.addresses ?? [],
                 locations: provider?.locations ?? []
             },
@@ -121,4 +119,3 @@
         </button>
     {/if}
 </div>
-<LoadingBar hidden={!loading} />

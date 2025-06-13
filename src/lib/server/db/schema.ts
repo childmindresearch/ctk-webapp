@@ -1,4 +1,4 @@
-import { pgTable, serial, varchar, integer, boolean, primaryKey } from "drizzle-orm/pg-core"
+import { pgTable, serial, varchar, integer, boolean, primaryKey, text } from "drizzle-orm/pg-core"
 import { relations } from "drizzle-orm"
 
 export const providerLocation = pgTable("location", {
@@ -8,8 +8,7 @@ export const providerLocation = pgTable("location", {
 
 export const provider = pgTable("provider", {
     id: serial("id").primaryKey(),
-    name: varchar("name", { length: 500 }).notNull(),
-    acceptsInsurance: boolean("accepts_insurance").default(false)
+    name: varchar("name", { length: 500 }).notNull()
 })
 
 export const providerAddress = pgTable("provider_address", {
@@ -21,7 +20,8 @@ export const providerAddress = pgTable("provider_address", {
     addressLine2: varchar("address_line2", { length: 255 }),
     city: varchar("city", { length: 100 }),
     state: varchar("state", { length: 50 }),
-    zipCode: varchar("zip_code", { length: 20 })
+    zipCode: varchar("zip_code", { length: 20 }),
+    contacts: text("contacts").array()
 })
 
 export const providerLocationJunction = pgTable(

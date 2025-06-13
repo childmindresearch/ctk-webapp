@@ -29,7 +29,8 @@ export async function getProviders(ids: number | number[] | undefined = undefine
                 addressLine2: providerAddress.addressLine2,
                 city: providerAddress.city,
                 state: providerAddress.state,
-                zipCode: providerAddress.zipCode
+                zipCode: providerAddress.zipCode,
+                contacts: providerAddress.contacts
             })
             .from(providerAddress)
     ])
@@ -39,29 +40,28 @@ export async function getProviders(ids: number | number[] | undefined = undefine
         id: number
         name: string
     }[]
-    const groupedLocations = groupById(locationsNoNull)
-    const groupedAddresses = groupById(addresses)
+    const groupedLocations = groupById(locationsNoNull, "providerId")
+    const groupedAddresses = groupById(addresses, "providerId")
 
     const providersWithRelations: GetProviderResponse = providers.map(providerData => {
         const providerId = providerData.id
-
-        const providerLocations = groupedLocations
-        const providerAddresses = groupedAddresses
-
         return {
             ...providerData,
-            locations: providerLocations[providerId] || [],
-            addresses: providerAddresses[providerId] || []
+            locations: groupedLocations[providerId] || [],
+            addresses: groupedAddresses[providerId] || []
         }
     })
 
     return providersWithRelations
 }
 
-function groupById<Type extends { providerId: number }>(values: Array<Type>): Record<number, Type[]> {
+function groupById<Type extends Record<string, unknown>>(
+    values: Array<Type>,
+    property: keyof Type
+): Record<string, Type[]> {
     return values.reduce(
         (acc, val) => {
-            const key = val.providerId as number
+            const key = val[property] as string
             if (!acc[key]) acc[key] = []
             acc[key].push(val)
             return acc

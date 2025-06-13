@@ -36,7 +36,8 @@ const ProviderAddressSchema = z.object({
     addressLine2: z.string().optional(),
     city: z.string().optional(),
     state: z.string().optional(),
-    zipCode: z.string().optional()
+    zipCode: z.string().optional(),
+    contacts: z.array(z.string()).optional()
 })
 
 const ProviderLocationInputSchema = z.object({
@@ -58,6 +59,8 @@ export async function PUT({ params, request }) {
         return providerRequest
     }
 
+    logger.info("PUT!")
+    logger.info(providerRequest)
     try {
         await db.transaction(async tx => {
             await tx

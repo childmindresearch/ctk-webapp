@@ -4,7 +4,7 @@ export function unpackProviders(row: GetSingleProviderResponse) {
     console.log(row)
     return {
         id: String(row.id),
-        Name: row.name,
+        name: row.name,
         locations: row.locations.length ? concatenateTruthyUnique(row.locations.map(loc => loc.name)) : ""
     }
 }
