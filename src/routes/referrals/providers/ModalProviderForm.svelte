@@ -4,7 +4,6 @@
     const modalStore = getModalStore()
 
     let name: string = $state($modalStore[0].meta?.name ?? "")
-
     let addresses: {
         addressLine1?: string
         addressLine2?: string
@@ -46,6 +45,7 @@
                     return
                 }
             } else {
+                address.location = "Remote"
                 address.addressLine1 = undefined
                 address.city = undefined
                 address.state = undefined
