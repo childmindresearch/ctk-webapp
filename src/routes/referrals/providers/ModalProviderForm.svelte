@@ -4,8 +4,7 @@
 
     const modalStore = getModalStore()
 
-    let name: string = $state($modalStore[0].meta?.providerName ?? "")
-    let acceptsInsurance: boolean = $state($modalStore[0].meta?.acceptsInsurance ?? false)
+    let name: string = $state($modalStore[0].meta?.name ?? "")
 
     let addresses: Array<{
         addressLine1?: string
@@ -39,7 +38,6 @@
 
             $modalStore[0].response({
                 name: name,
-                acceptsInsurance,
                 addresses: validAddresses.length > 0 ? validAddresses : undefined,
                 locations:
                     idsSelected.Locations.length > 0

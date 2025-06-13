@@ -34,7 +34,6 @@ const ProviderLocationInputSchema = z.object({
 
 const PostProviderRequestSchema = z.object({
     name: z.string(),
-    acceptsInsurance: z.boolean().optional(),
     addresses: z.array(ProviderAddressSchema).optional(),
     locations: z.array(ProviderLocationInputSchema).optional()
 })
@@ -51,8 +50,7 @@ export async function POST({ request }) {
             const providerIds: { id: number }[] = await tx
                 .insert(provider)
                 .values({
-                    name: providerRequest.name,
-                    acceptsInsurance: providerRequest.acceptsInsurance ?? false
+                    name: providerRequest.name
                 })
                 .returning({ id: provider.id })
             const providerId = providerIds[0].id
