@@ -1,7 +1,7 @@
 import { db } from "$lib/server/db"
-import { provider, providerLocation, providerLocationJunction, providerAddress } from "$lib/server/db/schema.js"
+import { provider, providerAddress } from "$lib/server/db/schema.js"
 import type { GetProviderResponse } from "$lib/types"
-import { eq, inArray } from "drizzle-orm"
+import { inArray } from "drizzle-orm"
 
 export async function getProviders(ids: number | number[] | undefined = undefined): Promise<GetProviderResponse> {
     let providers
@@ -12,19 +12,12 @@ export async function getProviders(ids: number | number[] | undefined = undefine
         providers = await db.select().from(provider).where(inArray(provider.id, ids))
     }
 
-    const [locations, addresses] = await Promise.all([
-        db
-            .select({
-                providerId: providerLocationJunction.providerId,
-                id: providerLocation.id,
-                name: providerLocation.name
-            })
-            .from(providerLocation)
-            .leftJoin(providerLocationJunction, eq(providerLocationJunction.locationId, providerLocation.id)),
+    const [addresses] = await Promise.all([
         db
             .select({
                 providerId: providerAddress.providerId,
                 id: providerAddress.id,
+                location: providerAddress.location,
                 addressLine1: providerAddress.addressLine1,
                 addressLine2: providerAddress.addressLine2,
                 city: providerAddress.city,
@@ -35,19 +28,12 @@ export async function getProviders(ids: number | number[] | undefined = undefine
             .from(providerAddress)
     ])
 
-    const locationsNoNull = locations.filter(loc => loc.providerId !== null) as {
-        providerId: number
-        id: number
-        name: string
-    }[]
-    const groupedLocations = groupById(locationsNoNull, "providerId")
     const groupedAddresses = groupById(addresses, "providerId")
 
     const providersWithRelations: GetProviderResponse = providers.map(providerData => {
         const providerId = providerData.id
         return {
             ...providerData,
-            locations: groupedLocations[providerId] || [],
             addresses: groupedAddresses[providerId] || []
         }
     })

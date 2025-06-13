@@ -13,15 +13,12 @@ export type Address = {
     state: string | null
     zipCode: string | null
     contacts: string[] | null
+    location: string | null
 }
 
 export type GetSingleProviderResponse = {
     id: number
     name: string
-    locations: Array<{
-        id: number
-        name: string
-    }>
     addresses: Address[]
 }
 

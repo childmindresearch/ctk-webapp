@@ -1,11 +1,10 @@
 import type { GetSingleProviderResponse } from "$lib/types"
 
 export function unpackProviders(row: GetSingleProviderResponse) {
-    console.log(row)
     return {
         id: String(row.id),
         name: row.name,
-        locations: row.locations.length ? concatenateTruthyUnique(row.locations.map(loc => loc.name)) : ""
+        location: concatenateTruthyUnique(row.addresses.map(addr => addr.location))
     }
 }
 

@@ -29,27 +29,16 @@ INSERT INTO templates (id, text, parent_id, priority) VALUES
     (3, 'Leaf', 2, 0);
 
 -- Referral network tables
-CREATE TABLE location (
-    id SERIAL PRIMARY KEY,
-    name VARCHAR(255) NOT NULL UNIQUE
-);
-
 CREATE TABLE provider (
     id SERIAL PRIMARY KEY,
     name VARCHAR(500) NOT NULL
-);
-
--- NEW: Junction table for many-to-many provider-location relationship
-CREATE TABLE provider_location (
-    provider_id INTEGER NOT NULL REFERENCES provider(id) ON DELETE CASCADE,
-    location_id INTEGER NOT NULL REFERENCES location(id),
-    PRIMARY KEY (provider_id, location_id)
 );
 
 CREATE TABLE provider_address (
     id SERIAL PRIMARY KEY,
     provider_id INTEGER NOT NULL REFERENCES provider(id) ON DELETE CASCADE,
     is_remote BOOLEAN,
+    location VARCHAR(255),
     address_line1 VARCHAR(255),
     address_line2 VARCHAR(255),
     city VARCHAR(100),
@@ -59,14 +48,6 @@ CREATE TABLE provider_address (
 );
 
 
--- Insert reference data (unchanged)
-INSERT INTO location (name) VALUES
-('Manhattan'),
-('Brooklyn'),
-('Queens'),
-('Bronx'),
-('Staten Island');
-
 
 -- UPDATED: Insert providers without primary_id
 INSERT INTO provider (name) VALUES
@@ -74,23 +55,15 @@ INSERT INTO provider (name) VALUES
 ('Brooklyn Family Therapy Associates'),
 ('Queens Developmental Services');
 
--- NEW: Insert provider-location relationships
-INSERT INTO provider_location (provider_id, location_id) VALUES
--- NYC Child Study Center operates in Manhattan (primary)
-(1, 1),
--- Brooklyn Family Therapy Associates operates in Brooklyn (primary)
-(2, 2),
--- Queens Developmental Services operates in Queens (primary)
-(3, 3);
 
 -- Rest of the inserts remain the same
-INSERT INTO provider_address (provider_id, is_remote, address_line1, address_line2, city, state, zip_code, contacts) VALUES
+INSERT INTO provider_address (provider_id, location, is_remote, address_line1, address_line2, city, state, zip_code, contacts) VALUES
 -- NYC Child Study Center addresses
-(1, FALSE, '1 Park Avenue', '7th Floor', 'New York', 'NY', '10016', ARRAY['+1 438 529 4420', 'info@nycchildstudy.org', 'www.nycchildstudy.org']),
-(1, FALSE, '315 E 62nd Street', '5th Floor', 'New York', 'NY', '10065', ARRAY['+1 212 224 1350', 'uppereast@nycchildstudy.org']),
+(1, 'Manhattan', FALSE, '1 Park Avenue', '7th Floor', 'New York', 'NY', '10016', ARRAY['+1 438 529 4420', 'info@nycchildstudy.org', 'www.nycchildstudy.org']),
+(1, 'Manhattan', FALSE, '315 E 62nd Street', '5th Floor', 'New York', 'NY', '10065', ARRAY['+1 212 224 1350', 'uppereast@nycchildstudy.org']),
 -- Brooklyn Family Therapy Associates
-(2, FALSE, '26 Court Street', 'Suite 1808', 'Brooklyn', 'NY', '11242', ARRAY['+1 718 555 0123', 'courtst@brooklynfta.com', 'www.brooklynfamilytherapy.org']),
-(2, FALSE, '142 Joralemon Street', 'Suite 11C', 'Brooklyn', 'NY', '11201', ARRAY['+1 718 555 0124', 'joralemon@brooklynfta.com']),
+(2, 'Brooklyn', FALSE, '26 Court Street', 'Suite 1808', 'Brooklyn', 'NY', '11242', ARRAY['+1 718 555 0123', 'courtst@brooklynfta.com', 'www.brooklynfamilytherapy.org']),
+(2, 'Brookyln', FALSE, '142 Joralemon Street', 'Suite 11C', 'Brooklyn', 'NY', '11201', ARRAY['+1 718 555 0124', 'joralemon@brooklynfta.com']),
 -- Queens Developmental Services
-(3, FALSE, '104-70 Queens Boulevard', 'Floor 2', 'Forest Hills', 'NY', '11375', ARRAY['+1 718 555 0200', 'intake@queensdev.org', 'www.queensdevelopmental.org']),
-(3, TRUE, NULL, NULL, NULL, NULL, NULL, ARRAY['+1 718 555 0201', 'telehealth@queensdev.org', 'portal.queensdevelopmental.org']);
+(3, 'Space', FALSE, '104-70 Queens Boulevard', 'Floor 2', 'Forest Hills', 'NY', '11375', ARRAY['+1 718 555 0200', 'intake@queensdev.org', 'www.queensdevelopmental.org']),
+(3, 'Space', TRUE, NULL, NULL, NULL, NULL, NULL, ARRAY['+1 718 555 0201', 'telehealth@queensdev.org', 'portal.queensdevelopmental.org']);

@@ -1,6 +1,5 @@
 <script lang="ts">
     import { getModalStore } from "@skeletonlabs/skeleton"
-    import MultiSelect from "../MultiSelect.svelte"
 
     const modalStore = getModalStore()
 
@@ -14,15 +13,8 @@
         state?: string
         zipCode?: string
         contacts?: string[]
+        location?: string
     }[] = $state($modalStore[0].meta?.addresses ? [...$modalStore[0].meta?.addresses] : [{}])
-
-    const multiSelectKeys = ["Locations"] as const
-    const multiSelects: Record<(typeof multiSelectKeys)[number], string> = {
-        Locations: "/api/referrals/providers/locations"
-    }
-    const idsSelected: Record<(typeof multiSelectKeys)[number], { id: number; name: string }[]> = {
-        Locations: $modalStore[0].meta?.locations ?? []
-    }
 
     function addAddress() {
         addresses.push({})
@@ -63,11 +55,7 @@
         if ($modalStore[0].response) {
             $modalStore[0].response({
                 name: name,
-                addresses: addresses.length > 0 ? addresses : undefined,
-                locations:
-                    idsSelected.Locations.length > 0
-                        ? idsSelected.Locations.map(loc => ({ locationId: loc.id }))
-                        : undefined
+                addresses: addresses.length > 0 ? addresses : undefined
             })
             modalStore.close()
         }
@@ -111,6 +99,11 @@
                         </label>
 
                         {#if !address.isRemote}
+                            <label class="label">
+                                <span>Location</span>
+                                <input class="input" required bind:value={address.location} />
+                            </label>
+
                             <label class="label">
                                 <span>Address Line 1*</span>
                                 <input class="input" required bind:value={address.addressLine1} />
@@ -178,18 +171,6 @@
                     </div>
                 {/each}
             </div>
-
-            <!-- Locations Selection -->
-            {#each multiSelectKeys as name}
-                <MultiSelect
-                    {name}
-                    endpoint={multiSelects[name]}
-                    allowCreate={true}
-                    isSelected={idsSelected[name].map(selection => selection.name)}
-                    onSelect={selection => (idsSelected[name] = selection)}
-                />
-            {/each}
-
             <button class="btn variant-filled-primary" type="submit"> Submit </button>
         </form>
     </div>

@@ -1,10 +1,5 @@
-import { pgTable, serial, varchar, integer, boolean, primaryKey, text } from "drizzle-orm/pg-core"
+import { pgTable, serial, varchar, integer, text } from "drizzle-orm/pg-core"
 import { relations } from "drizzle-orm"
-
-export const providerLocation = pgTable("location", {
-    id: serial("id").primaryKey(),
-    name: varchar("name", { length: 255 }).notNull()
-})
 
 export const provider = pgTable("provider", {
     id: serial("id").primaryKey(),
@@ -13,6 +8,7 @@ export const provider = pgTable("provider", {
 
 export const providerAddress = pgTable("provider_address", {
     id: serial("id").primaryKey(),
+    location: varchar("location", { length: 255 }),
     providerId: integer("provider_id")
         .notNull()
         .references(() => provider.id),
@@ -24,38 +20,8 @@ export const providerAddress = pgTable("provider_address", {
     contacts: text("contacts").array()
 })
 
-export const providerLocationJunction = pgTable(
-    "provider_location",
-    {
-        providerId: integer("provider_id")
-            .notNull()
-            .references(() => provider.id),
-        locationId: integer("location_id")
-            .notNull()
-            .references(() => providerLocation.id)
-    },
-    table => ({
-        pk: primaryKey({ columns: [table.providerId, table.locationId] })
-    })
-)
-export const locationRelations = relations(providerLocation, ({ many }) => ({
-    providerLocations: many(providerLocationJunction)
-}))
-
 export const providerRelations = relations(provider, ({ many }) => ({
-    providerLocations: many(providerLocationJunction),
     addresses: many(providerAddress)
-}))
-
-export const providerLocationRelations = relations(providerLocationJunction, ({ one }) => ({
-    provider: one(provider, {
-        fields: [providerLocationJunction.providerId],
-        references: [provider.id]
-    }),
-    location: one(providerLocation, {
-        fields: [providerLocationJunction.locationId],
-        references: [providerLocation.id]
-    })
 }))
 
 export const providerAddressRelations = relations(providerAddress, ({ one }) => ({

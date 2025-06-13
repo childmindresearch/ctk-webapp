@@ -1,5 +1,5 @@
 import { db } from "$lib/server/db"
-import { provider, providerAddress, providerLocationJunction } from "$lib/server/db/schema"
+import { provider, providerAddress } from "$lib/server/db/schema"
 import { logger } from "$lib/server/logging"
 import { isModel, zodValidateOr400 } from "$lib/server/zod_utils.js"
 import { json } from "@sveltejs/kit"
@@ -34,6 +34,7 @@ const ProviderAddressSchema = z.object({
     providerId: z.number().optional(),
     addressLine1: z.string().optional(),
     addressLine2: z.string().optional(),
+    location: z.string(),
     city: z.string().optional(),
     state: z.string().optional(),
     zipCode: z.string().optional(),
@@ -59,8 +60,6 @@ export async function PUT({ params, request }) {
         return providerRequest
     }
 
-    logger.info("PUT!")
-    logger.info(providerRequest)
     try {
         await db.transaction(async tx => {
             await tx
@@ -77,15 +76,6 @@ export async function PUT({ params, request }) {
                     providerId: id
                 }))
                 await tx.insert(providerAddress).values(addresses)
-            }
-
-            await tx.delete(providerLocationJunction).where(eq(providerLocationJunction.providerId, id))
-            if (providerRequest.locations && providerRequest.locations.length > 0) {
-                const junctionEntries = providerRequest.locations.map(location => ({
-                    providerId: id,
-                    locationId: location.locationId
-                }))
-                await tx.insert(providerLocationJunction).values(junctionEntries)
             }
         })
 
