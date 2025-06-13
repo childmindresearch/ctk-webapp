@@ -42,15 +42,14 @@ CREATE TABLE provider (
 
 -- NEW: Junction table for many-to-many provider-location relationship
 CREATE TABLE provider_location (
-    provider_id INTEGER NOT NULL REFERENCES provider(id),
+    provider_id INTEGER NOT NULL REFERENCES provider(id) ON DELETE CASCADE,
     location_id INTEGER NOT NULL REFERENCES location(id),
-    is_primary BOOLEAN DEFAULT FALSE,
     PRIMARY KEY (provider_id, location_id)
 );
 
 CREATE TABLE provider_address (
     id SERIAL PRIMARY KEY,
-    provider_id INTEGER NOT NULL REFERENCES provider(id),
+    provider_id INTEGER NOT NULL REFERENCES provider(id) ON DELETE CASCADE,
     address_line1 VARCHAR(255),
     address_line2 VARCHAR(255),
     city VARCHAR(100),

@@ -39,11 +39,33 @@
         }
         modalStore.trigger(modal)
     }
+
+    async function onDelete(row: ReturnType<typeof unpackProviders>) {
+        const modal: ModalSettings = {
+            type: "confirm",
+            title: `Delete DSM Code`,
+            body: `Are you sure you wish to delete "${row.Name}"?`,
+            response: async response => {
+                if (!response) return
+                await fetch(`/api/referrals/providers/${row.id}`, { method: "DELETE" }).then(response => {
+                    if (response.ok) {
+                        providers = providers.filter(prov => prov.id !== Number(row.id))
+                    } else {
+                        toastStore.trigger({
+                            message: "Could not delete provider",
+                            background: "variant-filled-error"
+                        })
+                    }
+                })
+            }
+        }
+        modalStore.trigger(modal)
+    }
 </script>
 
 <div class="z-0">
     {#if providers.length > 0}
-        <DataTable data={unpackedProviders} {onCreate} idColumn="providerId" hiddenColumns={["providerId"]} />
+        <DataTable data={unpackedProviders} {onCreate} {onDelete} idColumn="id" hiddenColumns={["id"]} />
     {:else}
         <p>Error: No providers found.</p>
     {/if}
