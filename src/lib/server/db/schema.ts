@@ -1,88 +1,66 @@
+import { pgTable, serial, varchar, integer, boolean, primaryKey } from "drizzle-orm/pg-core"
 import { relations } from "drizzle-orm"
-import { integer, text, boolean, pgTable, serial } from "drizzle-orm/pg-core"
 
-// Table definitions
-export const referralProviders = pgTable("referral_providers", {
+export const providerLocation = pgTable("location", {
     id: serial("id").primaryKey(),
-    name: text("name").notNull().unique(),
-    address: text("address").notNull(),
-    phone: text("phone").notNull(),
-    website: text("website"),
-    takesInsurance: boolean("takes_insurance").notNull(),
-    description: text("description")
+    name: varchar("name", { length: 255 }).notNull()
 })
 
-export const referralPresets = pgTable("referral_presets", {
+export const provider = pgTable("provider", {
     id: serial("id").primaryKey(),
-    name: text("name").notNull().unique()
+    name: varchar("name", { length: 500 }).notNull(),
+    acceptsInsurance: boolean("accepts_insurance").default(false)
 })
 
-export const referralServices = pgTable("referral_services", {
+export const providerAddress = pgTable("provider_address", {
     id: serial("id").primaryKey(),
-    name: text("name").notNull().unique()
-})
-
-export const referralLanguages = pgTable("referral_languages", {
-    id: serial("id").primaryKey(),
-    name: text("name").notNull().unique()
-})
-
-// Relationships
-
-export const providerRelations = relations(referralProviders, ({ many }) => ({
-    providersToLanguages: many(providersToLanguages),
-    providersToServices: many(providersToServices)
-}))
-
-export const presetsRelations = relations(referralPresets, ({ many }) => ({
-    providersToLanguages: many(presetsToLanguages),
-    providersToServices: many(presetsToServices)
-}))
-
-export const servicesRelations = relations(referralServices, ({ many }) => ({
-    providersToServices: many(providersToServices),
-    presetsToServices: many(presetsToServices)
-}))
-
-export const languagesRelations = relations(referralLanguages, ({ many }) => ({
-    providersToServices: many(providersToLanguages),
-    presetsToServices: many(presetsToLanguages)
-}))
-
-// Junction tables
-
-export const providersToLanguages = pgTable("providers_to_languages", {
     providerId: integer("provider_id")
         .notNull()
-        .references(() => referralProviders.id, { onDelete: "cascade" }),
-    languageId: integer("language_id")
-        .notNull()
-        .references(() => referralLanguages.id, { onDelete: "cascade" })
+        .references(() => provider.id),
+    addressLine1: varchar("address_line1", { length: 255 }),
+    addressLine2: varchar("address_line2", { length: 255 }),
+    city: varchar("city", { length: 100 }),
+    state: varchar("state", { length: 50 }),
+    zipCode: varchar("zip_code", { length: 20 })
 })
 
-export const providersToServices = pgTable("providers_to_services", {
-    providerId: integer("provider_id")
-        .notNull()
-        .references(() => referralProviders.id, { onDelete: "cascade" }),
-    serviceId: integer("service_id")
-        .notNull()
-        .references(() => referralServices.id, { onDelete: "cascade" })
-})
+export const providerLocationJunction = pgTable(
+    "provider_location",
+    {
+        providerId: integer("provider_id")
+            .notNull()
+            .references(() => provider.id),
+        locationId: integer("location_id")
+            .notNull()
+            .references(() => providerLocation.id)
+    },
+    table => ({
+        pk: primaryKey({ columns: [table.providerId, table.locationId] })
+    })
+)
+export const locationRelations = relations(providerLocation, ({ many }) => ({
+    providerLocations: many(providerLocationJunction)
+}))
 
-export const presetsToLanguages = pgTable("presets_to_languages", {
-    presetId: integer("preset_id")
-        .notNull()
-        .references(() => referralPresets.id, { onDelete: "cascade" }),
-    languageId: integer("language_id")
-        .notNull()
-        .references(() => referralLanguages.id, { onDelete: "cascade" })
-})
+export const providerRelations = relations(provider, ({ many }) => ({
+    providerLocations: many(providerLocationJunction),
+    addresses: many(providerAddress)
+}))
 
-export const presetsToServices = pgTable("presets_to_services", {
-    presetId: integer("preset_id")
-        .notNull()
-        .references(() => referralPresets.id, { onDelete: "cascade" }),
-    serviceId: integer("service_id")
-        .notNull()
-        .references(() => referralServices.id, { onDelete: "cascade" })
-})
+export const providerLocationRelations = relations(providerLocationJunction, ({ one }) => ({
+    provider: one(provider, {
+        fields: [providerLocationJunction.providerId],
+        references: [provider.id]
+    }),
+    location: one(providerLocation, {
+        fields: [providerLocationJunction.locationId],
+        references: [providerLocation.id]
+    })
+}))
+
+export const providerAddressRelations = relations(providerAddress, ({ one }) => ({
+    provider: one(provider, {
+        fields: [providerAddress.providerId],
+        references: [provider.id]
+    })
+}))

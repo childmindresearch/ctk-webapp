@@ -30,6 +30,7 @@
 
     type Props<T extends Record<string, any>> = {
         data: T[]
+        idColumn: string
         hiddenColumns?: readonly (keyof T)[]
         onCreate?: () => void
         onEdit?: (row: (typeof data)[number]) => void
@@ -46,7 +47,7 @@
         ) as { [K in keyof T]: string }
     }
 
-    const { data, hiddenColumns, onCreate, onEdit, onDelete, unpack = defaultUnpack }: Props<T> = $props()
+    const { data, idColumn, hiddenColumns, onCreate, onEdit, onDelete, unpack = defaultUnpack }: Props<T> = $props()
 
     const paginationOptions = [5, 10, 20, 50] as const
     let currentPage = $state(0)
@@ -137,7 +138,7 @@
     </thead>
 
     <tbody>
-        {#each paginated as row (row.id)}
+        {#each paginated as row (row[idColumn])}
             <tr animate:flip={{ duration: 350 }}>
                 {#if showControls}
                     <td>

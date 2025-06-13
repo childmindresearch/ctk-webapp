@@ -1,71 +1,92 @@
-import { db } from "$lib/server/db"
-import { referralProviders } from "$lib/server/db/schema"
-import { logger } from "$lib/server/logging"
 import { json } from "@sveltejs/kit"
-import { createInsertSchema } from "drizzle-zod"
+import { db } from "$lib/server/db"
+import { logger } from "$lib/server/logging.js"
+import { provider, providerAddress, providerLocationJunction } from "$lib/server/db/schema"
 import { z } from "zod"
-import { getExtendedProviders, relationships } from "./utils"
-import { postSchemaProvider } from "./schemas"
+import { zodValidateOr400, isModel } from "$lib/server/zod_utils.js"
+import { getProviders } from "./fetchers.js"
 
-/**
- * Creates a provider in the database.
- * @param {Request} request - The request, see postSchema for the body.
- * @returns The created provider along with its relationships.
- */
-export async function POST({ request }) {
-    logger.info("Creating a provider.")
-
+export async function GET({}) {
+    logger.info("Getting all providers.")
     try {
-        const validatedBody = postSchemaProvider.parse(await request.json())
-        const providerData = createInsertSchema(referralProviders).parse(validatedBody)
-
-        const createdProvider = await db.transaction(async tx => {
-            const [createdProvider] = await tx.insert(referralProviders).values(providerData).returning()
-
-            await Promise.all(
-                relationships.map(async relation => {
-                    const schema = createInsertSchema(relation.junctionTable)
-                    const keys = schema.keyof().options
-                    const [otherKey] = keys.filter(key => key != "providerId")
-                    const postSchema = validatedBody[relation.bodyName].map(item => {
-                        return schema.parse({
-                            providerId: createdProvider.id,
-                            [otherKey]: item.id
-                        })
-                    })
-                    return tx.insert(relation.junctionTable).values(postSchema)
-                })
-            )
-            return createdProvider
+        return json({
+            providers: await getProviders()
         })
-
-        const newModel: {
-            [key: string]: string | boolean | number | undefined | null | { id: number; name: string }[]
-        } = createdProvider
-        newModel["languages"] = validatedBody.languages
-        newModel["services"] = validatedBody.services
-
-        return json(newModel)
     } catch (error) {
-        if (error instanceof z.ZodError) {
-            logger.warn("Invalid provider data.", { errors: error.errors })
-            return json({ errors: error.errors }, { status: 400 })
-        }
-        logger.error("Failed to create provider.", { error })
-        return json({ error: "Failed to create provider." }, { status: 500 })
+        logger.error("Error fetching providers:", error)
+        return new Response("Could not fetch providers.", { status: 500 })
     }
 }
 
-/**
- *
- * @returns Returns all providers in the database, joined with their languages, services, and areas covered.
- */
-export async function GET() {
-    logger.info("Getting all providers.")
+const ProviderAddressSchema = z.object({
+    addressId: z.number().optional(),
+    providerId: z.number().optional(),
+    addressLine1: z.string().optional(),
+    addressLine2: z.string().optional(),
+    city: z.string().optional(),
+    state: z.string().optional(),
+    zipCode: z.string().optional()
+})
+
+const ProviderLocationInputSchema = z.object({
+    locationId: z.number()
+})
+
+const PostProviderRequestSchema = z.object({
+    name: z.string(),
+    acceptsInsurance: z.boolean().optional(),
+    addresses: z.array(ProviderAddressSchema).optional(),
+    locations: z.array(ProviderLocationInputSchema).optional()
+})
+
+export async function POST({ request }) {
+    const providerData = await request.json()
+    let providerRequest = zodValidateOr400(PostProviderRequestSchema, providerData)
+    if (!isModel(PostProviderRequestSchema, providerRequest)) {
+        return providerRequest
+    }
+
     try {
-        return json(await getExtendedProviders())
+        const providerId = await db.transaction(async tx => {
+            const providerIds: { id: number }[] = await tx
+                .insert(provider)
+                .values({
+                    name: providerRequest.name,
+                    acceptsInsurance: providerRequest.acceptsInsurance ?? false
+                })
+                .returning({ id: provider.id })
+            const providerId = providerIds[0].id
+
+            if (providerRequest.addresses) {
+                const addresses = providerRequest.addresses.map(address => ({
+                    ...address,
+                    providerId
+                }))
+                await tx.insert(providerAddress).values(addresses)
+            }
+
+            if (providerRequest.locations) {
+                const locations = providerRequest.locations.map(location => ({
+                    ...location,
+                    providerId
+                }))
+
+                const junctionEntries = locations.map(loc => ({
+                    providerId: loc.providerId,
+                    locationId: loc.locationId
+                }))
+                await tx.insert(providerLocationJunction).values(junctionEntries)
+            }
+            return providerId
+        })
+
+        const newProvider = (await getProviders(providerId))[0]
+        return json(newProvider, { status: 201 })
     } catch (error) {
-        logger.error("Failed to get providers.", { error })
-        return json({ error: "Failed to get providers." }, { status: 500 })
+        console.error("Error creating provider:", error)
+        return new Response(JSON.stringify({ error: "Failed to create provider" }), {
+            status: 500,
+            headers: { "Content-Type": "application/json" }
+        })
     }
 }

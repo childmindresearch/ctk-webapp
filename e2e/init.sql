@@ -1,33 +1,94 @@
-CREATE DATABASE ctk;
 \c ctk;
 
+-- Templates and DSM codes
 CREATE TABLE users (
     id SERIAL PRIMARY KEY,
     email VARCHAR(255) NOT NULL,
     is_admin BOOLEAN
 );
-
 CREATE TABLE dsm_codes (
     id SERIAL PRIMARY KEY,
     code VARCHAR(255) NOT NULL,
     label VARCHAR(255) NOT NULL
 );
-
 CREATE TABLE templates (
     id SERIAL PRIMARY KEY ,
-    text VARCHAR(10000) NOT NULL,
+    text VARCHAR(8000) NOT NULL,
     parent_id INTEGER,
     priority INTEGER NOT NULL
 );
 
 INSERT INTO users (email, is_admin) VALUES
     ('development.user.admin@example.com', true);
-
 INSERT INTO dsm_codes (code, label) VALUES
     ('304.30/F12.20', 'Severe Cannabis Use Disorder'),
     ('300.23/F40.10', 'Social Anxiety Disorder');
-
 INSERT INTO templates (id, text, parent_id, priority) VALUES
     (1, 'Root', NULL, 0),
     (2, 'Directory', 1, 0),
     (3, 'Leaf', 2, 0);
+
+-- Referral network tables
+CREATE TABLE location (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL UNIQUE
+);
+
+CREATE TABLE provider (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(500) NOT NULL,
+    accepts_insurance BOOLEAN DEFAULT FALSE
+);
+
+-- NEW: Junction table for many-to-many provider-location relationship
+CREATE TABLE provider_location (
+    provider_id INTEGER NOT NULL REFERENCES provider(id),
+    location_id INTEGER NOT NULL REFERENCES location(id),
+    is_primary BOOLEAN DEFAULT FALSE,
+    PRIMARY KEY (provider_id, location_id)
+);
+
+CREATE TABLE provider_address (
+    id SERIAL PRIMARY KEY,
+    provider_id INTEGER NOT NULL REFERENCES provider(id),
+    address_line1 VARCHAR(255),
+    address_line2 VARCHAR(255),
+    city VARCHAR(100),
+    state VARCHAR(50),
+    zip_code VARCHAR(20)
+);
+
+-- Insert reference data (unchanged)
+INSERT INTO location (name) VALUES
+('Manhattan'),
+('Brooklyn'),
+('Queens'),
+('Bronx'),
+('Staten Island');
+
+
+-- UPDATED: Insert providers without primary_id
+INSERT INTO provider (name, accepts_insurance) VALUES
+('NYC Child Study Center', true),
+('Brooklyn Family Therapy Associates', true),
+('Queens Developmental Services', false);
+
+-- NEW: Insert provider-location relationships
+INSERT INTO provider_location (provider_id, location_id) VALUES
+-- NYC Child Study Center operates in Manhattan (primary)
+(1, 1),
+-- Brooklyn Family Therapy Associates operates in Brooklyn (primary)
+(2, 2),
+-- Queens Developmental Services operates in Queens (primary)
+(3, 3);
+
+-- Rest of the inserts remain the same
+INSERT INTO provider_address (provider_id, address_line1, address_line2, city, state, zip_code) VALUES
+-- NYC Child Study Center addresses
+(1,  '1 Park Avenue', '7th Floor', 'New York', 'NY', '10016'),
+(1,  '315 E 62nd Street', '5th Floor', 'New York', 'NY', '10065'),
+-- Brooklyn Family Therapy Associates
+(2,  '26 Court Street', 'Suite 1808', 'Brooklyn', 'NY', '11242'),
+(2,  '142 Joralemon Street', 'Suite 11C', 'Brooklyn', 'NY', '11201'),
+-- Queens Developmental Services
+(3,  '104-70 Queens Boulevard', 'Floor 2', 'Forest Hills', 'NY', '11375');
