@@ -30,7 +30,9 @@ CREATE TABLE provider (
     id SERIAL PRIMARY KEY,
     name VARCHAR(500) NOT NULL,
     accepts_insurance BOOLEAN NOT NULL,
-    insurance_details VARCHAR(1024)
+    insurance_details VARCHAR(1024),
+    min_age INTEGER DEFAULT 0,
+    max_age INTEGER DEFAULT 120
 );
 CREATE TABLE provider_address (
     id SERIAL PRIMARY KEY,
@@ -45,20 +47,39 @@ CREATE TABLE provider_address (
     contacts VARCHAR(255)[]
 );
 
--- UPDATED: Insert providers without primary_id
-INSERT INTO provider (name, accepts_insurance, insurance_details) VALUES
-('Rookie Harbor Counseling Center', TRUE, 'CrossWorlds Health Network'),
-('Bergen Village Therapy Associates', FALSE, NULL),
-('Autumn''s Rise Digital Wellness', FALSE, NULL);
+-- Insert providers with age ranges
+INSERT INTO provider (name, accepts_insurance, insurance_details, min_age, max_age) VALUES
+('Rookie Harbor Counseling Center', TRUE, 'CrossWorlds Health Network', 13, 120),
+('Harbor Youth Development Center', TRUE, 'CrossWorlds Health Network', 5, 18),
+('Bergen Village Therapy Associates', FALSE, NULL, 18, 65),
+('Bergen Tree Healing Collective', TRUE, 'Forest Guild Insurance', 0, 120),
+('Autumn''s Rise Digital Wellness', FALSE, NULL, 16, 35),
+('Peak Performance Mental Health', TRUE, 'Mountain Climbers United', 21, 120),
+('Ba''kii Kum Desert Counseling', TRUE, 'Shad''gan Tribal Health', 12, 120),
+('Oasis Mind & Body Therapy', FALSE, NULL, 18, 50),
+('Sapphire Ridge Virtual Care', TRUE, 'CrossWorlds Health Network', 0, 120),
+('Crystal Peak Telehealth Services', FALSE, NULL, 16, 120);
 
--- Rest of the inserts remain the same
+-- Insert provider addresses
 INSERT INTO provider_address (provider_id, location, is_remote, address_line1, address_line2, city, state, zip_code, contacts) VALUES
--- Rookie Harbor Counseling Center addresses
+-- Rookie Harbor providers
 (1, 'Rookie Harbor', FALSE, '1 Guild Plaza', 'Training Wing', 'Rookie Harbor', 'CW', '00001', ARRAY['+1 555 LEA-HELP', 'help@rookieharbor.cw', 'www.rookieharborwellness.cw']),
 (1, 'Rookie Harbor', FALSE, '42 Market Street', 'Merchant Quarter', 'Rookie Harbor', 'CW', '00002', ARRAY['+1 555 NEW-HOPE', 'market@rookieharbor.cw']),
--- Bergen Village Therapy Associates
-(2, 'Bergen Village', FALSE, '15 Forest Path Lane', 'Tree House Complex', 'Bergen Village', 'CW', '10001', ARRAY['+1 555 TREE-AID', 'nature@bergentherapy.cw', 'www.bergenvillagehealing.cw']),
-(2, 'Bergen Village', FALSE, '8 Ancient Grove Circle', 'Elder''s Pavilion', 'Bergen Village', 'CW', '10002', ARRAY['+1 555 GROVE-DR', 'elders@bergentherapy.cw']),
--- Autumn's Rise Digital Wellness
-(3, 'Virtual Space', FALSE, '99 Autumn''s Peak Drive', 'Summit Level', 'Autumn''s Rise', 'CW', '20001', ARRAY['+1 555 AUTUMN-1', 'peak@autumnwellness.cw', 'www.autumnsrisedigital.cw']),
-(3, 'Virtual Space', TRUE, NULL, NULL, NULL, NULL, NULL, ARRAY['+1 555 VIRTUAL-1', 'remote@autumnwellness.cw', 'portal.autumnsrisedigital.cw']);
+(2, 'Rookie Harbor', FALSE, '7 Training Grounds Way', 'Youth Center', 'Rookie Harbor', 'CW', '00003', ARRAY['+1 555 YOUTH-1', 'info@harboryouth.cw', 'www.harboryouthdevelopment.cw']),
+
+-- Bergen Village providers
+(3, 'Bergen Village', FALSE, '15 Forest Path Lane', 'Tree House Complex', 'Bergen Village', 'CW', '10001', ARRAY['+1 555 TREE-AID', 'nature@bergentherapy.cw', 'www.bergenvillagehealing.cw']),
+(3, 'Bergen Village', FALSE, '8 Ancient Grove Circle', 'Elder''s Pavilion', 'Bergen Village', 'CW', '10002', ARRAY['+1 555 GROVE-DR', 'elders@bergentherapy.cw']),
+(4, 'Bergen Village', FALSE, '23 Harmony Trail', 'Meditation Grove', 'Bergen Village', 'CW', '10003', ARRAY['+1 555 TREE-HEAL', 'collective@bergentree.cw', 'www.treehealingcollective.cw']),
+
+-- Autumn's Rise providers
+(5, 'Autumn''s Rise', FALSE, '99 Autumn''s Peak Drive', 'Summit Level', 'Autumn''s Rise', 'CW', '20001', ARRAY['+1 555 AUTUMN-1', 'peak@autumnwellness.cw', 'www.autumnsrisedigital.cw']),
+(6, 'Autumn''s Rise', FALSE, '156 Golden Leaf Boulevard', 'Serenity Tower', 'Autumn''s Rise', 'CW', '20002', ARRAY['+1 555 PEAK-PERF', 'performance@peakmental.cw', 'www.peakperformancehealth.cw']),
+
+-- Ba'kii Kum providers
+(7, 'Ba''kii Kum', FALSE, '88 Sandstorm Avenue', 'Oasis Medical Plaza', 'Ba''kii Kum', 'CW', '30001', ARRAY['+1 555 DESERT-1', 'counsel@bakiikum.cw', 'www.desertcounseling.cw']),
+(8, 'Ba''kii Kum', FALSE, '44 Mirage Circle', 'Healing Springs Center', 'Ba''kii Kum', 'CW', '30002', ARRAY['+1 555 OASIS-DR', 'therapy@oasismind.cw', 'www.oasismindbody.cw']),
+
+-- Remote providers
+(9, 'Remote', TRUE, NULL, NULL, NULL, NULL, NULL, ARRAY['+1 555 VIRTUAL-1', 'remote@sapphireridge.cw', 'portal.sapphireridgevirtual.cw']),
+(10, 'Remote', TRUE, NULL, NULL, NULL, NULL, NULL, ARRAY['+1 555 CRYSTAL-1', 'telehealth@crystalpeak.cw', 'portal.crystalpeaktelehealth.cw']);

@@ -46,7 +46,9 @@ const PutProviderRequestSchema = z.object({
     name: z.string(),
     addresses: z.array(ProviderAddressSchema).optional(),
     acceptsInsurance: z.boolean(),
-    insuranceDetails: z.string().optional()
+    insuranceDetails: z.string().optional(),
+    minAge: z.number(),
+    maxAge: z.number()
 })
 
 export async function PUT({ params, request }) {
@@ -63,7 +65,11 @@ export async function PUT({ params, request }) {
             await tx
                 .update(provider)
                 .set({
-                    name: providerRequest.name
+                    name: providerRequest.name,
+                    acceptsInsurance: providerRequest.acceptsInsurance,
+                    insuranceDetails: providerRequest.insuranceDetails,
+                    minAge: providerRequest.minAge,
+                    maxAge: providerRequest.maxAge
                 })
                 .where(eq(provider.id, id))
 

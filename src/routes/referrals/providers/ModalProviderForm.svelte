@@ -3,51 +3,45 @@
 
     const modalStore = getModalStore()
 
-    let name: string = $state($modalStore[0].meta?.name ?? "")
-    let acceptsInsurance: boolean = $state($modalStore[0].meta?.acceptsInsurance ?? "")
-    let insuranceDetails: string = $state($modalStore[0].meta?.insuranceDetails ?? "")
+    let provider = $state({
+        name: $modalStore[0].meta?.name ?? "",
+        acceptsInsurance: $modalStore[0].meta?.acceptsInsurance ?? false,
+        insuranceDetails: $modalStore[0].meta?.insuranceDetails ?? "",
+        minAge: $modalStore[0].meta?.minAge ?? 0,
+        maxAge: $modalStore[0].meta?.maxAge ?? 120,
+        addresses: $modalStore[0].meta?.addresses ? [...$modalStore[0].meta?.addresses] : [{}]
+    })
 
     $effect(() => {
-        if (!acceptsInsurance) {
-            insuranceDetails = ""
+        if (!provider.acceptsInsurance) {
+            provider.insuranceDetails = ""
         }
     })
 
-    let addresses: {
-        addressLine1?: string
-        addressLine2?: string
-        isRemote?: boolean
-        city?: string
-        state?: string
-        zipCode?: string
-        contacts?: string[]
-        location?: string
-    }[] = $state($modalStore[0].meta?.addresses ? [...$modalStore[0].meta?.addresses] : [{}])
-
     function addAddress() {
-        addresses.push({})
+        provider.addresses.push({})
     }
 
     function removeAddress(index: number) {
-        addresses = addresses.filter((_, i) => i !== index)
+        provider.addresses = provider.addresses.filter((_, i) => i !== index)
     }
 
-    function addContact(address: (typeof addresses)[number]) {
+    function addContact(address: (typeof provider.addresses)[number]) {
         if (!address.contacts) {
             address.contacts = []
         }
         address.contacts.push("")
     }
 
-    function removeContact(address: (typeof addresses)[number], index: number) {
+    function removeContact(address: (typeof provider.addresses)[number], index: number) {
         if (!address.contacts) {
             return
         }
-        address.contacts = address.contacts.filter((_, i) => i !== index)
+        address.contacts = address.contacts.filter((_: string, i: number) => i !== index)
     }
 
     function onSubmit() {
-        for (let address of addresses) {
+        for (let address of provider.addresses) {
             if (!address.isRemote) {
                 if (!address.addressLine1 || !address.city || !address.state || !address.zipCode) {
                     alert("Please fill in all required address fields.")
@@ -63,12 +57,7 @@
             }
         }
         if ($modalStore[0].response) {
-            $modalStore[0].response({
-                name,
-                acceptsInsurance,
-                insuranceDetails,
-                addresses: addresses.length > 0 ? addresses : undefined
-            })
+            $modalStore[0].response(provider)
             modalStore.close()
         }
     }
@@ -80,18 +69,40 @@
             <!-- Provider Section -->
             <label class="label">
                 <span>Provider Name*</span>
-                <input class="input" required bind:value={name} />
+                <input class="input" required bind:value={provider.name} />
             </label>
 
             <label class="label">
-                <input class="checkbox" type="checkbox" bind:checked={acceptsInsurance} />
+                <input class="checkbox" type="checkbox" bind:checked={provider.acceptsInsurance} />
                 <span>Accepts Insurance</span>
                 <input
                     class="input"
                     placeholder="Insurance Details"
-                    disabled={!acceptsInsurance}
-                    bind:value={insuranceDetails}
+                    disabled={!provider.acceptsInsurance}
+                    bind:value={provider.insuranceDetails}
                 />
+            </label>
+
+            <label class="label">
+                <span>Age Range</span>
+                <div class="grid grid-cols-2 gap-2">
+                    <input
+                        class="input"
+                        type="number"
+                        min="0"
+                        max="120"
+                        placeholder="Min Age"
+                        bind:value={provider.minAge}
+                    />
+                    <input
+                        class="input"
+                        type="number"
+                        min="0"
+                        max="120"
+                        placeholder="Max Age"
+                        bind:value={provider.maxAge}
+                    />
+                </div>
             </label>
 
             <!-- Addresses Section -->
@@ -103,7 +114,7 @@
                     </button>
                 </div>
 
-                {#each addresses as address, address_index}
+                {#each provider.addresses as address, address_index}
                     <div class="card p-4 space-y-2">
                         <div class="flex justify-between items-center">
                             <span class="font-semibold">Address {address_index + 1}</span>
@@ -169,7 +180,7 @@
                             </div>
 
                             {#if address.contacts}
-                                {#each address.contacts as contact, contact_index}
+                                {#each address.contacts as _, contact_index}
                                     <div class="card p-4 space-y-2">
                                         <div class="flex justify-between items-center">
                                             <span class="font-semibold">Contact {contact_index + 1}</span>

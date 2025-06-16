@@ -27,6 +27,7 @@
     import SortBothArrows from "$lib/icons/SortBothArrows.svelte"
     import SortDownArrow from "$lib/icons/SortDownArrow.svelte"
     import SortUpArrow from "$lib/icons/SortUpArrow.svelte"
+    import Filters from "./Filters.svelte"
 
     type Props<T extends Record<string, any>> = {
         data: T[]
@@ -36,6 +37,7 @@
         onEdit?: (row: (typeof data)[number]) => void
         onDelete?: (row: (typeof data)[number]) => void
         unpack?: (value: T) => { [K in keyof T]: string }
+        columnsWithFilters?: (keyof T)[]
     }
 
     function defaultUnpack<T extends Record<string, unknown>>(row: T) {
@@ -47,21 +49,36 @@
         ) as { [K in keyof T]: string }
     }
 
-    const { data, idColumn, hiddenColumns, onCreate, onEdit, onDelete, unpack = defaultUnpack }: Props<T> = $props()
+    let {
+        data,
+        idColumn,
+        hiddenColumns,
+        onCreate,
+        onEdit,
+        onDelete,
+        unpack = defaultUnpack,
+        columnsWithFilters = []
+    }: Props<T> = $props()
 
     const paginationOptions = [5, 10, 20, 50] as const
+    const filterSeparator = ","
     let currentPage = $state(0)
     let nRowsPerPage: (typeof paginationOptions)[number] = $state(10)
     let sortKey: keyof T | null = $state(null)
     let sortDirection: -1 | 0 | 1 = $state(0)
+    let columnFilters: Record<string, string> = $state({})
+
+    // Reset to first page when filters change
+    $effect(() => {
+        columnFilters
+        currentPage = 0
+    })
 
     const showControls = onEdit || onDelete
 
-    let globalSearch = $state("")
-    let searched = $derived(applyFilters(data))
-    let sorted = $derived(applySort(searched, sortKey, sortDirection))
+    let sorted = $derived(applySort(data, sortKey, sortDirection))
     let paginated = $derived(applyPagination(sorted))
-    let maxPages = $derived(Math.ceil(searched.length / nRowsPerPage))
+    let maxPages = $derived(Math.ceil(data.length / nRowsPerPage))
 
     const columns = (Object.keys(data[0]) as (keyof T)[]).filter(name => !hiddenColumns?.includes(name))
 
@@ -78,41 +95,20 @@
             .join(" ")
     }
 
-    function applyFilters(data: T[]) {
-        let selected = data.map(unpack)
-
-        if (globalSearch) {
-            selected = selected.filter(row => {
-                const rowString = Object.values(row).reduce(
-                    (accumulator, value) => accumulator + " " + String(value),
-                    ""
-                )
-                return rowString.includes(globalSearch)
-            })
-        }
-        return selected
-    }
-
     function applyPagination(data: { [K in keyof T]: string }[]) {
         const skip = nRowsPerPage * currentPage
         return data.slice(skip, skip + nRowsPerPage)
     }
 </script>
 
-<div class="pb-2">
-    <input
-        class="input max-w-96"
-        type="search"
-        bind:value={globalSearch}
-        placeholder="Search"
-        data-testid="search-bar"
-    />
-    <select bind:value={nRowsPerPage}>
-        {#each paginationOptions as num}
-            <option value={num}>{num}</option>
-        {/each}
-    </select>
-</div>
+<Filters
+    {data}
+    {columnsWithFilters}
+    onChange={newData => {
+        data = newData
+    }}
+/>
+
 <table class="table-fixed table table-hover overflow-x-auto">
     <thead>
         <tr>

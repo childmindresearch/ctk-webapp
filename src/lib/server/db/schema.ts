@@ -5,6 +5,8 @@ export const provider = pgTable("provider", {
     id: serial("id").primaryKey(),
     name: varchar("name", { length: 500 }).notNull(),
     acceptsInsurance: boolean("accepts_insurance").notNull(),
+    minAge: integer("min_age").notNull(),
+    maxAge: integer("max_age").notNull(),
     insuranceDetails: varchar("insurance_details", { length: 1024 })
 })
 

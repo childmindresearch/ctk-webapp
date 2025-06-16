@@ -35,7 +35,9 @@ const PostProviderRequestSchema = z.object({
     name: z.string(),
     addresses: z.array(ProviderAddressSchema),
     acceptsInsurance: z.boolean(),
-    insuranceDetails: z.string()
+    insuranceDetails: z.string(),
+    minAge: z.number(),
+    maxAge: z.number()
 })
 
 export async function POST({ request }) {
@@ -52,7 +54,9 @@ export async function POST({ request }) {
                 .values({
                     name: providerRequest.name,
                     acceptsInsurance: providerRequest.acceptsInsurance,
-                    insuranceDetails: providerRequest.insuranceDetails
+                    insuranceDetails: providerRequest.insuranceDetails,
+                    minAge: providerRequest.minAge,
+                    maxAge: providerRequest.maxAge
                 })
                 .returning({ id: provider.id })
             const providerId = providerIds[0].id

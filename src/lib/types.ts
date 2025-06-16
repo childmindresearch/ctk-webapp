@@ -22,6 +22,8 @@ export type GetSingleProviderResponse = {
     name: string
     acceptsInsurance: boolean
     insuranceDetails: string | null
+    minAge: number
+    maxAge: number
     addresses: Address[]
 }
 
