@@ -100,7 +100,13 @@
 </script>
 
 <div class="pb-2">
-    <input class="input max-w-96" type="search" bind:value={globalSearch} placeholder="Search" />
+    <input
+        class="input max-w-96"
+        type="search"
+        bind:value={globalSearch}
+        placeholder="Search"
+        data-testid="search-bar"
+    />
     <select bind:value={nRowsPerPage}>
         {#each paginationOptions as num}
             <option value={num}>{num}</option>

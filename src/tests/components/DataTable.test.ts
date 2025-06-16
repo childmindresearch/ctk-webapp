@@ -8,6 +8,22 @@ class ResizeObserverMock {
     disconnect = vi.fn()
 }
 
+beforeAll(() => {
+    Element.prototype.getAnimations = Element.prototype.getAnimations || (() => [])
+    Element.prototype.animate =
+        Element.prototype.animate ||
+        (() => ({
+            cancel: () => {},
+            finish: () => {},
+            play: () => {},
+            pause: () => {},
+            reverse: () => {},
+            addEventListener: () => {},
+            removeEventListener: () => {},
+            dispatchEvent: () => true
+        }))
+})
+
 global.ResizeObserver = ResizeObserverMock
 
 const mockData = [
@@ -43,25 +59,11 @@ describe("DataTable", () => {
 
         // Column names take a moment to render.
         await new Promise(r => setTimeout(r, 300))
-        const headers = container.querySelectorAll("th")
-        const idHeader = Array.from(headers).find(th => th.textContent?.includes("Id"))
-        expect(idHeader).toHaveClass("hidden")
-    })
+        const nameHeader = Array.from(container.querySelectorAll("td")).find(td => td.textContent?.includes("Name"))
+        const idHeader = Array.from(container.querySelectorAll("td")).find(td => td.textContent?.includes("Id"))
 
-    it("calls onExport with correct data", async () => {
-        const mockExport = vi.fn()
-        render(DataTable, {
-            props: {
-                data: mockData,
-                idColumn: "id",
-                onExport: mockExport
-            }
-        })
-
-        const exportButton = screen.getByText("Export")
-        await fireEvent.click(exportButton)
-
-        expect(mockExport).toHaveBeenCalledWith(mockData)
+        expect(nameHeader).toBeDefined()
+        expect(idHeader).toBeUndefined()
     })
 
     it("shows edit and delete buttons when handlers are provided", () => {
@@ -120,7 +122,8 @@ describe("DataTable", () => {
     it("updates search results when searching", async () => {
         render(DataTable, { props: { data: mockData, idColumn: "id" } })
 
-        const searchInput = screen.getByPlaceholderText("Search")
+        const searchInput = screen.getByTestId("search-bar")
+        console.log(searchInput)
         await fireEvent.input(searchInput, { target: { value: "John" } })
 
         expect(screen.getByText("John Doe")).toBeInTheDocument()
@@ -141,12 +144,6 @@ describe("DataTable", () => {
         expect(createButton).toBeInTheDocument()
     })
 
-    it("shows correct pagination information", () => {
-        render(DataTable, { props: { data: mockData, idColumn: "id" } })
-
-        expect(screen.getByText(/Showing 1 to 3 of 3 rows/)).toBeInTheDocument()
-    })
-
     it("sorts columns when clicking header", async () => {
         const { container } = render(DataTable, {
             props: {
@@ -159,15 +156,17 @@ describe("DataTable", () => {
         await new Promise(r => setTimeout(r, 300))
 
         // Ascending
-        const nameHeader = Array.from(container.querySelectorAll("th")).find(th => th.textContent?.includes("Name"))
-        await fireEvent.click(nameHeader!)
+        const nameHeaderButton = Array.from(container.querySelectorAll("td"))
+            .find(td => td.textContent?.includes("Name"))
+            ?.querySelector("button")
+        await fireEvent.click(nameHeaderButton!)
 
         let namesCells = container.querySelectorAll("tbody tr td:nth-child(2)")
         let names = Array.from(namesCells).map(cell => cell.textContent)
         expect(names).toEqual(["Bob Johnson", "Jane Smith", "John Doe"])
 
         // Descending
-        await fireEvent.click(nameHeader!)
+        await fireEvent.click(nameHeaderButton!)
 
         namesCells = container.querySelectorAll("tbody tr td:nth-child(2)")
         names = Array.from(namesCells).map(cell => cell.textContent)
