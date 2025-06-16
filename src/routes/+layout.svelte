@@ -1,6 +1,7 @@
 <script lang="ts">
     import { browser } from "$app/environment"
     import { page } from "$app/stores"
+
     import ModalMarkdown from "$lib/components/ModalMarkdown.svelte"
     import NavBar from "$lib/components/NavBar.svelte"
     import Navigation from "$lib/components/Navigation.svelte"
@@ -30,6 +31,8 @@
         markdown: { ref: ModalMarkdown },
         searchDecisionTree: { ref: ModalSearchDecisionTree }
     }
+
+    let { children } = $props()
 
     $modeCurrent = true
     $effect(() => {
@@ -67,6 +70,6 @@
         <Navigation />
     </svelte:fragment>
     <div class="overflow-y-hidden px-10 pt-5">
-        <slot />
+        {@render children?.()}
     </div>
 </AppShell>

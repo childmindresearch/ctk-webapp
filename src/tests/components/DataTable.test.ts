@@ -1,5 +1,5 @@
 import { render, screen, fireEvent } from "@testing-library/svelte"
-import DataTable from "$lib/components/DataTableOld/DataTable.svelte"
+import DataTable from "$lib/components/DataTable.svelte"
 import { vi } from "vitest"
 
 class ResizeObserverMock {
@@ -11,14 +11,14 @@ class ResizeObserverMock {
 global.ResizeObserver = ResizeObserverMock
 
 const mockData = [
-    { id: 1, name: "John Doe", age: 30, role: "Developer" },
-    { id: 2, name: "Jane Smith", age: 25, role: "Designer" },
-    { id: 3, name: "Bob Johnson", age: 35, role: "Manager" }
+    { id: 1, name: "John Doe", age: "30", role: "Developer" },
+    { id: 2, name: "Jane Smith", age: "25", role: "Designer" },
+    { id: 3, name: "Bob Johnson", age: "35", role: "Manager" }
 ]
 
 describe("DataTable", () => {
     it("renders table with correct data", async () => {
-        render(DataTable, { props: { data: mockData } })
+        render(DataTable, { props: { data: mockData, idColumn: "id" } })
 
         // Column names take a moment to render.
         await new Promise(r => setTimeout(r, 300))
@@ -36,7 +36,8 @@ describe("DataTable", () => {
         const { container } = render(DataTable, {
             props: {
                 data: mockData,
-                hiddenColumns: ["id"]
+                hiddenColumns: ["id"],
+                idColumn: "id"
             }
         })
 
@@ -52,6 +53,7 @@ describe("DataTable", () => {
         render(DataTable, {
             props: {
                 data: mockData,
+                idColumn: "id",
                 onExport: mockExport
             }
         })
@@ -69,6 +71,7 @@ describe("DataTable", () => {
         render(DataTable, {
             props: {
                 data: mockData,
+                idColumn: "id",
                 onEdit: mockEdit,
                 onDelete: mockDelete
             }
@@ -87,6 +90,7 @@ describe("DataTable", () => {
         render(DataTable, {
             props: {
                 data: mockData,
+                idColumn: "id",
                 onEdit: mockEdit
             }
         })
@@ -102,6 +106,7 @@ describe("DataTable", () => {
         render(DataTable, {
             props: {
                 data: mockData,
+                idColumn: "id",
                 onDelete: mockDelete
             }
         })
@@ -113,7 +118,7 @@ describe("DataTable", () => {
     })
 
     it("updates search results when searching", async () => {
-        render(DataTable, { props: { data: mockData } })
+        render(DataTable, { props: { data: mockData, idColumn: "id" } })
 
         const searchInput = screen.getByPlaceholderText("Search")
         await fireEvent.input(searchInput, { target: { value: "John" } })
@@ -127,6 +132,7 @@ describe("DataTable", () => {
         render(DataTable, {
             props: {
                 data: mockData,
+                idColumn: "id",
                 onCreate: mockCreate
             }
         })
@@ -136,7 +142,7 @@ describe("DataTable", () => {
     })
 
     it("shows correct pagination information", () => {
-        render(DataTable, { props: { data: mockData } })
+        render(DataTable, { props: { data: mockData, idColumn: "id" } })
 
         expect(screen.getByText(/Showing 1 to 3 of 3 rows/)).toBeInTheDocument()
     })
@@ -144,7 +150,8 @@ describe("DataTable", () => {
     it("sorts columns when clicking header", async () => {
         const { container } = render(DataTable, {
             props: {
-                data: mockData
+                data: mockData,
+                idColumn: "id"
             }
         })
 
