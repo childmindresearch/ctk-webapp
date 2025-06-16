@@ -17,6 +17,7 @@ export async function getProviders(ids: number | number[] | undefined = undefine
             .select({
                 providerId: providerAddress.providerId,
                 id: providerAddress.id,
+                isRemote: providerAddress.isRemote,
                 location: providerAddress.location,
                 addressLine1: providerAddress.addressLine1,
                 addressLine2: providerAddress.addressLine2,

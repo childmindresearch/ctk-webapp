@@ -9,11 +9,12 @@ export type Address = {
     id: number
     addressLine1: string | null
     addressLine2: string | null
+    isRemote: boolean
     city: string | null
     state: string | null
     zipCode: string | null
     contacts: string[] | null
-    location: string | null
+    location: string
 }
 
 export type GetSingleProviderResponse = {

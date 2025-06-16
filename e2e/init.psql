@@ -1,5 +1,4 @@
 \c ctk;
-
 -- Templates and DSM codes
 CREATE TABLE users (
     id SERIAL PRIMARY KEY,
@@ -17,17 +16,15 @@ CREATE TABLE templates (
     parent_id INTEGER,
     priority INTEGER NOT NULL
 );
-
 INSERT INTO users (email, is_admin) VALUES
-    ('development.user.admin@example.com', true);
+    ('lea@crossworlds-guild.org', true);
 INSERT INTO dsm_codes (code, label) VALUES
-    ('304.30/F12.20', 'Severe Cannabis Use Disorder'),
-    ('300.23/F40.10', 'Social Anxiety Disorder');
+    ('309.28/F43.23', 'CrossCode Addiction Disorder'),
+    ('300.29/F41.9', 'Virtual Reality Dissociation Syndrome');
 INSERT INTO templates (id, text, parent_id, priority) VALUES
-    (1, 'Root', NULL, 0),
-    (2, 'Directory', 1, 0),
-    (3, 'Leaf', 2, 0);
-
+    (1, 'CrossWorlds Main Hub', NULL, 0),
+    (2, 'Rookie Harbor District', 1, 0),
+    (3, 'Training Ground Alpha', 2, 0);
 -- Referral network tables
 CREATE TABLE provider (
     id SERIAL PRIMARY KEY,
@@ -35,7 +32,6 @@ CREATE TABLE provider (
     accepts_insurance BOOLEAN NOT NULL,
     insurance_details VARCHAR(1024)
 );
-
 CREATE TABLE provider_address (
     id SERIAL PRIMARY KEY,
     provider_id INTEGER NOT NULL REFERENCES provider(id) ON DELETE CASCADE,
@@ -49,23 +45,20 @@ CREATE TABLE provider_address (
     contacts VARCHAR(255)[]
 );
 
-
-
 -- UPDATED: Insert providers without primary_id
 INSERT INTO provider (name, accepts_insurance, insurance_details) VALUES
-('NYC Child Study Center', TRUE, 'Cigna'),
-('Brooklyn Family Therapy Associates', FALSE, NULL),
-('Queens Developmental Services', FALSE, NULL);
-
+('Rookie Harbor Counseling Center', TRUE, 'CrossWorlds Health Network'),
+('Bergen Village Therapy Associates', FALSE, NULL),
+('Autumn''s Rise Digital Wellness', FALSE, NULL);
 
 -- Rest of the inserts remain the same
 INSERT INTO provider_address (provider_id, location, is_remote, address_line1, address_line2, city, state, zip_code, contacts) VALUES
--- NYC Child Study Center addresses
-(1, 'Manhattan', FALSE, '1 Park Avenue', '7th Floor', 'New York', 'NY', '10016', ARRAY['+1 438 529 4420', 'info@nycchildstudy.org', 'www.nycchildstudy.org']),
-(1, 'Manhattan', FALSE, '315 E 62nd Street', '5th Floor', 'New York', 'NY', '10065', ARRAY['+1 212 224 1350', 'uppereast@nycchildstudy.org']),
--- Brooklyn Family Therapy Associates
-(2, 'Brooklyn', FALSE, '26 Court Street', 'Suite 1808', 'Brooklyn', 'NY', '11242', ARRAY['+1 718 555 0123', 'courtst@brooklynfta.com', 'www.brooklynfamilytherapy.org']),
-(2, 'Brooklyn', FALSE, '142 Joralemon Street', 'Suite 11C', 'Brooklyn', 'NY', '11201', ARRAY['+1 718 555 0124', 'joralemon@brooklynfta.com']),
--- Queens Developmental Services
-(3, 'Space', FALSE, '104-70 Queens Boulevard', 'Floor 2', 'Forest Hills', 'NY', '11375', ARRAY['+1 718 555 0200', 'intake@queensdev.org', 'www.queensdevelopmental.org']),
-(3, 'Space', TRUE, NULL, NULL, NULL, NULL, NULL, ARRAY['+1 718 555 0201', 'telehealth@queensdev.org', 'portal.queensdevelopmental.org']);
+-- Rookie Harbor Counseling Center addresses
+(1, 'Rookie Harbor', FALSE, '1 Guild Plaza', 'Training Wing', 'Rookie Harbor', 'CW', '00001', ARRAY['+1 555 LEA-HELP', 'help@rookieharbor.cw', 'www.rookieharborwellness.cw']),
+(1, 'Rookie Harbor', FALSE, '42 Market Street', 'Merchant Quarter', 'Rookie Harbor', 'CW', '00002', ARRAY['+1 555 NEW-HOPE', 'market@rookieharbor.cw']),
+-- Bergen Village Therapy Associates
+(2, 'Bergen Village', FALSE, '15 Forest Path Lane', 'Tree House Complex', 'Bergen Village', 'CW', '10001', ARRAY['+1 555 TREE-AID', 'nature@bergentherapy.cw', 'www.bergenvillagehealing.cw']),
+(2, 'Bergen Village', FALSE, '8 Ancient Grove Circle', 'Elder''s Pavilion', 'Bergen Village', 'CW', '10002', ARRAY['+1 555 GROVE-DR', 'elders@bergentherapy.cw']),
+-- Autumn's Rise Digital Wellness
+(3, 'Virtual Space', FALSE, '99 Autumn''s Peak Drive', 'Summit Level', 'Autumn''s Rise', 'CW', '20001', ARRAY['+1 555 AUTUMN-1', 'peak@autumnwellness.cw', 'www.autumnsrisedigital.cw']),
+(3, 'Virtual Space', TRUE, NULL, NULL, NULL, NULL, NULL, ARRAY['+1 555 VIRTUAL-1', 'remote@autumnwellness.cw', 'portal.autumnsrisedigital.cw']);

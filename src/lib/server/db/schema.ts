@@ -10,10 +10,11 @@ export const provider = pgTable("provider", {
 
 export const providerAddress = pgTable("provider_address", {
     id: serial("id").primaryKey(),
-    location: varchar("location", { length: 255 }),
+    location: varchar("location", { length: 255 }).notNull(),
     providerId: integer("provider_id")
         .notNull()
         .references(() => provider.id),
+    isRemote: boolean("is_remote").notNull(),
     addressLine1: varchar("address_line1", { length: 255 }),
     addressLine2: varchar("address_line2", { length: 255 }),
     city: varchar("city", { length: 100 }),
