@@ -65,7 +65,7 @@ INSERT INTO provider_address (provider_id, location, is_remote, address_line1, a
 (1, 'Manhattan', FALSE, '315 E 62nd Street', '5th Floor', 'New York', 'NY', '10065', ARRAY['+1 212 224 1350', 'uppereast@nycchildstudy.org']),
 -- Brooklyn Family Therapy Associates
 (2, 'Brooklyn', FALSE, '26 Court Street', 'Suite 1808', 'Brooklyn', 'NY', '11242', ARRAY['+1 718 555 0123', 'courtst@brooklynfta.com', 'www.brooklynfamilytherapy.org']),
-(2, 'Brookyln', FALSE, '142 Joralemon Street', 'Suite 11C', 'Brooklyn', 'NY', '11201', ARRAY['+1 718 555 0124', 'joralemon@brooklynfta.com']),
+(2, 'Brooklyn', FALSE, '142 Joralemon Street', 'Suite 11C', 'Brooklyn', 'NY', '11201', ARRAY['+1 718 555 0124', 'joralemon@brooklynfta.com']),
 -- Queens Developmental Services
 (3, 'Space', FALSE, '104-70 Queens Boulevard', 'Floor 2', 'Forest Hills', 'NY', '11375', ARRAY['+1 718 555 0200', 'intake@queensdev.org', 'www.queensdevelopmental.org']),
 (3, 'Space', TRUE, NULL, NULL, NULL, NULL, NULL, ARRAY['+1 718 555 0201', 'telehealth@queensdev.org', 'portal.queensdevelopmental.org']);
