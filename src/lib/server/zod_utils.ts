@@ -10,7 +10,7 @@ export function zodValidateOr400<T extends z.ZodRawShape>(
     model: z.ZodObject<T>,
     input: string | object
 ): Response | z.infer<z.ZodObject<T>> {
-    let parsedData: any
+    let parsedData: unknown
     try {
         parsedData = typeof input === "string" ? JSON.parse(input) : input
     } catch (error) {
@@ -37,6 +37,6 @@ export function zodValidateOr400<T extends z.ZodRawShape>(
     return validationResult.data
 }
 
-export function isModel<T extends z.ZodSchema>(model: T, obj: any): obj is z.infer<T> {
+export function isModel<T extends z.ZodSchema>(model: T, obj: unknown): obj is z.infer<T> {
     return model.safeParse(obj).success
 }

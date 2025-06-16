@@ -6,7 +6,7 @@ import { z } from "zod"
 import { zodValidateOr400, isModel } from "$lib/server/zod_utils.js"
 import { getProviders } from "./fetchers.js"
 
-export async function GET({}) {
+export async function GET() {
     logger.info("Getting all providers.")
     try {
         return json({
@@ -40,7 +40,7 @@ const PostProviderRequestSchema = z.object({
 
 export async function POST({ request }) {
     const providerData = await request.json()
-    let providerRequest = zodValidateOr400(PostProviderRequestSchema, providerData)
+    const providerRequest = zodValidateOr400(PostProviderRequestSchema, providerData)
     if (!isModel(PostProviderRequestSchema, providerRequest)) {
         return providerRequest
     }

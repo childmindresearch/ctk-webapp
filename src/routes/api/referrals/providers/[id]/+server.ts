@@ -53,7 +53,7 @@ export async function PUT({ params, request }) {
     const id = Number(params.id)
     const providerData = await request.json()
 
-    let providerRequest = zodValidateOr400(PutProviderRequestSchema, providerData)
+    const providerRequest = zodValidateOr400(PutProviderRequestSchema, providerData)
     if (!isModel(PutProviderRequestSchema, providerRequest)) {
         return providerRequest
     }
