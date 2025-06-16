@@ -4,6 +4,8 @@ export function unpackProviders(row: GetSingleProviderResponse) {
     return {
         id: String(row.id),
         name: row.name,
+        acceptsInsurance: row.acceptsInsurance,
+        insuranceDetails: row.insuranceDetails,
         location: concatenateTruthyUnique(row.addresses.map(addr => addr.location))
     }
 }

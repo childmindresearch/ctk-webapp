@@ -76,8 +76,9 @@
             title: "Update Provider",
             meta: {
                 name: row.name,
-                addresses: provider?.addresses ?? [],
-                locations: provider?.locations ?? []
+                acceptsInsurance: row.acceptsInsurance,
+                insuranceDetails: row.insuranceDetails,
+                addresses: provider?.addresses ?? []
             },
             response: async response => {
                 if (!response) return
@@ -111,7 +112,14 @@
 
 <div class="z-0">
     {#if providers.length > 0}
-        <DataTable data={unpackedProviders} {onCreate} {onDelete} {onEdit} idColumn="id" hiddenColumns={["id"]} />
+        <DataTable
+            data={unpackedProviders}
+            {onCreate}
+            {onDelete}
+            {onEdit}
+            idColumn="id"
+            hiddenColumns={["id", "insuranceDetails"]}
+        />
     {:else}
         <p>No providers found.</p>
         <button onclick={onCreate} class="btn variant-filled-secondary">

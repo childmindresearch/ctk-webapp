@@ -1,7 +1,7 @@
 import { json } from "@sveltejs/kit"
 import { db } from "$lib/server/db"
 import { logger } from "$lib/server/logging.js"
-import { provider, providerAddress, providerLocationJunction } from "$lib/server/db/schema"
+import { provider, providerAddress } from "$lib/server/db/schema"
 import { z } from "zod"
 import { zodValidateOr400, isModel } from "$lib/server/zod_utils.js"
 import { getProviders } from "./fetchers.js"
@@ -23,20 +23,19 @@ const ProviderAddressSchema = z.object({
     providerId: z.number().optional(),
     addressLine1: z.string().optional(),
     addressLine2: z.string().optional(),
+    location: z.string(),
     city: z.string().optional(),
     state: z.string().optional(),
     zipCode: z.string().optional(),
-    contacts: z.array(z.string())
-})
-
-const ProviderLocationInputSchema = z.object({
-    locationId: z.number()
+    contacts: z.array(z.string()),
+    isRemote: z.boolean()
 })
 
 const PostProviderRequestSchema = z.object({
     name: z.string(),
-    addresses: z.array(ProviderAddressSchema).optional(),
-    locations: z.array(ProviderLocationInputSchema).optional()
+    addresses: z.array(ProviderAddressSchema),
+    acceptsInsurance: z.boolean(),
+    insuranceDetails: z.string()
 })
 
 export async function POST({ request }) {
@@ -51,7 +50,9 @@ export async function POST({ request }) {
             const providerIds: { id: number }[] = await tx
                 .insert(provider)
                 .values({
-                    name: providerRequest.name
+                    name: providerRequest.name,
+                    acceptsInsurance: providerRequest.acceptsInsurance,
+                    insuranceDetails: providerRequest.insuranceDetails
                 })
                 .returning({ id: provider.id })
             const providerId = providerIds[0].id
@@ -64,18 +65,6 @@ export async function POST({ request }) {
                 await tx.insert(providerAddress).values(addresses)
             }
 
-            if (providerRequest.locations) {
-                const locations = providerRequest.locations.map(location => ({
-                    ...location,
-                    providerId
-                }))
-
-                const junctionEntries = locations.map(loc => ({
-                    providerId: loc.providerId,
-                    locationId: loc.locationId
-                }))
-                await tx.insert(providerLocationJunction).values(junctionEntries)
-            }
             return providerId
         })
 

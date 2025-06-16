@@ -31,7 +31,9 @@ INSERT INTO templates (id, text, parent_id, priority) VALUES
 -- Referral network tables
 CREATE TABLE provider (
     id SERIAL PRIMARY KEY,
-    name VARCHAR(500) NOT NULL
+    name VARCHAR(500) NOT NULL,
+    accepts_insurance BOOLEAN NOT NULL,
+    insurance_details VARCHAR(1024)
 );
 
 CREATE TABLE provider_address (
@@ -50,10 +52,10 @@ CREATE TABLE provider_address (
 
 
 -- UPDATED: Insert providers without primary_id
-INSERT INTO provider (name) VALUES
-('NYC Child Study Center'),
-('Brooklyn Family Therapy Associates'),
-('Queens Developmental Services');
+INSERT INTO provider (name, accepts_insurance, insurance_details) VALUES
+('NYC Child Study Center', TRUE, 'Cigna'),
+('Brooklyn Family Therapy Associates', FALSE, NULL),
+('Queens Developmental Services', FALSE, NULL);
 
 
 -- Rest of the inserts remain the same

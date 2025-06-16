@@ -34,6 +34,7 @@ const ProviderAddressSchema = z.object({
     providerId: z.number().optional(),
     addressLine1: z.string().optional(),
     addressLine2: z.string().optional(),
+    isRemote: z.boolean(),
     location: z.string(),
     city: z.string().optional(),
     state: z.string().optional(),
@@ -41,14 +42,11 @@ const ProviderAddressSchema = z.object({
     contacts: z.array(z.string()).optional()
 })
 
-const ProviderLocationInputSchema = z.object({
-    locationId: z.number()
-})
-
 const PutProviderRequestSchema = z.object({
     name: z.string(),
     addresses: z.array(ProviderAddressSchema).optional(),
-    locations: z.array(ProviderLocationInputSchema).optional()
+    acceptsInsurance: z.boolean(),
+    insuranceDetails: z.string().optional()
 })
 
 export async function PUT({ params, request }) {

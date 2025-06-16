@@ -4,6 +4,15 @@
     const modalStore = getModalStore()
 
     let name: string = $state($modalStore[0].meta?.name ?? "")
+    let acceptsInsurance: boolean = $state($modalStore[0].meta?.acceptsInsurance ?? "")
+    let insuranceDetails: string = $state($modalStore[0].meta?.insuranceDetails ?? "")
+
+    $effect(() => {
+        if (!acceptsInsurance) {
+            insuranceDetails = ""
+        }
+    })
+
     let addresses: {
         addressLine1?: string
         addressLine2?: string
@@ -47,6 +56,7 @@
             } else {
                 address.location = "Remote"
                 address.addressLine1 = undefined
+                address.addressLine2 = undefined
                 address.city = undefined
                 address.state = undefined
                 address.zipCode = undefined
@@ -54,7 +64,9 @@
         }
         if ($modalStore[0].response) {
             $modalStore[0].response({
-                name: name,
+                name,
+                acceptsInsurance,
+                insuranceDetails,
                 addresses: addresses.length > 0 ? addresses : undefined
             })
             modalStore.close()
@@ -69,6 +81,17 @@
             <label class="label">
                 <span>Provider Name*</span>
                 <input class="input" required bind:value={name} />
+            </label>
+
+            <label class="label">
+                <input class="checkbox" type="checkbox" bind:checked={acceptsInsurance} />
+                <span>Accepts Insurance</span>
+                <input
+                    class="input"
+                    placeholder="Insurance Details"
+                    disabled={!acceptsInsurance}
+                    bind:value={insuranceDetails}
+                />
             </label>
 
             <!-- Addresses Section -->

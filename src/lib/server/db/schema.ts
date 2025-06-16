@@ -1,9 +1,11 @@
-import { pgTable, serial, varchar, integer, text } from "drizzle-orm/pg-core"
+import { pgTable, serial, varchar, integer, text, boolean } from "drizzle-orm/pg-core"
 import { relations } from "drizzle-orm"
 
 export const provider = pgTable("provider", {
     id: serial("id").primaryKey(),
-    name: varchar("name", { length: 500 }).notNull()
+    name: varchar("name", { length: 500 }).notNull(),
+    acceptsInsurance: boolean("accepts_insurance").notNull(),
+    insuranceDetails: varchar("insurance_details", { length: 1024 })
 })
 
 export const providerAddress = pgTable("provider_address", {

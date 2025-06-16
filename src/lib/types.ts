@@ -19,6 +19,8 @@ export type Address = {
 export type GetSingleProviderResponse = {
     id: number
     name: string
+    acceptsInsurance: boolean
+    insuranceDetails: string | null
     addresses: Address[]
 }
 
