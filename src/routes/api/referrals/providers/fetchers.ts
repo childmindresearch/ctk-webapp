@@ -1,7 +1,7 @@
 import { db } from "$lib/server/db"
-import { provider, providerAddress } from "$lib/server/db/schema.js"
+import { provider, providerAddress, serviceTypes, providerSubServices, subServiceTypes } from "$lib/server/db/schema.js"
 import type { GetProviderResponse } from "$lib/types"
-import { inArray } from "drizzle-orm"
+import { inArray, eq } from "drizzle-orm"
 
 export async function getProviders(ids: number | number[] | undefined = undefined): Promise<GetProviderResponse> {
     let providers
@@ -12,7 +12,7 @@ export async function getProviders(ids: number | number[] | undefined = undefine
         providers = await db.select().from(provider).where(inArray(provider.id, ids))
     }
 
-    const [addresses] = await Promise.all([
+    const [addresses, serviceTypesData, subServicesData] = await Promise.all([
         db
             .select({
                 providerId: providerAddress.providerId,
@@ -26,16 +26,43 @@ export async function getProviders(ids: number | number[] | undefined = undefine
                 zipCode: providerAddress.zipCode,
                 contacts: providerAddress.contacts
             })
-            .from(providerAddress)
+            .from(providerAddress),
+
+        db
+            .select({
+                id: serviceTypes.id,
+                name: serviceTypes.name
+            })
+            .from(serviceTypes),
+
+        db
+            .select({
+                providerId: providerSubServices.providerId,
+                subServiceId: subServiceTypes.id,
+                subServiceName: subServiceTypes.name,
+                serviceTypeId: subServiceTypes.serviceTypeId
+            })
+            .from(providerSubServices)
+            .innerJoin(subServiceTypes, eq(providerSubServices.subServiceTypeId, subServiceTypes.id))
     ])
 
     const groupedAddresses = groupById(addresses, "providerId")
+    const groupedSubServices = groupById(subServicesData, "providerId")
+    const serviceTypesMap = Object.fromEntries(serviceTypesData.map(st => [st.id, st.name]))
 
     const providersWithRelations: GetProviderResponse = providers.map(providerData => {
         const providerId = providerData.id
+        const providerSubServices = groupedSubServices[providerId] || []
+
         return {
             ...providerData,
-            addresses: groupedAddresses[providerId] || []
+            addresses: groupedAddresses[providerId] || [],
+            serviceType: providerData.serviceTypeId ? serviceTypesMap[providerData.serviceTypeId] : null,
+            subServices: providerSubServices.map(subService => ({
+                id: subService.subServiceId,
+                name: subService.subServiceName,
+                serviceTypeId: subService.serviceTypeId
+            }))
         }
     })
 

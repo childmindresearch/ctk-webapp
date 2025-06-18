@@ -5,26 +5,32 @@ CREATE TABLE users (
     email VARCHAR(255) NOT NULL,
     is_admin BOOLEAN
 );
+
 CREATE TABLE dsm_codes (
     id SERIAL PRIMARY KEY,
     code VARCHAR(255) NOT NULL,
     label VARCHAR(255) NOT NULL
 );
+
 CREATE TABLE templates (
     id SERIAL PRIMARY KEY ,
     text VARCHAR(8000) NOT NULL,
     parent_id INTEGER,
     priority INTEGER NOT NULL
 );
-INSERT INTO users (email, is_admin) VALUES
-    ('lea@crossworlds-guild.org', true);
-INSERT INTO dsm_codes (code, label) VALUES
-    ('309.28/F43.23', 'CrossCode Addiction Disorder'),
-    ('300.29/F41.9', 'Virtual Reality Dissociation Syndrome');
-INSERT INTO templates (id, text, parent_id, priority) VALUES
-    (1, 'CrossWorlds Main Hub', NULL, 0),
-    (2, 'Rookie Harbor District', 1, 0),
-    (3, 'Training Ground Alpha', 2, 0);
+
+-- Service types and sub-service types
+CREATE TABLE service_types (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL
+);
+
+CREATE TABLE sub_service_types (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    service_type_id INTEGER NOT NULL REFERENCES service_types(id) ON DELETE CASCADE
+);
+
 -- Referral network tables
 CREATE TABLE provider (
     id SERIAL PRIMARY KEY,
@@ -32,8 +38,10 @@ CREATE TABLE provider (
     accepts_insurance BOOLEAN NOT NULL,
     insurance_details VARCHAR(1024),
     min_age INTEGER DEFAULT 0,
-    max_age INTEGER DEFAULT 120
+    max_age INTEGER DEFAULT 120,
+    service_type_id INTEGER REFERENCES service_types(id)
 );
+
 CREATE TABLE provider_address (
     id SERIAL PRIMARY KEY,
     provider_id INTEGER NOT NULL REFERENCES provider(id) ON DELETE CASCADE,
@@ -47,39 +55,127 @@ CREATE TABLE provider_address (
     contacts VARCHAR(255)[]
 );
 
--- Insert providers with age ranges
-INSERT INTO provider (name, accepts_insurance, insurance_details, min_age, max_age) VALUES
-('Rookie Harbor Counseling Center', TRUE, 'CrossWorlds Health Network', 13, 120),
-('Harbor Youth Development Center', TRUE, 'CrossWorlds Health Network', 5, 18),
-('Bergen Village Therapy Associates', FALSE, NULL, 18, 65),
-('Bergen Tree Healing Collective', TRUE, 'Forest Guild Insurance', 0, 120),
-('Autumn''s Rise Digital Wellness', FALSE, NULL, 16, 35),
-('Peak Performance Mental Health', TRUE, 'Mountain Climbers United', 21, 120),
-('Ba''kii Kum Desert Counseling', TRUE, 'Shad''gan Tribal Health', 12, 120),
-('Oasis Mind & Body Therapy', FALSE, NULL, 18, 50),
-('Sapphire Ridge Virtual Care', TRUE, 'CrossWorlds Health Network', 0, 120),
-('Crystal Peak Telehealth Services', FALSE, NULL, 16, 120);
+-- Junction table for providers and their sub-service types
+CREATE TABLE provider_sub_services (
+    id SERIAL PRIMARY KEY,
+    provider_id INTEGER NOT NULL REFERENCES provider(id) ON DELETE CASCADE,
+    sub_service_type_id INTEGER NOT NULL REFERENCES sub_service_types(id) ON DELETE CASCADE,
+    UNIQUE(provider_id, sub_service_type_id)
+);
+
+-- Insert initial data
+INSERT INTO users (email, is_admin) VALUES
+    ('lea@crossworlds-guild.org', true);
+
+INSERT INTO dsm_codes (code, label) VALUES
+    ('309.28/F43.23', 'CrossCode Addiction Disorder'),
+    ('300.29/F41.9', 'Virtual Reality Dissociation Syndrome');
+
+INSERT INTO templates (id, text, parent_id, priority) VALUES
+    (1, 'CrossWorlds Main Hub', NULL, 0),
+    (2, 'Rookie Harbor District', 1, 0),
+    (3, 'Training Ground Alpha', 2, 0);
+
+-- Insert service types
+INSERT INTO service_types (name) VALUES
+    ('Mental Health'),
+    ('Substance Abuse'),
+    ('Family Therapy'),
+    ('Specialized Therapy');
+
+-- Insert sub-service types
+INSERT INTO sub_service_types (name, service_type_id) VALUES`
+    -- Mental Health sub-services
+    ('Anxiety Disorders', 1),
+    ('Depression Treatment', 1),
+    ('PTSD/Trauma Therapy', 1),
+    ('ADHD Assessment', 1),
+    ('Bipolar Disorder', 1),
+    ('Eating Disorders', 1),
+    ('OCD Treatment', 1),
+    ('CrossCode Addiction', 1),
+
+    -- Substance Abuse sub-services
+    ('Alcohol Treatment', 2),
+    ('Drug Rehabilitation', 2),
+    ('Detoxification', 2),
+    ('Relapse Prevention', 2),
+
+    -- Family Therapy sub-services
+    ('Couples Counseling', 3),
+    ('Child Psychology', 3),
+    ('Family Mediation', 3),
+    ('Parenting Support', 3),
+
+    -- Specialized Therapy sub-services
+    ('Cognitive Behavioral Therapy', 4),
+    ('Dialectical Behavior Therapy', 4),
+    ('EMDR Therapy', 4),
+    ('Art/Music Therapy', 4),
+    ('Group Therapy', 4),
+    ('Telehealth Services', 4);
+
+-- Insert providers with age ranges and service types
+INSERT INTO provider (name, accepts_insurance, insurance_details, min_age, max_age, service_type_id) VALUES
+    ('Rookie Harbor Counseling Center', TRUE, 'CrossWorlds Health Network', 13, 120, 1),
+    ('Harbor Youth Development Center', TRUE, 'CrossWorlds Health Network', 5, 18, 1),
+    ('Bergen Village Therapy Associates', FALSE, NULL, 18, 65, 1),
+    ('Bergen Tree Healing Collective', TRUE, 'Forest Guild Insurance', 0, 120, 1),
+    ('Autumn''s Rise Digital Wellness', FALSE, NULL, 16, 35, 1),
+    ('Peak Performance Mental Health', TRUE, 'Mountain Climbers United', 21, 120, 1),
+    ('Ba''kii Kum Desert Counseling', TRUE, 'Shad''gan Tribal Health', 12, 120, 2),
+    ('Oasis Mind & Body Therapy', FALSE, NULL, 18, 50, 3),
+    ('Sapphire Ridge Virtual Care', TRUE, 'CrossWorlds Health Network', 0, 120, 1),
+    ('Crystal Peak Telehealth Services', FALSE, NULL, 16, 120, 4);
 
 -- Insert provider addresses
 INSERT INTO provider_address (provider_id, location, is_remote, address_line1, address_line2, city, state, zip_code, contacts) VALUES
--- Rookie Harbor providers
-(1, 'Rookie Harbor', FALSE, '1 Guild Plaza', 'Training Wing', 'Rookie Harbor', 'CW', '00001', ARRAY['+1 555 LEA-HELP', 'help@rookieharbor.cw', 'www.rookieharborwellness.cw']),
-(1, 'Rookie Harbor', FALSE, '42 Market Street', 'Merchant Quarter', 'Rookie Harbor', 'CW', '00002', ARRAY['+1 555 NEW-HOPE', 'market@rookieharbor.cw']),
-(2, 'Rookie Harbor', FALSE, '7 Training Grounds Way', 'Youth Center', 'Rookie Harbor', 'CW', '00003', ARRAY['+1 555 YOUTH-1', 'info@harboryouth.cw', 'www.harboryouthdevelopment.cw']),
+    -- Rookie Harbor providers
+    (1, 'Rookie Harbor', FALSE, '1 Guild Plaza', 'Training Wing', 'Rookie Harbor', 'CW', '00001', ARRAY['+1 555 LEA-HELP', 'help@rookieharbor.cw', 'www.rookieharborwellness.cw']),
+    (1, 'Rookie Harbor', FALSE, '42 Market Street', 'Merchant Quarter', 'Rookie Harbor', 'CW', '00002', ARRAY['+1 555 NEW-HOPE', 'market@rookieharbor.cw']),
+    (2, 'Rookie Harbor', FALSE, '7 Training Grounds Way', 'Youth Center', 'Rookie Harbor', 'CW', '00003', ARRAY['+1 555 YOUTH-1', 'info@harboryouth.cw', 'www.harboryouthdevelopment.cw']),
+    -- Bergen Village providers
+    (3, 'Bergen Village', FALSE, '15 Forest Path Lane', 'Tree House Complex', 'Bergen Village', 'CW', '10001', ARRAY['+1 555 TREE-AID', 'nature@bergentherapy.cw', 'www.bergenvillagehealing.cw']),
+    (3, 'Bergen Village', FALSE, '8 Ancient Grove Circle', 'Elder''s Pavilion', 'Bergen Village', 'CW', '10002', ARRAY['+1 555 GROVE-DR', 'elders@bergentherapy.cw']),
+    (4, 'Bergen Village', FALSE, '23 Harmony Trail', 'Meditation Grove', 'Bergen Village', 'CW', '10003', ARRAY['+1 555 TREE-HEAL', 'collective@bergentree.cw', 'www.treehealingcollective.cw']),
+    -- Autumn's Rise providers
+    (5, 'Autumn''s Rise', FALSE, '99 Autumn''s Peak Drive', 'Summit Level', 'Autumn''s Rise', 'CW', '20001', ARRAY['+1 555 AUTUMN-1', 'peak@autumnwellness.cw', 'www.autumnsrisedigital.cw']),
+    (6, 'Autumn''s Rise', FALSE, '156 Golden Leaf Boulevard', 'Serenity Tower', 'Autumn''s Rise', 'CW', '20002', ARRAY['+1 555 PEAK-PERF', 'performance@peakmental.cw', 'www.peakperformancehealth.cw']),
+    -- Ba'kii Kum providers
+    (7, 'Ba''kii Kum', FALSE, '88 Sandstorm Avenue', 'Oasis Medical Plaza', 'Ba''kii Kum', 'CW', '30001', ARRAY['+1 555 DESERT-1', 'counsel@bakiikum.cw', 'www.desertcounseling.cw']),
+    (8, 'Ba''kii Kum', FALSE, '44 Mirage Circle', 'Healing Springs Center', 'Ba''kii Kum', 'CW', '30002', ARRAY['+1 555 OASIS-DR', 'therapy@oasismind.cw', 'www.oasismindbody.cw']),
+    -- Remote providers
+    (9, 'Remote', TRUE, NULL, NULL, NULL, NULL, NULL, ARRAY['+1 555 VIRTUAL-1', 'remote@sapphireridge.cw', 'portal.sapphireridgevirtual.cw']),
+    (10, 'Remote', TRUE, NULL, NULL, NULL, NULL, NULL, ARRAY['+1 555 CRYSTAL-1', 'telehealth@crystalpeak.cw', 'portal.crystalpeaktelehealth.cw']);
 
--- Bergen Village providers
-(3, 'Bergen Village', FALSE, '15 Forest Path Lane', 'Tree House Complex', 'Bergen Village', 'CW', '10001', ARRAY['+1 555 TREE-AID', 'nature@bergentherapy.cw', 'www.bergenvillagehealing.cw']),
-(3, 'Bergen Village', FALSE, '8 Ancient Grove Circle', 'Elder''s Pavilion', 'Bergen Village', 'CW', '10002', ARRAY['+1 555 GROVE-DR', 'elders@bergentherapy.cw']),
-(4, 'Bergen Village', FALSE, '23 Harmony Trail', 'Meditation Grove', 'Bergen Village', 'CW', '10003', ARRAY['+1 555 TREE-HEAL', 'collective@bergentree.cw', 'www.treehealingcollective.cw']),
+-- Assign sub-services to providers
+INSERT INTO provider_sub_services (provider_id, sub_service_type_id) VALUES
+    -- Rookie Harbor Counseling Center (General Mental Health)
+    (1, 1), (1, 2), (1, 3), (1, 8), (1, 18), (1, 20),
 
--- Autumn's Rise providers
-(5, 'Autumn''s Rise', FALSE, '99 Autumn''s Peak Drive', 'Summit Level', 'Autumn''s Rise', 'CW', '20001', ARRAY['+1 555 AUTUMN-1', 'peak@autumnwellness.cw', 'www.autumnsrisedigital.cw']),
-(6, 'Autumn''s Rise', FALSE, '156 Golden Leaf Boulevard', 'Serenity Tower', 'Autumn''s Rise', 'CW', '20002', ARRAY['+1 555 PEAK-PERF', 'performance@peakmental.cw', 'www.peakperformancehealth.cw']),
+    -- Harbor Youth Development Center (Youth-focused)
+    (2, 1), (2, 2), (2, 4), (2, 15), (2, 17), (2, 19),
 
--- Ba'kii Kum providers
-(7, 'Ba''kii Kum', FALSE, '88 Sandstorm Avenue', 'Oasis Medical Plaza', 'Ba''kii Kum', 'CW', '30001', ARRAY['+1 555 DESERT-1', 'counsel@bakiikum.cw', 'www.desertcounseling.cw']),
-(8, 'Ba''kii Kum', FALSE, '44 Mirage Circle', 'Healing Springs Center', 'Ba''kii Kum', 'CW', '30002', ARRAY['+1 555 OASIS-DR', 'therapy@oasismind.cw', 'www.oasismindbody.cw']),
+    -- Bergen Village Therapy Associates (Adult therapy)
+    (3, 1), (3, 2), (3, 3), (3, 5), (3, 18), (3, 19),
 
--- Remote providers
-(9, 'Remote', TRUE, NULL, NULL, NULL, NULL, NULL, ARRAY['+1 555 VIRTUAL-1', 'remote@sapphireridge.cw', 'portal.sapphireridgevirtual.cw']),
-(10, 'Remote', TRUE, NULL, NULL, NULL, NULL, NULL, ARRAY['+1 555 CRYSTAL-1', 'telehealth@crystalpeak.cw', 'portal.crystalpeaktelehealth.cw']);
+    -- Bergen Tree Healing Collective (Holistic approach)
+    (4, 1), (4, 2), (4, 3), (4, 19), (4, 20), (4, 21),
+
+    -- Autumn's Rise Digital Wellness (Tech-focused young adults)
+    (5, 1), (5, 2), (5, 8), (5, 18), (5, 21),
+
+    -- Peak Performance Mental Health (Performance/ADHD focused)
+    (6, 1), (6, 2), (6, 4), (6, 5), (6, 18),
+
+    -- Ba'kii Kum Desert Counseling (Substance abuse primary)
+    (7, 9), (7, 10), (7, 11), (7, 12), (7, 3),
+
+    -- Oasis Mind & Body Therapy (Family therapy primary)
+    (8, 13), (8, 15), (8, 16), (8, 17), (8, 1),
+
+    -- Sapphire Ridge Virtual Care (Remote mental health)
+    (9, 1), (9, 2), (9, 3), (9, 8), (9, 18), (9, 21),
+
+    -- Crystal Peak Telehealth Services (Remote specialized)
+    (10, 1), (10, 2), (10, 18), (10, 19), (10, 20), (10, 21);

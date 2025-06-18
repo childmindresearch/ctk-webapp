@@ -123,7 +123,6 @@ describe("DataTable", () => {
         render(DataTable, { props: { data: mockData, idColumn: "id" } })
 
         const searchInput = screen.getByTestId("search-bar")
-        console.log(searchInput)
         await fireEvent.input(searchInput, { target: { value: "John" } })
 
         expect(screen.getByText("John Doe")).toBeInTheDocument()

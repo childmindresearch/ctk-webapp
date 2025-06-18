@@ -17,7 +17,14 @@ export type Address = {
     location: string
 }
 
+export type SubService = {
+    id: number
+    name: string
+    serviceTypeId: number
+}
+
 export type GetSingleProviderResponse = {
+    [key: string]: string | number | boolean | null | Address[] | SubService[]
     id: number
     name: string
     acceptsInsurance: boolean
@@ -25,6 +32,8 @@ export type GetSingleProviderResponse = {
     minAge: number
     maxAge: number
     addresses: Address[]
+    serviceType: string | null
+    subServices: SubService[]
 }
 
 export type GetProviderResponse = GetSingleProviderResponse[]

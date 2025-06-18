@@ -27,7 +27,6 @@
     import SortBothArrows from "$lib/icons/SortBothArrows.svelte"
     import SortDownArrow from "$lib/icons/SortDownArrow.svelte"
     import SortUpArrow from "$lib/icons/SortUpArrow.svelte"
-    import Filters from "./Filters.svelte"
 
     type Props<T extends Record<string, any>> = {
         data: T[]
@@ -37,42 +36,15 @@
         onEdit?: (row: (typeof data)[number]) => void
         onDelete?: (row: (typeof data)[number]) => void
         unpack?: (value: T) => { [K in keyof T]: string }
-        columnsWithFilters?: (keyof T)[]
     }
 
-    function defaultUnpack<T extends Record<string, unknown>>(row: T) {
-        return Object.fromEntries(
-            Object.entries(row).map(entry => {
-                const [key, value] = entry
-                return [key, String(value)]
-            })
-        ) as { [K in keyof T]: string }
-    }
-
-    let {
-        data,
-        idColumn,
-        hiddenColumns,
-        onCreate,
-        onEdit,
-        onDelete,
-        unpack = defaultUnpack,
-        columnsWithFilters = []
-    }: Props<T> = $props()
+    let { data, idColumn, hiddenColumns, onCreate, onEdit, onDelete }: Props<T> = $props()
 
     const paginationOptions = [5, 10, 20, 50] as const
-    const filterSeparator = ","
     let currentPage = $state(0)
     let nRowsPerPage: (typeof paginationOptions)[number] = $state(10)
     let sortKey: keyof T | null = $state(null)
     let sortDirection: -1 | 0 | 1 = $state(0)
-    let columnFilters: Record<string, string> = $state({})
-
-    // Reset to first page when filters change
-    $effect(() => {
-        columnFilters
-        currentPage = 0
-    })
 
     const showControls = onEdit || onDelete
 
@@ -100,14 +72,6 @@
         return data.slice(skip, skip + nRowsPerPage)
     }
 </script>
-
-<Filters
-    {data}
-    {columnsWithFilters}
-    onChange={newData => {
-        data = newData
-    }}
-/>
 
 <table class="table-fixed table table-hover overflow-x-auto">
     <thead>

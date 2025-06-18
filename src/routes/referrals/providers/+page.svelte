@@ -1,35 +1,53 @@
 <script lang="ts">
     import DataTable from "$lib/components/DataTable/DataTable.svelte"
-    import type { GetProviderResponse } from "$lib/types.js"
-    import { unpackProviders } from "../utils.js"
+    import MultiSelectFilter from "$lib/components/DataTable/MultiSelectFilter.svelte"
+    import type { GetSingleProviderResponse } from "$lib/types.js"
     import { getModalStore, getToastStore, type ModalSettings } from "@skeletonlabs/skeleton"
+    import { downloadBlob } from "$lib/utils.js"
 
     let { data } = $props()
 
     const toastStore = getToastStore()
     const modalStore = getModalStore()
 
-    let providers = $state(data.data)
+    let providers = $state(data.data.map(unpackProviders))
+    let isLoading = $state(false)
+    type columnNames = keyof (typeof providers)[number]
 
+    const filters: columnNames[] = ["acceptsInsurance", "location", "serviceType"]
+    const documentColumns: columnNames[] = ["name", "location", "acceptsInsurance"]
+    const hiddenColumns: columnNames[] = ["id", "insuranceDetails", "minAge", "maxAge", "address"]
+
+    let columnFilters: Partial<Record<columnNames, string>> = $state({})
     let participantAge: number | null = $state(null)
-    function filterProviders(age: number | null): GetProviderResponse {
-        if (age === null) return providers
+    function filterProviders(age: number | null, filters: typeof columnFilters) {
+        let filtered = providers
 
-        return providers.filter(provider => {
-            const { minAge, maxAge } = provider
-            console.log(`Filtering provider ${provider.name} for age ${age} with minAge ${minAge} and maxAge ${maxAge}`)
+        if (age !== null) {
+            filtered = filtered.filter(provider => {
+                const { minAge, maxAge } = provider
+                if (minAge === null && maxAge === null) return true
+                const meetsMinAge = minAge === null || age >= minAge
+                const meetsMaxAge = maxAge === null || age <= maxAge
+                return meetsMinAge && meetsMaxAge
+            })
+        }
 
-            if (minAge === null && maxAge === null) return true
+        if (Object.keys(filters).length > 0) {
+            filtered = filtered.filter(provider => {
+                return Object.entries(filters).every(([column, filterValue]) => {
+                    if (!filterValue || !filterValue.trim()) return true
+                    const cellValue = String(provider[column as keyof (typeof providers)[number]]).toLowerCase()
+                    const filterValues = filterValue.split(",").map(v => v.trim().toLowerCase())
+                    return filterValues.some(filterVal => cellValue.includes(filterVal))
+                })
+            })
+        }
 
-            const meetsMinAge = minAge === null || (age as number) >= minAge
-            const meetsMaxAge = maxAge === null || (age as number) <= maxAge
-
-            console.log(`Provider ${provider.name} meetsMinAge: ${meetsMinAge}, meetsMaxAge: ${meetsMaxAge}`)
-
-            return meetsMinAge && meetsMaxAge
-        })
+        return filtered
     }
-    let unpackedProviders = $derived(filterProviders(participantAge).map(unpackProviders))
+
+    let unpackedProviders = $derived(filterProviders(participantAge, columnFilters))
 
     async function onCreate() {
         const modal: ModalSettings = {
@@ -71,7 +89,7 @@
                 if (!response) return
                 await fetch(`/api/referrals/providers/${row.id}`, { method: "DELETE" }).then(response => {
                     if (response.ok) {
-                        providers = providers.filter(prov => prov.id !== Number(row.id))
+                        providers = providers.filter(prov => prov.id !== row.id)
                         toastStore.trigger({
                             message: `Deleted provider.`,
                             background: "bg-success-500"
@@ -89,7 +107,7 @@
     }
 
     async function onEdit(row: ReturnType<typeof unpackProviders>) {
-        const provider = providers.find(prov => prov.id === Number(row.id))
+        const baseProvider = data.data.find(prov => prov.id === Number(row.id))
         const modal: ModalSettings = {
             type: "component",
             component: "modalProvider",
@@ -98,9 +116,9 @@
                 name: row.name,
                 acceptsInsurance: row.acceptsInsurance,
                 insuranceDetails: row.insuranceDetails,
-                minAge: provider?.minAge,
-                maxAge: provider?.maxAge,
-                addresses: provider?.addresses ?? []
+                minAge: baseProvider?.minAge,
+                maxAge: baseProvider?.maxAge,
+                addresses: baseProvider?.addresses ?? []
             },
             response: async response => {
                 if (!response) return
@@ -111,7 +129,7 @@
                     .then(async response => {
                         if (!response.ok) throw await response.text()
                         const newProvider = await response.json()
-                        const oldProvider = providers.findIndex(prov => prov.id === Number(row.id))
+                        const oldProvider = providers.findIndex(prov => prov.id === row.id)
                         if (oldProvider !== -1) {
                             providers[oldProvider] = newProvider
                         }
@@ -129,6 +147,69 @@
             }
         }
         modalStore.trigger(modal)
+    }
+
+    async function onExport() {
+        const body = [
+            documentColumns,
+            ...unpackedProviders.map(provider => {
+                return documentColumns.map(col => String(provider[col]))
+            })
+        ]
+        await fetch("/api/referrals/document", { method: "POST", body: JSON.stringify(body) })
+            .then(async response => {
+                if (!response.ok) {
+                    throw new Error(await response.text())
+                }
+                return await response.blob()
+            })
+            .then(blob => {
+                const filename = `referral_CTK.docx`
+                downloadBlob(blob, filename)
+            })
+            .catch(error => {
+                toastStore.trigger({
+                    background: "variant-filled-error",
+                    message: error.message
+                })
+                isLoading = false
+            })
+            .finally(() => {
+                isLoading = false
+            })
+    }
+
+    function unpackProviders(row: GetSingleProviderResponse) {
+        return {
+            id: String(row.id),
+            name: row.name,
+            acceptsInsurance: row.acceptsInsurance,
+            insuranceDetails: row.insuranceDetails,
+            minAge: row.minAge,
+            maxAge: row.maxAge,
+            location: concatenateTruthyUnique(row.addresses.map(addr => addr.location)),
+            serviceType: row.serviceType,
+            subServices: concatenateTruthyUnique(row.subServices.map(s => s.name)),
+            address: row.addresses
+                .map(addr => {
+                    if (addr.isRemote) return "Remote"
+                    return [addr.addressLine1, addr.addressLine2, addr.city, addr.zipCode, addr.state]
+                        .filter(value => value !== null)
+                        .join(", ")
+                })
+                .join("\n")
+        }
+    }
+
+    function concatenateTruthyUnique(arr: Array<string | null>, join: string = ", ") {
+        return arr
+            .filter(val => val)
+            .filter(onlyUnique)
+            .join(join)
+    }
+
+    function onlyUnique<T>(value: T, index: number, array: Array<T>) {
+        return array.indexOf(value) === index
     }
 </script>
 
@@ -149,17 +230,17 @@
             </div>
         </div>
 
-        {#key unpackedProviders}
-            <DataTable
-                data={unpackedProviders}
-                {onCreate}
-                {onDelete}
-                {onEdit}
-                idColumn="id"
-                columnsWithFilters={["location", "acceptsInsurance"]}
-                hiddenColumns={["id", "insuranceDetails"]}
+        {#each filters as filter}
+            <MultiSelectFilter
+                options={providers.map(p => String(p[filter])).filter(onlyUnique)}
+                name={filter}
+                onChange={s => (columnFilters[filter] = s.join(", "))}
             />
-        {/key}
+        {/each}
+
+        <button class="btn variant-filled-primary" onclick={onExport}> Export </button>
+
+        <DataTable data={unpackedProviders} {onCreate} {onDelete} {onEdit} idColumn="id" {hiddenColumns} />
     {:else}
         <p>No providers found.</p>
         <button onclick={onCreate} class="btn variant-filled-secondary">

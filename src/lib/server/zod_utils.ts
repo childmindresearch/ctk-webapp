@@ -6,10 +6,7 @@ import { z } from "zod"
  * @param input The input string or object to validate.
  * @returns Validated object if validation is succesful, 400 response otherwise.
  */
-export function zodValidateOr400<T extends z.ZodRawShape>(
-    model: z.ZodObject<T>,
-    input: string | object
-): Response | z.infer<z.ZodObject<T>> {
+export function zodValidateOr400<T extends z.ZodSchema>(model: T, input: string | object): Response | z.infer<T> {
     let parsedData: unknown
     try {
         parsedData = typeof input === "string" ? JSON.parse(input) : input
