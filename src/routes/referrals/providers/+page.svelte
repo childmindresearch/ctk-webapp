@@ -1,9 +1,9 @@
 <script lang="ts">
     import DataTable from "$lib/components/DataTable/DataTable.svelte"
     import MultiSelectFilter from "$lib/components/DataTable/MultiSelectFilter.svelte"
-    import type { GetSingleProviderResponse } from "$lib/types.js"
     import { getModalStore, getToastStore, type ModalSettings } from "@skeletonlabs/skeleton"
     import { downloadBlob } from "$lib/utils.js"
+    import { unpackProviders, onlyUnique } from "./utils.js"
 
     let { data } = $props()
 
@@ -15,8 +15,8 @@
     type columnNames = keyof (typeof providers)[number]
 
     const filters: columnNames[] = ["acceptsInsurance", "location", "serviceType"]
-    const documentColumns: columnNames[] = ["name", "location", "acceptsInsurance"]
-    const hiddenColumns: columnNames[] = ["id", "insuranceDetails", "minAge", "maxAge", "address"]
+    const documentColumns: columnNames[] = ["name", "location", "addresses", "acceptsInsurance"]
+    const hiddenColumns: columnNames[] = ["id", "insuranceDetails", "minAge", "maxAge", "addresses"]
 
     let columnFilters: Partial<Record<columnNames, string>> = $state({})
     let participantAge: number | null = $state(null)
@@ -177,39 +177,6 @@
             .finally(() => {
                 isLoading = false
             })
-    }
-
-    function unpackProviders(row: GetSingleProviderResponse) {
-        return {
-            id: String(row.id),
-            name: row.name,
-            acceptsInsurance: row.acceptsInsurance,
-            insuranceDetails: row.insuranceDetails,
-            minAge: row.minAge,
-            maxAge: row.maxAge,
-            location: concatenateTruthyUnique(row.addresses.map(addr => addr.location)),
-            serviceType: row.serviceType,
-            subServices: concatenateTruthyUnique(row.subServices.map(s => s.name)),
-            address: row.addresses
-                .map(addr => {
-                    if (addr.isRemote) return "Remote"
-                    return [addr.addressLine1, addr.addressLine2, addr.city, addr.zipCode, addr.state]
-                        .filter(value => value !== null)
-                        .join(", ")
-                })
-                .join("\n")
-        }
-    }
-
-    function concatenateTruthyUnique(arr: Array<string | null>, join: string = ", ") {
-        return arr
-            .filter(val => val)
-            .filter(onlyUnique)
-            .join(join)
-    }
-
-    function onlyUnique<T>(value: T, index: number, array: Array<T>) {
-        return array.indexOf(value) === index
     }
 </script>
 

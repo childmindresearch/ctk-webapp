@@ -1,5 +1,5 @@
 import { db } from "$lib/server/db"
-import { provider, providerAddress, serviceTypes, providerSubServices, subServiceTypes } from "$lib/server/db/schema.js"
+import { provider, providerAddress, serviceType, providerSubServices, subServiceType } from "$lib/server/db/schema.js"
 import type { GetProviderResponse } from "$lib/types"
 import { inArray, eq } from "drizzle-orm"
 
@@ -30,20 +30,20 @@ export async function getProviders(ids: number | number[] | undefined = undefine
 
         db
             .select({
-                id: serviceTypes.id,
-                name: serviceTypes.name
+                id: serviceType.id,
+                name: serviceType.name
             })
-            .from(serviceTypes),
+            .from(serviceType),
 
         db
             .select({
                 providerId: providerSubServices.providerId,
-                subServiceId: subServiceTypes.id,
-                subServiceName: subServiceTypes.name,
-                serviceTypeId: subServiceTypes.serviceTypeId
+                subServiceId: subServiceType.id,
+                subServiceName: subServiceType.name,
+                serviceTypeId: subServiceType.serviceTypeId
             })
-            .from(providerSubServices)
-            .innerJoin(subServiceTypes, eq(providerSubServices.subServiceTypeId, subServiceTypes.id))
+            .from(subServiceType)
+            .innerJoin(providerSubServices, eq(providerSubServices.subServiceTypeId, subServiceType.id))
     ])
 
     const groupedAddresses = groupById(addresses, "providerId")

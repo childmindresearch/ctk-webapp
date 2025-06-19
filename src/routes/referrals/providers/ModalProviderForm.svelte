@@ -7,6 +7,8 @@
         name: $modalStore[0].meta?.name ?? "",
         acceptsInsurance: $modalStore[0].meta?.acceptsInsurance ?? false,
         insuranceDetails: $modalStore[0].meta?.insuranceDetails ?? "",
+        serviceType: $modalStore[0].meta?.serviceType ?? "",
+        subServiceTypes: $modalStore[0].meta?.subServiceTypes ?? [],
         minAge: $modalStore[0].meta?.minAge ?? 0,
         maxAge: $modalStore[0].meta?.maxAge ?? 120,
         addresses: $modalStore[0].meta?.addresses ? [...$modalStore[0].meta?.addresses] : [{}]
@@ -26,6 +28,13 @@
         provider.addresses = provider.addresses.filter((_, i) => i !== index)
     }
 
+    function addSubService() {
+        provider.subServiceTypes.push("")
+    }
+    function removeSubService(index: number) {
+        provider.subServiceTypes = provider.subServiceTypes.filter((_: any, i: number) => i !== index)
+    }
+
     function addContact(address: (typeof provider.addresses)[number]) {
         if (!address.contacts) {
             address.contacts = []
@@ -34,7 +43,7 @@
     }
 
     function removeContact(address: (typeof provider.addresses)[number], index: number) {
-        if (!address.contacts) {
+        if (address.contacts.length < 2) {
             return
         }
         address.contacts = address.contacts.filter((_: string, i: number) => i !== index)
@@ -67,21 +76,53 @@
     <div class="card fixed p-12 rounded-3xl w-modal-wide space-y-4 max-h-[70vh] overflow-y-auto">
         <form onsubmit={onSubmit} class="space-y-2">
             <!-- Provider Section -->
-            <label class="label">
-                <span>Provider Name*</span>
-                <input class="input" required bind:value={provider.name} />
-            </label>
+            <div class="space-y-4">
+                <h3 class="h3">Provider</h3>
 
-            <label class="label">
-                <input class="checkbox" type="checkbox" bind:checked={provider.acceptsInsurance} />
-                <span>Accepts Insurance</span>
-                <input
-                    class="input"
-                    placeholder="Insurance Details"
-                    disabled={!provider.acceptsInsurance}
-                    bind:value={provider.insuranceDetails}
-                />
-            </label>
+                <label class="label">
+                    <span>Name*</span>
+                    <input class="input" required bind:value={provider.name} />
+                </label>
+
+                <label class="label">
+                    <input class="checkbox" type="checkbox" bind:checked={provider.acceptsInsurance} />
+                    <span>Accepts Insurance</span>
+                    <input
+                        class="input"
+                        placeholder="Insurance Details"
+                        disabled={!provider.acceptsInsurance}
+                        bind:value={provider.insuranceDetails}
+                    />
+                </label>
+            </div>
+
+            <!-- Services Section -->
+            <div class="space-y-4">
+                <h3 class="h3">Services</h3>
+                <label class="label">
+                    <span>Service Type</span>
+                    <input class="input" bind:value={provider.serviceType} placeholder="Service Type" />
+                </label>
+                <button type="button" class="btn btn-sm variant-ghost-primary" onclick={addSubService}>
+                    Add Subservice
+                </button>
+                {#each provider.subServiceTypes as _, subservice_index}
+                    <div class="flex gap-2 items-center">
+                        <input
+                            class="input flex-1"
+                            bind:value={provider.subServiceTypes[subservice_index]}
+                            placeholder="Subservice Name"
+                        />
+                        <button
+                            type="button"
+                            class="btn btn-sm variant-ghost-error"
+                            onclick={() => removeSubService(subservice_index)}
+                        >
+                            Remove
+                        </button>
+                    </div>
+                {/each}
+            </div>
 
             <label class="label">
                 <span>Age Range</span>

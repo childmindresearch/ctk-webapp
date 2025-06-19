@@ -1,17 +1,17 @@
 import { pgTable, serial, varchar, integer, text, boolean, unique } from "drizzle-orm/pg-core"
 import { relations } from "drizzle-orm"
 
-export const serviceTypes = pgTable("service_types", {
+export const serviceType = pgTable("service_types", {
     id: serial("id").primaryKey(),
     name: varchar("name", { length: 255 }).notNull()
 })
 
-export const subServiceTypes = pgTable("sub_service_types", {
+export const subServiceType = pgTable("sub_service_types", {
     id: serial("id").primaryKey(),
     name: varchar("name", { length: 255 }).notNull(),
     serviceTypeId: integer("service_type_id")
         .notNull()
-        .references(() => serviceTypes.id, { onDelete: "cascade" })
+        .references(() => serviceType.id, { onDelete: "cascade" })
 })
 
 export const provider = pgTable("provider", {
@@ -21,7 +21,7 @@ export const provider = pgTable("provider", {
     minAge: integer("min_age").notNull(),
     maxAge: integer("max_age").notNull(),
     insuranceDetails: varchar("insurance_details", { length: 1024 }),
-    serviceTypeId: integer("service_type_id").references(() => serviceTypes.id)
+    serviceTypeId: integer("service_type_id").references(() => serviceType.id)
 })
 
 export const providerAddress = pgTable("provider_address", {
@@ -48,22 +48,22 @@ export const providerSubServices = pgTable(
             .references(() => provider.id, { onDelete: "cascade" }),
         subServiceTypeId: integer("sub_service_type_id")
             .notNull()
-            .references(() => subServiceTypes.id, { onDelete: "cascade" })
+            .references(() => subServiceType.id, { onDelete: "cascade" })
     },
     table => ({
         uniqueProviderSubService: unique().on(table.providerId, table.subServiceTypeId)
     })
 )
 
-export const serviceTypesRelations = relations(serviceTypes, ({ many }) => ({
-    subServiceTypes: many(subServiceTypes),
+export const serviceTypesRelations = relations(serviceType, ({ many }) => ({
+    subServiceTypes: many(subServiceType),
     providers: many(provider)
 }))
 
-export const subServiceTypesRelations = relations(subServiceTypes, ({ one, many }) => ({
-    serviceType: one(serviceTypes, {
-        fields: [subServiceTypes.serviceTypeId],
-        references: [serviceTypes.id]
+export const subServiceTypesRelations = relations(subServiceType, ({ one, many }) => ({
+    serviceType: one(serviceType, {
+        fields: [subServiceType.serviceTypeId],
+        references: [serviceType.id]
     }),
     providerSubServices: many(providerSubServices)
 }))
@@ -73,9 +73,9 @@ export const providerSubServicesRelations = relations(providerSubServices, ({ on
         fields: [providerSubServices.providerId],
         references: [provider.id]
     }),
-    subServiceType: one(subServiceTypes, {
+    subServiceType: one(subServiceType, {
         fields: [providerSubServices.subServiceTypeId],
-        references: [subServiceTypes.id]
+        references: [subServiceType.id]
     })
 }))
 

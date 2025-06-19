@@ -1,10 +1,11 @@
 import { json } from "@sveltejs/kit"
 import { db } from "$lib/server/db"
 import { logger } from "$lib/server/logging.js"
-import { provider, providerAddress } from "$lib/server/db/schema"
+import { provider, providerAddress, providerSubServices, serviceType, subServiceType } from "$lib/server/db/schema"
 import { z } from "zod"
 import { zodValidateOr400, isModel } from "$lib/server/zod_utils.js"
 import { getProviders } from "./fetchers.js"
+import { eq, and } from "drizzle-orm"
 
 export async function GET() {
     logger.info("Getting all providers.")
@@ -37,7 +38,9 @@ const PostProviderRequestSchema = z.object({
     acceptsInsurance: z.boolean(),
     insuranceDetails: z.string(),
     minAge: z.number(),
-    maxAge: z.number()
+    maxAge: z.number(),
+    serviceType: z.string(),
+    subServiceTypes: z.array(z.string())
 })
 
 export async function POST({ request }) {
@@ -48,7 +51,29 @@ export async function POST({ request }) {
     }
 
     try {
-        const providerId = await db.transaction(async tx => {
+        const newProvider = await db.transaction(async tx => {
+            let service = await tx.select().from(serviceType).where(eq(serviceType.name, providerRequest.serviceType))
+            if (service.length == 0) {
+                service = await tx.insert(serviceType).values({ name: providerRequest.serviceType }).returning()
+            }
+            const serviceId = service[0].id
+
+            const subServices = await Promise.all(
+                providerRequest.subServiceTypes.map(async name => {
+                    let subService = await tx
+                        .select()
+                        .from(subServiceType)
+                        .where(and(eq(subServiceType.name, name), eq(subServiceType.serviceTypeId, serviceId)))
+                    if (subService.length == 0) {
+                        subService = await tx
+                            .insert(subServiceType)
+                            .values({ name: name, serviceTypeId: serviceId })
+                            .returning()
+                    }
+                    return subService[0]
+                })
+            )
+
             const providerIds: { id: number }[] = await tx
                 .insert(provider)
                 .values({
@@ -56,7 +81,8 @@ export async function POST({ request }) {
                     acceptsInsurance: providerRequest.acceptsInsurance,
                     insuranceDetails: providerRequest.insuranceDetails,
                     minAge: providerRequest.minAge,
-                    maxAge: providerRequest.maxAge
+                    maxAge: providerRequest.maxAge,
+                    serviceTypeId: serviceId
                 })
                 .returning({ id: provider.id })
             const providerId = providerIds[0].id
@@ -69,10 +95,15 @@ export async function POST({ request }) {
                 await tx.insert(providerAddress).values(addresses)
             }
 
-            return providerId
+            await Promise.all(
+                subServices.map(subService => {
+                    tx.insert(providerSubServices).values({ providerId, subServiceTypeId: subService.id })
+                })
+            )
+
+            return (await getProviders(providerId))[0]
         })
 
-        const newProvider = (await getProviders(providerId))[0]
         return json(newProvider, { status: 201 })
     } catch (error) {
         console.error("Error creating provider:", error)
