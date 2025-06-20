@@ -1,9 +1,9 @@
 <script lang="ts">
+    import ModalMarkdown from "$lib/components/ModalMarkdown.svelte"
     import FileIcon from "$lib/icons/FileIcon.svelte"
-    import { DecisionTree } from "../DecisionTree.svelte"
     import { toaster } from "$lib/utils"
     import { Modal } from "@skeletonlabs/skeleton-svelte"
-    import ModalMarkdown from "$lib/components/ModalMarkdown.svelte"
+    import { DecisionTree } from "../DecisionTree.svelte"
 
     type Props = {
         node: DecisionTree

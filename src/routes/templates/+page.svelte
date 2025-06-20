@@ -1,14 +1,14 @@
 <script lang="ts">
     import LoadingBar from "$lib/components/LoadingBar.svelte"
-    import { Tabs } from "@skeletonlabs/skeleton-svelte"
+    import MarkdownEditor from "$lib/components/MarkdownEditor.svelte"
     import { toaster } from "$lib/utils"
+    import { Tabs } from "@skeletonlabs/skeleton-svelte"
     import { onMount } from "svelte"
+    import type { LayoutProps } from "../$types"
     import Checkout from "./Checkout/Checkout.svelte"
     import { DecisionTree } from "./DecisionTree.svelte"
-    import TemplatesDirectory from "./TemplatesDirectory/TemplatesDirectory.svelte"
     import SelectedNodes from "./SelectedNodes.svelte"
-    import MarkdownEditor from "$lib/components/MarkdownEditor.svelte"
-    import type { LayoutProps } from "../$types"
+    import TemplatesDirectory from "./TemplatesDirectory/TemplatesDirectory.svelte"
 
     let { data }: LayoutProps = $props()
 

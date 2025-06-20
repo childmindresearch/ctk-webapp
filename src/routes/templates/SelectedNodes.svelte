@@ -2,10 +2,10 @@
     import ArrowDownIcon from "$lib/icons/ArrowDownIcon.svelte"
     import ArrowUpIcon from "$lib/icons/ArrowUpIcon.svelte"
     import TrashIcon from "$lib/icons/TrashIcon.svelte"
+    import { toaster } from "$lib/utils"
     import { flip } from "svelte/animate"
     import { quintOut } from "svelte/easing"
     import type { DecisionTree } from "./DecisionTree.svelte"
-    import { toaster } from "$lib/utils"
 
     export let nodes: DecisionTree[]
 

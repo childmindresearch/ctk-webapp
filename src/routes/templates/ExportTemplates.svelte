@@ -1,10 +1,10 @@
 <script lang="ts">
     import LoadingBar from "$lib/components/LoadingBar.svelte"
-    import { DecisionTree } from "./DecisionTree.svelte"
     import { toaster } from "$lib/utils"
+    import { DecisionTree } from "./DecisionTree.svelte"
 
-    import { nodesToMarkdown } from "./TemplatesDirectory/templateExport"
     import { downloadBlob } from "$lib/utils"
+    import { nodesToMarkdown } from "./TemplatesDirectory/templateExport"
 
     export let nodes: DecisionTree
 

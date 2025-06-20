@@ -1,11 +1,11 @@
 <script lang="ts">
     import { browser } from "$app/environment"
     import { page } from "$app/stores"
-    import { Toaster } from "@skeletonlabs/skeleton-svelte"
-    import { toaster } from "$lib/utils"
-    import Navigation from "$lib/components/Navigation.svelte"
     import NavBar from "$lib/components/NavBar.svelte"
+    import Navigation from "$lib/components/Navigation.svelte"
+    import { toaster } from "$lib/utils"
     import "@cmi-dair/skeleton-themes/cmi.postcss"
+    import { Toaster } from "@skeletonlabs/skeleton-svelte"
     import "../app.css"
 
     let { children } = $props()

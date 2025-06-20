@@ -1,6 +1,6 @@
 <script lang="ts">
-    import type { DecisionTree } from "../DecisionTree.svelte"
     import Fuse from "fuse.js"
+    import type { DecisionTree } from "../DecisionTree.svelte"
 
     type Props = {
         root: DecisionTree
