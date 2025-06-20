@@ -4,7 +4,6 @@
     import { DecisionTree } from "../DecisionTree.svelte"
     import { openNodeIds } from "./store"
     import { toaster } from "$lib/utils"
-    import { Modal } from "@skeletonlabs/skeleton-svelte"
 
     type Props = {
         node: DecisionTree
@@ -19,6 +18,8 @@
     }
 
     async function onDelete() {
+        const confirmed = confirm(`Are you sure you wish to delete node ${shortenText(node.text)}?`)
+        if (!confirmed) return
         await fetch(`/api/templates/${node.id}`, { method: "DELETE" }).then(response => {
             if (!response.ok) {
                 toaster.error({
@@ -38,22 +39,6 @@
     }
 </script>
 
-<Modal
-    open={isModalOpen}
-    onOpenChange={e => (isModalOpen = e.open)}
-    triggerBase="btn hover:preset-tonal"
-    contentBase="card bg-surface-100-900 p-4 space-y-4 shadow-xl max-w-screen-sm"
-    backdropClasses="backdrop-blur-sm"
->
-    {#snippet trigger()}
-        <TrashIcon class="text-error-600" />
-    {/snippet}
-    {#snippet content()}
-        <header>Delete node</header>
-        <article>Are you sure you wish to delete node {shortenText(node.text)}?</article>
-        <footer class="flex justify-end gap-4">
-            <button type="button" class="btn preset-tonal" onclick={modalClose}>Cancel</button>
-            <button type="button" class="btn preset-filled" onclick={onDelete}>Delete</button>
-        </footer>
-    {/snippet}
-</Modal>
+<button type="button" class="btn hover:preset-tonal" onclick={onDelete}>
+    <TrashIcon class="text-error-600" />
+</button>

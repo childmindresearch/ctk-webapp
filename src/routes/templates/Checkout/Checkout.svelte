@@ -55,7 +55,7 @@
 </script>
 
 {#if containsWarnings}
-    <aside class="alert variant-filled-warning mb-3">
+    <aside class="alert preset-filled-warning-500 mb-3">
         <div class="alert-message">
             <h3 class="h3">Not all template values covered.</h3>
             <p>Some of the template values will have to be filled in in the Word document.</p>

@@ -35,6 +35,7 @@
             }
             node.text = text
         })
+        isModalOpen = false
     }
 </script>
 

@@ -38,6 +38,7 @@
                 const newChild = new DecisionTree([newNode], newNode.id, node)
                 node = node.addChild(newChild)
             })
+        isModalOpen = false
     }
 </script>
 

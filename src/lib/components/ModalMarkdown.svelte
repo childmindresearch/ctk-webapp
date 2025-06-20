@@ -91,5 +91,5 @@
         </div>
     </div>
 
-    <button disabled={isLoading} class="btn variant-filled-primary" onclick={localOnSubmit}>Save</button>
+    <button disabled={isLoading} class="btn preset-filled-primary-500" onclick={localOnSubmit}>Save</button>
 </div>

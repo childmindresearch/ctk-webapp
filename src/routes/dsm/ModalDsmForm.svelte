@@ -7,15 +7,14 @@
     }
     let { code, label, onSubmit, instructions }: Props = $props()
 
-    function localOnSubmit(event: Event) {
-        event.preventDefault()
+    function localOnSubmit() {
         onSubmit(code, label)
     }
 </script>
 
-<div class="card p-4 w-modal-wide shadow-xl space-y-4">
+<div class="p-4 space-y-4 w-[80%]">
     <p>{instructions}</p>
-    <form onsubmit={localOnSubmit}>
+    <form class="space-y-4" onsubmit={localOnSubmit}>
         <label>
             DSM Code
             <input class="input" bind:value={code} />
@@ -24,6 +23,6 @@
             DSM Label
             <input class="input" bind:value={label} />
         </label>
-        <button class="btn variant-filled-primary" type="submit"> Submit </button>
+        <button class="btn preset-filled-primary-500" type="submit"> Submit </button>
     </form>
 </div>

@@ -12,12 +12,12 @@
 <Modal
     open={isModalOpen}
     onOpenChange={e => (isModalOpen = e.open)}
-    triggerBase="btn preset-tonal"
-    contentBase="card bg-surface-100-900 p-4 space-y-4 shadow-xl"
+    triggerBase="btn"
+    contentBase="card bg-surface-100-900 p-4 space-y-4 shadow-xl w-[48rem] max-w-[90vw]"
     backdropClasses="backdrop-blur-sm"
 >
     {#snippet trigger()}
-        <span class="btn">Create DSM Code</span>
+        <span class="btn preset-filled-primary-500">Create DSM Code</span>
     {/snippet}
     {#snippet content()}
         <ModalDsmForm code="" label="" onSubmit={onCreate} {instructions} />

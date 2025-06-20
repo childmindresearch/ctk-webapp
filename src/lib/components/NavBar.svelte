@@ -34,7 +34,7 @@
         </a>
     {/snippet}
     {#snippet trail()}
-        <button class="btn hover:variant-soft-primary">
+        <button class="btn hover:preset-tonal-primary">
             <a
                 href="https://chief-resonance-054.notion.site/138229e809388113b654dabf11c4dd33?pvs=105"
                 target="_blank"
