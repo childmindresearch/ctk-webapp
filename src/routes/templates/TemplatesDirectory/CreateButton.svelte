@@ -1,16 +1,15 @@
 <script lang="ts">
     import FileIcon from "$lib/icons/FileIcon.svelte"
-    import { shortenText } from "$lib/utils"
-    import { getModalStore, getToastStore, type ModalSettings } from "@skeletonlabs/skeleton"
     import { DecisionTree } from "../DecisionTree.svelte"
+    import { toaster } from "$lib/utils"
+    import { Modal } from "@skeletonlabs/skeleton-svelte"
+    import ModalMarkdown from "$lib/components/ModalMarkdown.svelte"
 
     type Props = {
         node: DecisionTree
     }
     let { node }: Props = $props()
-
-    const modalStore = getModalStore()
-    const toastStore = getToastStore()
+    let isModalOpen = $state(false)
 
     const instructions = `To add a template value, write it in all caps with dashes for spaces
         between two curly brackets. For example: {{CHILD-NAME}} could be used
@@ -19,39 +18,40 @@
         through {{PRONOUN-4}} representing "he/she, him/her, his/her, his/hers, himself/herself".
         Please conjugate verbs associated with these pronouns in the singular.`
 
-    async function localOnCreate() {
-        const modal: ModalSettings = {
-            type: "component",
-            component: "markdown",
-            title: `New template inside "${shortenText([...node.getPath(), node.text].join(" | "))}"`,
-            meta: { instructions: instructions, value: "" },
-            response: async response => {
-                if (response === undefined || !response.value) return
-                await fetch(`/api/templates/${node.id}`, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ text: response.value })
-                })
-                    .then(res => {
-                        if (!res.ok) {
-                            toastStore.trigger({
-                                message: `Failed to create the template: ${res.statusText}`,
-                                background: "variant-filled-error"
-                            })
-                        } else {
-                            return res.json()
-                        }
+    async function onSubmit(text: string) {
+        if (!text) return
+        await fetch(`/api/templates/${node.id}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ text: text })
+        })
+            .then(res => {
+                if (!res.ok) {
+                    toaster.error({
+                        title: `Failed to create the template: ${res.statusText}`
                     })
-                    .then(newNode => {
-                        const newChild = new DecisionTree([newNode], newNode.id, node)
-                        node = node.addChild(newChild)
-                    })
-            }
-        }
-        modalStore.trigger(modal)
+                } else {
+                    return res.json()
+                }
+            })
+            .then(newNode => {
+                const newChild = new DecisionTree([newNode], newNode.id, node)
+                node = node.addChild(newChild)
+            })
     }
 </script>
 
-<button onclick={localOnCreate} class="btn hover:variant-ghost-primary w-[1rem] h-[1.5rem]">
-    <FileIcon class="text-success-600" />
-</button>
+<Modal
+    open={isModalOpen}
+    onOpenChange={e => (isModalOpen = e.open)}
+    triggerBase="btn hover:preset-tonal"
+    contentBase="card p-4 space-y-4"
+    backdropClasses="backdrop-blur-sm"
+>
+    {#snippet trigger()}
+        <FileIcon class="text-success-600 bg-surface-50" />
+    {/snippet}
+    {#snippet content()}
+        <ModalMarkdown text="" {onSubmit} {instructions} />
+    {/snippet}
+</Modal>

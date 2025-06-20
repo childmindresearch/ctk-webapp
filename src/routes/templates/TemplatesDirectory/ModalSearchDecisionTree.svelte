@@ -1,20 +1,18 @@
 <script lang="ts">
-    import { getModalStore } from "@skeletonlabs/skeleton"
     import type { DecisionTree } from "../DecisionTree.svelte"
     import Fuse from "fuse.js"
-    import { openNodeIds } from "./store"
-    import CreateButton from "./CreateButton.svelte"
-    import EditButton from "./EditButton.svelte"
-    import DeleteButton from "./DeleteButton.svelte"
 
-    const modalStore = getModalStore()
+    type Props = {
+        root: DecisionTree
+        onSearchClick: (node: DecisionTree) => void
+        onSaveClick: (node: DecisionTree) => void
+    }
+    const { root, onSearchClick, onSaveClick }: Props = $props()
 
-    let root: DecisionTree = $modalStore[0].meta.root
-    let editable: boolean = $modalStore[0].meta.editable ?? false
-    let searchTerm = ""
-    let debounceSearchTerm = ""
+    let searchTerm = $state("")
+    let debounceSearchTerm = $state("")
     let elemDocSearch: HTMLElement
-    let results: DecisionTree[] = []
+    let results: DecisionTree[] = $state([])
 
     const allChildNodes = root.getChildrenRecursive()
     const pathsTextsAndIds = allChildNodes.map(node => ({
@@ -62,23 +60,9 @@
             if (queryFirstAnchorElement) queryFirstAnchorElement.focus()
         }
     }
-
-    function onSearchClick(node: DecisionTree) {
-        const parents = node.getAncestors()
-        const ids = [...parents.map(parent => parent.id), node.id]
-        openNodeIds.set(new Set(ids))
-        modalStore.close()
-    }
-
-    function onSaveClick(node: DecisionTree) {
-        if ($modalStore[0].response) {
-            $modalStore[0].response({ value: node })
-            modalStore.close()
-        }
-    }
 </script>
 
-<div bind:this={elemDocSearch} class="card p-4 w-modal-wide shadow-xl space-y-4 h-[36rem]">
+<div bind:this={elemDocSearch} class="card p-4 shadow-xl space-y-4 h-[36rem]">
     <header class="input-group input-group-divider grid-cols-[auto_1fr_auto] flex items-center">
         <i class="fa-solid fa-magnifying-glass text-xl ml-4"></i>
         <input
@@ -97,25 +81,14 @@
                 {#each results as node}
                     <li class="text-lg">
                         <div class="flex items-center">
-                            {#if editable}
-                                <!-- svelte-ignore a11y-click-events-have-key-events -->
-                                <!-- svelte-ignore a11y-no-static-element-interactions -->
-                                <div onclick={() => modalStore.close()}>
-                                    <span class="grid grid-rows-1 grid-flow-col gap-0">
-                                        <CreateButton {node} />
-                                        <EditButton {node} />
-                                        <DeleteButton {node} ondelete={() => {}} />
-                                    </span>
-                                </div>
-                            {/if}
                             <button
-                                class="btn hover:variant-ghost-primary w-[1rem] h-[1.5rem]"
+                                class="btn w-[1rem] h-[1.5rem] hover:bg-surface-700"
                                 onclick={() => onSaveClick(node)}
                                 aria-label="Add to cart."
                             >
                                 <i class="fa-solid fa-plus"></i>
                             </button>
-                            <button onclick={() => onSearchClick(node)} class="btn hover:variant-ghost-primary">
+                            <button onclick={() => onSearchClick(node)} class="btn hover:bg-surface-700">
                                 <span class="text-wrap text-left">{node.getPath().slice(1).join("  |  ")}</span>
                             </button>
                         </div>

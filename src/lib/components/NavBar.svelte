@@ -1,32 +1,39 @@
 <script lang="ts">
     import EnvelopeIcon from "$lib/icons/EnvelopeIcon.svelte"
-    import { AppBar, getDrawerStore } from "@skeletonlabs/skeleton"
+    import { Modal, AppBar } from "@skeletonlabs/skeleton-svelte"
+    import Navigation from "./Navigation.svelte"
+    import BarsIcon from "$lib/icons/BarsIcon.svelte"
 
-    const drawerStore = getDrawerStore()
-
-    function drawerOpen(): void {
-        drawerStore.open({})
-    }
+    let drawerState = $state(false)
 </script>
 
-<AppBar slotTrail="!space-x-2">
-    <svelte:fragment slot="lead">
-        <div class="flex items-center">
-            <button class="md:hidden btn btn-sm mr-4" on:click={drawerOpen} aria-label="Drawer Menu">
-                <span>
-                    <svg viewBox="0 0 100 80" class="fill-token w-4 h-4">
-                        <rect width="100" height="20" />
-                        <rect y="30" width="100" height="20" />
-                        <rect y="60" width="100" height="20" />
-                    </svg>
-                </span>
-            </button>
-            <a href="/" data-testid="a-cmi-logo" class="hidden md:block">
-                <img src="/cmi.svg" alt="Clinician Toolkit" class="w-28" />
-            </a>
+<AppBar background="bg-surface-50" border="border-b border-surface-200" trailBase="!space-x-2">
+    {#snippet lead()}
+        <div class="flex items-center md:hidden">
+            <Modal
+                open={drawerState}
+                onOpenChange={e => (drawerState = e.open)}
+                triggerBase="btn hover:preset-tonal"
+                contentBase="bg-surface-100-900 p-4 space-y-4 shadow-xl w-[480px] h-screen"
+                positionerJustify="justify-start"
+                positionerAlign=""
+                positionerPadding=""
+                transitionsPositionerIn={{ x: -480, duration: 200 }}
+                transitionsPositionerOut={{ x: -480, duration: 200 }}
+            >
+                {#snippet trigger()}
+                    <BarsIcon />
+                {/snippet}
+                {#snippet content()}
+                    <Navigation bind:isOpen={drawerState} />
+                {/snippet}
+            </Modal>
         </div>
-    </svelte:fragment>
-    <svelte:fragment slot="trail">
+        <a href="/" data-testid="a-cmi-logo" class="hidden md:block">
+            <img src="/cmi.svg" alt="Clinician Toolkit" class="w-28" />
+        </a>
+    {/snippet}
+    {#snippet trail()}
         <button class="btn hover:variant-soft-primary">
             <a
                 href="https://chief-resonance-054.notion.site/138229e809388113b654dabf11c4dd33?pvs=105"
@@ -37,5 +44,5 @@
                 <span>Feedback</span>
             </a>
         </button>
-    </svelte:fragment>
+    {/snippet}
 </AppBar>

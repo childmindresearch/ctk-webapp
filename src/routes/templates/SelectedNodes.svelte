@@ -2,20 +2,17 @@
     import ArrowDownIcon from "$lib/icons/ArrowDownIcon.svelte"
     import ArrowUpIcon from "$lib/icons/ArrowUpIcon.svelte"
     import TrashIcon from "$lib/icons/TrashIcon.svelte"
-    import { getToastStore } from "@skeletonlabs/skeleton"
     import { flip } from "svelte/animate"
     import { quintOut } from "svelte/easing"
     import type { DecisionTree } from "./DecisionTree.svelte"
+    import { toaster } from "$lib/utils"
 
     export let nodes: DecisionTree[]
 
-    const toastStore = getToastStore()
-
     function removeNode(node: DecisionTree): void {
         nodes = nodes.filter(n => n.id !== node.id)
-        toastStore.trigger({
-            background: "variant-filled-success",
-            message: "Template removed from selection."
+        toaster.success({
+            title: "Template removed from selection."
         })
     }
 

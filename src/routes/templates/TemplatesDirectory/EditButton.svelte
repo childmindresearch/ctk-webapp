@@ -1,15 +1,15 @@
 <script lang="ts">
     import EditIcon from "$lib/icons/EditIcon.svelte"
-    import { getModalStore, getToastStore, type ModalSettings } from "@skeletonlabs/skeleton"
     import { DecisionTree } from "../DecisionTree.svelte"
+    import { toaster } from "$lib/utils"
+    import { Modal } from "@skeletonlabs/skeleton-svelte"
+    import ModalMarkdown from "$lib/components/ModalMarkdown.svelte"
 
     type Props = {
         node: DecisionTree
     }
     let { node }: Props = $props()
-
-    const modalStore = getModalStore()
-    const toastStore = getToastStore()
+    let isModalOpen = $state(false)
 
     const instructions = `To add a template value, write it in all caps with dashes for spaces
         between two curly brackets. For example: {{CHILD-NAME}} could be used
@@ -18,35 +18,37 @@
         through {{PRONOUN-4}} representing "he/she, him/her, his/her, his/hers, himself/herself".
         Please conjugate verbs associated with these pronouns in the singular.`
 
-    async function onEdit() {
+    async function onSubmit(text: string) {
         const parentId = node.parent ? node.parent.id : null
-        const modal: ModalSettings = {
-            type: "component",
-            component: "markdown",
-            title: `Edit template`,
-            meta: { instructions: instructions, value: node.text },
-            response: async response => {
-                if (!response) return
-                await fetch(`/api/templates/${node.id}`, {
-                    method: "PUT",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ text: response.value, parentId, priority: node.priority })
-                }).then(result => {
-                    if (!result.ok) {
-                        toastStore.trigger({
-                            message: `Failed to edit the template: ${result.statusText}`,
-                            background: "variant-filled-error"
-                        })
-                        return
-                    }
-                    node.text = response.value
+
+        if (!text) return
+        await fetch(`/api/templates/${node.id}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ text, parentId, priority: node.priority })
+        }).then(result => {
+            if (!result.ok) {
+                toaster.error({
+                    title: `Failed to edit the template: ${result.statusText}`
                 })
+                return
             }
-        }
-        modalStore.trigger(modal)
+            node.text = text
+        })
     }
 </script>
 
-<button onclick={onEdit} class="btn hover:variant-ghost-primary w-[1rem] h-[1.5rem]">
-    <EditIcon class="text-warning-600" />
-</button>
+<Modal
+    open={isModalOpen}
+    onOpenChange={e => (isModalOpen = e.open)}
+    triggerBase="btn hover:preset-tonal"
+    contentBase="card bg-surface-100-900 p-4 space-y-4 shadow-xl"
+    backdropClasses="backdrop-blur-sm"
+>
+    {#snippet trigger()}
+        <EditIcon class="text-warning-600" />
+    {/snippet}
+    {#snippet content()}
+        <ModalMarkdown text={node.text} {onSubmit} {instructions} />
+    {/snippet}
+</Modal>

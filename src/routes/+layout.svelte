@@ -1,45 +1,31 @@
 <script lang="ts">
     import { browser } from "$app/environment"
     import { page } from "$app/stores"
-    import ModalMarkdown from "$lib/components/ModalMarkdown.svelte"
-    import NavBar from "$lib/components/NavBar.svelte"
+    import { Toaster } from "@skeletonlabs/skeleton-svelte"
+    import { toaster } from "$lib/utils"
     import Navigation from "$lib/components/Navigation.svelte"
+    import NavBar from "$lib/components/NavBar.svelte"
     import "@cmi-dair/skeleton-themes/cmi.postcss"
-    import { arrow, autoUpdate, computePosition, flip, offset, shift } from "@floating-ui/dom"
-    import {
-        AppShell,
-        Drawer,
-        Modal,
-        Toast,
-        initializeStores,
-        modeCurrent,
-        storePopup,
-        type ModalComponent
-    } from "@skeletonlabs/skeleton"
-    import "../app.postcss"
-    import ModalSearchDecisionTree from "./templates/TemplatesDirectory/ModalSearchDecisionTree.svelte"
-    import ModalDsmForm from "./dsm/ModalDsmForm.svelte"
+    import "../app.css"
 
-    initializeStores()
-    storePopup.set({ computePosition, autoUpdate, flip, shift, offset, arrow })
+    let { children } = $props()
 
-    const modalRegistry: Record<string, ModalComponent> = {
-        dsmForm: { ref: ModalDsmForm },
-        markdown: { ref: ModalMarkdown },
-        searchDecisionTree: { ref: ModalSearchDecisionTree }
-    }
-
-    $modeCurrent = true
     $effect(() => {
         $page.url.pathname
-        warmupFunction()
+        try {
+            warmupFunction()
+        } catch {
+            console.error("Could not contact backend.")
+        }
     })
 
     async function warmupFunction() {
         if (!browser) return
-        fetch("/api/health")
+        await fetch("/api/health")
     }
 </script>
+
+<Toaster {toaster}></Toaster>
 
 <svelte:head>
     <title>Clinician Toolkit</title>
@@ -48,23 +34,17 @@
     <link rel="icon" type="image/ico" href="/favicon.ico" />
 </svelte:head>
 
-<Modal zIndex="z-998" components={modalRegistry} />
-<Toast zIndex="z-999" />
+<header>
+    <NavBar />
+</header>
 
-<Drawer width="w-64">
-    <h2 class="p-4 h2">Navigation</h2>
-    <hr />
-    <Navigation />
-</Drawer>
-
-<AppShell slotSidebarLeft="bg-surface-500/5 w-0 md:w-64">
-    <svelte:fragment slot="header">
-        <NavBar />
-    </svelte:fragment>
-    <svelte:fragment slot="sidebarLeft">
-        <Navigation />
-    </svelte:fragment>
-    <div class="overflow-y-hidden px-10 pt-5">
-        <slot />
+<div class="flex h-screen">
+    <!-- Left sidebar navigation for medium+ screens -->
+    <div class="hidden md:block md:w-64 h-full z-10 flex-shrink-0">
+        <Navigation isOpen={true} />
     </div>
-</AppShell>
+
+    <div class="overflow-y-hidden px-10 pt-5 flex-1">
+        {@render children()}
+    </div>
+</div>

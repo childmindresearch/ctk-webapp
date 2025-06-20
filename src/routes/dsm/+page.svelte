@@ -2,7 +2,7 @@
     import XIcon from "$lib/icons/XIcon.svelte"
     import type { SqlDsmCodeSchema } from "$lib/server/sql"
     import type { User } from "$lib/types"
-    import { getToastStore, type ToastSettings } from "@skeletonlabs/skeleton"
+    import { toaster } from "$lib/utils"
     import { onMount } from "svelte"
     import CreateButton from "./CreateButton.svelte"
     import DeleteButton from "./DeleteButton.svelte"
@@ -22,14 +22,6 @@
     let inputDiv: HTMLDivElement
 
     const isAdmin = data.user?.is_admin
-    const toastStore = getToastStore()
-    const copyToast: ToastSettings = {
-        message: "The selected DSM codes have been copied to your clipboard."
-    }
-    const noSelectionToast: ToastSettings = {
-        message: "No DSM codes have been selected.",
-        background: "variant-filled-error"
-    }
 
     onMount(() => {
         fetch("/api/dsm")
@@ -52,7 +44,7 @@
 
     function exportToClipboard() {
         if (selected.length === 0) {
-            toastStore.trigger(noSelectionToast)
+            toaster.error({ title: "No DSM codes have been selected." })
             return
         }
 
@@ -64,7 +56,7 @@
             }
         }
         navigator.clipboard.writeText(selected.map(s => itemToString(s)).join("\n") + "\n")
-        toastStore.trigger(copyToast)
+        toaster.info({ title: "The selected DSM codes have been copied to your clipboard." })
     }
 
     function onCreate(item: SqlDsmCodeSchema) {

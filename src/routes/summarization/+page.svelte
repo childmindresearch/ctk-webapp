@@ -1,13 +1,16 @@
 <script lang="ts">
+    import { FileUpload } from "@skeletonlabs/skeleton-svelte"
+    import FileUploadIcon from "$lib/icons/FileUploadIcon.svelte"
+    import PaperclipIcon from "$lib/icons/PaperclipIcon.svelte"
+
     import mammoth from "mammoth"
     import { systemPrompt } from "./prompt"
-    import { getToastStore, type ToastSettings } from "@skeletonlabs/skeleton"
     import LoadingBar from "$lib/components/LoadingBar.svelte"
+    import { toaster } from "$lib/utils"
+    import XIcon from "$lib/icons/XIcon.svelte"
 
-    let file: FileList
-    let loading = false
-
-    const toastStore = getToastStore()
+    let file: File[] = $state([])
+    let loading = $state(false)
 
     async function docxToText(docx: File) {
         const buffer = await docx.arrayBuffer()
@@ -19,21 +22,15 @@
     async function onSubmit(event: SubmitEvent) {
         event.preventDefault()
         if (file.length === 0) {
-            const toast = {
-                message: "Please select a file to upload.",
-                background: "variant-filled-error"
-            }
-            toastStore.trigger(toast)
+            toaster.error({ title: "Please select a file to upload." })
             return
         }
         const text = await docxToText(file[0])
         const userPrompt = getTextBetween(text, /\n\s+clinical summary and impressions/i, /\n\s+recommendations/i)
         if (!userPrompt) {
-            const toast = {
-                message: "Could not find the 'clinical summary and impressions' and 'recommendations' in the document.",
-                background: "variant-filled-error"
-            }
-            toastStore.trigger(toast)
+            toaster.error({
+                title: "Could not find the 'clinical summary and impressions' and 'recommendations' in the document."
+            })
             return
         }
 
@@ -50,19 +47,11 @@
                 if (response.ok) {
                     return await response.json()
                 }
-                const toast: ToastSettings = {
-                    message: "There was a problem connecting to the server.",
-                    background: "variant-filled-error"
-                }
-                toastStore.trigger(toast)
+                toaster.error({ title: "There was a problem connecting to the server." })
                 return
             })
             .catch(error => {
-                const toast: ToastSettings = {
-                    message: `There was a interpreting the server response: ${error}.`,
-                    background: "variant-filled-error"
-                }
-                toastStore.trigger(toast)
+                toaster.error({ title: `The was a problem interpreting the server response: ${error}` })
                 loading = false
                 return
             })
@@ -91,20 +80,14 @@
                     loading = false
                     return
                 }
-                const toast: ToastSettings = {
-                    message: "There was a problem connecting to the server.",
-                    background: "variant-filled-error"
-                }
-                toastStore.trigger(toast)
+                toaster.error({ title: "There was a problem connecting to the server." })
                 loading = false
                 return
             })
             .catch(error => {
-                const toast: ToastSettings = {
-                    message: `There was a interpreting the server response: ${error}.`,
-                    background: "variant-filled-error"
-                }
-                toastStore.trigger(toast)
+                toaster.error({
+                    title: `There was a problem interpreting the server response: ${error}.`
+                })
                 loading = false
                 return
             })
@@ -120,11 +103,22 @@
     }
 </script>
 
-Upload a clinical report to generate a summary. The clinical report should contain the 'clinical summary and
+Upload a clinical report (.docx) to generate a summary. The clinical report should contain the 'clinical summary and
 impressions' and 'recommendations' sections, as we only send the paragraphs in between these.
 <form class="space-y-2" onsubmit={onSubmit}>
-    <input type="file" accept=".docx" bind:files={file} />
-    <button type="submit" class="btn variant-filled-primary">Submit</button>
+    <FileUpload
+        name="Upload Clinical Report"
+        accept="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+        maxFiles={1}
+        subtext="Attach a file."
+        onFileChange={e => (file = e.acceptedFiles)}
+        classes="w-full"
+    >
+        {#snippet iconInterface()}<FileUploadIcon class="size-8" />{/snippet}
+        {#snippet iconFile()}<PaperclipIcon class="size-4" />{/snippet}
+        {#snippet iconFileRemove()}<XIcon class="size-4" />{/snippet}
+    </FileUpload>
+    <button type="submit" class="btn preset-filled-primary-500">Submit</button>
 </form>
 
 <LoadingBar hidden={!loading} />

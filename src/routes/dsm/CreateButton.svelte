@@ -1,47 +1,25 @@
 <script lang="ts">
-    import type { SqlDsmCodeSchema } from "$lib/server/sql"
-    import { getModalStore, getToastStore, type ModalSettings } from "@skeletonlabs/skeleton"
+    import ModalDsmForm from "./ModalDsmForm.svelte"
+    import { Modal } from "@skeletonlabs/skeleton-svelte"
 
-    type Props = { onCreate: (item: SqlDsmCodeSchema) => void }
+    type Props = { onCreate: (code: string, label: string) => void }
     let { onCreate }: Props = $props()
+    let isModalOpen = $state(false)
 
     const instructions = "Create a new DSM code."
-
-    const toastStore = getToastStore()
-    const modalStore = getModalStore()
-
-    async function onClick() {
-        const modal: ModalSettings = {
-            type: "component",
-            component: "dsmForm",
-            title: `Create DSM Code`,
-            meta: { instructions: instructions },
-            response: async response => {
-                if (!response) return
-                await fetch(`/api/dsm`, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ code: response.code, label: response.label })
-                }).then(async result => {
-                    if (!result.ok) {
-                        toastStore.trigger({
-                            message: `Failed to create the DSM code: ${result.statusText}`,
-                            background: "variant-filled-error"
-                        })
-                    } else {
-                        onCreate(await result.json())
-                        toastStore.trigger({
-                            message: `Created the DSM code.`,
-                            background: "variant-filled-success"
-                        })
-                    }
-                })
-            }
-        }
-        modalStore.trigger(modal)
-    }
 </script>
 
-<button onclick={onClick} class="btn variant-filled-secondary">
-    <span>Create DSM Code</span>
-</button>
+<Modal
+    open={isModalOpen}
+    onOpenChange={e => (isModalOpen = e.open)}
+    triggerBase="btn preset-tonal"
+    contentBase="card bg-surface-100-900 p-4 space-y-4 shadow-xl"
+    backdropClasses="backdrop-blur-sm"
+>
+    {#snippet trigger()}
+        <span class="btn">Create DSM Code</span>
+    {/snippet}
+    {#snippet content()}
+        <ModalDsmForm code="" label="" onSubmit={onCreate} {instructions} />
+    {/snippet}
+</Modal>

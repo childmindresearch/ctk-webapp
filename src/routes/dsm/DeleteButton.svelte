@@ -1,47 +1,57 @@
 <script lang="ts">
     import TrashIcon from "$lib/icons/TrashIcon.svelte"
     import type { SqlDsmCodeSchema } from "$lib/server/sql"
-    import { getModalStore, getToastStore, type ModalSettings } from "@skeletonlabs/skeleton"
+    import { toaster } from "$lib/utils"
+    import { Modal } from "@skeletonlabs/skeleton-svelte"
 
     type Props = {
         dsmItem: { label: string; code: string; id: number }
         onDelete: (item: SqlDsmCodeSchema) => void
     }
-    let { dsmItem, onDelete }: Props = $props()
+    const { dsmItem, onDelete }: Props = $props()
+    let isModalOpen = $state(false)
 
-    const toastStore = getToastStore()
-    const modalStore = getModalStore()
+    function modalClose() {
+        isModalOpen = false
+    }
 
-    async function onClick() {
-        const modal: ModalSettings = {
-            type: "confirm",
-            title: `Delete DSM Code`,
-            body: `Are you sure you wish to delete "${dsmItem.label}"?`,
-            response: async response => {
-                if (!response) return
-                await fetch(`/api/dsm/${dsmItem.id}`, {
-                    method: "DELETE",
-                    headers: { "Content-Type": "application/json" }
-                }).then(result => {
-                    if (!result.ok) {
-                        toastStore.trigger({
-                            message: `Failed to edit the DSM code: ${result.statusText}`,
-                            background: "variant-filled-error"
-                        })
-                    } else {
-                        onDelete(dsmItem)
-                        toastStore.trigger({
-                            message: `Deleted the DSM code.`,
-                            background: "variant-filled-success"
-                        })
-                    }
+    async function localOnDelete() {
+        await fetch(`/api/dsm/${dsmItem.id}`, {
+            method: "DELETE",
+            headers: { "Content-Type": "application/json" }
+        }).then(result => {
+            if (!result.ok) {
+                toaster.error({
+                    title: `Failed to edit the DSM code: ${result.statusText}`
+                })
+            } else {
+                onDelete(dsmItem)
+                toaster.success({
+                    title: `Deleted the DSM code.`
                 })
             }
-        }
-        modalStore.trigger(modal)
+        })
+        onDelete(dsmItem)
+        modalClose()
     }
 </script>
 
-<button onclick={onClick} class="btn hover:variant-ghost-primary w-[1rem] h-[1.5rem]">
-    <TrashIcon class="text-error-600" />
-</button>
+<Modal
+    open={isModalOpen}
+    onOpenChange={e => (isModalOpen = e.open)}
+    triggerBase="btn preset-tonal"
+    contentBase="card bg-surface-100-900 p-4 space-y-4 shadow-xl max-w-screen-sm"
+    backdropClasses="backdrop-blur-sm"
+>
+    {#snippet trigger()}
+        <TrashIcon class="btn hover:variant-ghost-primary w-[1rem] h-[1.5rem] text-error-600" />
+    {/snippet}
+    {#snippet content()}
+        <header>Delete DSM code</header>
+        <article>Are you sure you wish to delete DSM Code {dsmItem.code + " " + dsmItem.label}?</article>
+        <footer class="flex justify-end gap-4">
+            <button type="button" class="btn preset-tonal" onclick={modalClose}>Cancel</button>
+            <button type="button" class="btn preset-filled" onclick={localOnDelete}>Delete</button>
+        </footer>
+    {/snippet}
+</Modal>

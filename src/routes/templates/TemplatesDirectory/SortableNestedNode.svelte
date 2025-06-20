@@ -82,19 +82,17 @@
                 <FolderOpenIcon class="text-secondary-600" />
             {/if}
         </button>
-        <div class="indented-list overflow-y-scroll max-h-[200px]">
+        <div class="indented-list overflow-y-auto max-h-[200px]">
             <SvelteMarkdown source={node.text} />
         </div>
         {#if editable}
-            <div>
-                <span class="grid grid-rows-1 grid-flow-col gap-0">
-                    <CreateButton {node} />
-                    {#if !_isRoot}
-                        <EditButton {node} />
-                        <DeleteButton {node} />
-                    {/if}
-                </span>
-            </div>
+            <span class="grid grid-rows-1 grid-flow-col gap-0">
+                <CreateButton {node} />
+                {#if !_isRoot}
+                    <EditButton {node} />
+                    <DeleteButton {node} />
+                {/if}
+            </span>
         {/if}
     </div>
 

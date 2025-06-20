@@ -1,18 +1,15 @@
 <script lang="ts">
     import LoadingBar from "$lib/components/LoadingBar.svelte"
     import { downloadBlob } from "$lib/utils"
-    import { getToastStore } from "@skeletonlabs/skeleton"
+    import { toaster } from "$lib/utils"
 
     let mrn = $state("")
     let isLoading = $state(false)
 
-    const toastStore = getToastStore()
-
     async function onSubmit() {
         if (mrn === "") {
-            toastStore.trigger({
-                background: "variant-filled-error",
-                message: "Please enter an MRN."
+            toaster.error({
+                title: "variant-filled-error"
             })
             return
         }
@@ -29,9 +26,8 @@
                 downloadBlob(blob, filename)
             })
             .catch(error => {
-                toastStore.trigger({
-                    background: "variant-filled-error",
-                    message: error.message
+                toaster.error({
+                    title: "variant-filled-error"
                 })
             })
         isLoading = false
@@ -39,16 +35,6 @@
 </script>
 
 <h3 class="h3">Pyrite Reports</h3>
-
-<aside class="variant-ghost-error alert">
-    <div class="alert-message">
-        <h3 class="h3">Alpha Feature</h3>
-        <p>
-            This is an alpha feature. It should not be used for day-to-day operations. It may change, error, or break at
-            any time.
-        </p>
-    </div>
-</aside>
 
 <p>
     This page is used to generate Pyrite reports. Please enter the MRN of the participant you would like to generate a
@@ -58,9 +44,18 @@
     <LoadingBar label="Loading... This may take a while." />
 {:else}
     <form class="space-y-2">
-        <input class="input w-72" placeholder="MRN" bind:value={mrn} data-testid="pyriteInput" />
+        <label class="label">
+            <span class="label-text">MRN</span>
+            <input class="input w-72" placeholder="MRN" bind:value={mrn} data-testid="pyriteInput" />
+        </label>
+
         <br />
-        <button class="btn variant-filled-primary" onclick={onSubmit} disabled={isLoading} data-testid="pyriteSubmit">
+        <button
+            class="btn preset-filled-primary-500"
+            onclick={onSubmit}
+            disabled={isLoading}
+            data-testid="pyriteSubmit"
+        >
             Submit
         </button>
     </form>

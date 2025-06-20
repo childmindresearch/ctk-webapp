@@ -1,8 +1,10 @@
 import { sveltekit } from "@sveltejs/kit/vite"
 import { defineConfig } from "vitest/config"
+import tailwindcss from "@tailwindcss/vite"
+import devtoolsJson from "vite-plugin-devtools-json"
 
 export default defineConfig(({ mode }) => ({
-    plugins: [sveltekit()],
+    plugins: [sveltekit(), tailwindcss(), devtoolsJson()],
     resolve: {
         conditions: mode === "test" ? ["browser"] : []
     },

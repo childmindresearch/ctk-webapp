@@ -1,9 +1,12 @@
-.input,
-.input-group,
-.select,
-.textarea {
-    @apply border-neutral-300 focus-within:border-neutral-300 focus:border-neutral-500;
-}
+@import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
+
+@import "@skeletonlabs/skeleton";
+@import "@skeletonlabs/skeleton/optional/presets";
+@import "@skeletonlabs/skeleton/themes/cerberus";
+
+@source '../node_modules/@skeletonlabs/skeleton-svelte/dist';
+@import "./cmi-light";
 
 /* Vditor does not work well with Tailwinds default list styles.*/
 .vditor-reset {

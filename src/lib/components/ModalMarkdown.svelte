@@ -1,23 +1,26 @@
 <script lang="ts">
-    import { getModalStore } from "@skeletonlabs/skeleton"
     import MarkdownEditor from "./MarkdownEditor.svelte"
 
-    const modalStore = getModalStore()
-    let text = $modalStore[0].meta.value
-    let replacementTags: string[] = []
-    let warningTags: string[] = []
+    type Props = {
+        text: string
+        title?: string | undefined
+        instructions?: string | undefined
+        onSubmit: (text: string) => void
+    }
 
-    let isLoading = false
+    let { text, onSubmit, title = undefined, instructions = undefined }: Props = $props()
+    let isLoading = $state(false)
+    const startingText = text
 
-    function onSubmit(event: Event) {
+    let replacementTags = $derived(detectTags(text, /{{\s*[\w-]+\s*}}/g))
+    let warningTags = $derived(detectTags(text, /{{!\s*[\w-]+\s*}}/g))
+
+    function localOnSubmit(event: Event) {
         event.preventDefault()
         isLoading = true
         // Text can take a moment to update, so we'll wait a bit before closing the modal.
         setTimeout(() => {
-            if ($modalStore[0].response) {
-                $modalStore[0].response({ value: text })
-            }
-            modalStore.close()
+            onSubmit(text)
         }, 1000)
     }
 
@@ -45,53 +48,48 @@
 
         return uniqueTags.map(tag => pronounMapping[tag] || tag)
     }
-
-    $: replacementTags = detectTags(text, /{{\s*[\w-]+\s*}}/g)
-    $: warningTags = detectTags(text, /{{!\s*[\w-]+\s*}}/g)
 </script>
 
-{#if $modalStore[0]}
-    <div class="card p-4 w-modal-wide shadow-xl space-y-4">
-        {#if $modalStore[0].title}
-            <header class="text-2xl">{$modalStore[0].title}</header>
-        {/if}
-        {#if $modalStore[0].meta.instructions}
-            <p>{$modalStore[0].meta.instructions}</p>
-        {/if}
+<div class="card p-4 w-modal-wide shadow-xl space-y-4">
+    {#if title}
+        <header class="text-2xl">{title}</header>
+    {/if}
+    {#if instructions}
+        <p>{instructions}</p>
+    {/if}
 
-        <div>
-            <div class="grid grid-cols-2 pb-2">
-                <div>
-                    <h2 class="text-lg">Replacement tags</h2>
-                    <ol class="list">
-                        {#if replacementTags.length > 0}
-                            {#each replacementTags as tag}
-                                <li>• {tag}</li>
-                            {/each}
-                        {:else}
-                            <li>• No replacement tags found</li>
-                        {/if}
-                    </ol>
-                </div>
-
-                <div>
-                    <h2 class="text-lg">Warning tags</h2>
-                    <ul>
-                        {#if warningTags.length > 0}
-                            {#each warningTags as tag}
-                                <li>• {tag}</li>
-                            {/each}
-                        {:else}
-                            <li>• No warning tags found</li>
-                        {/if}
-                    </ul>
-                </div>
-            </div>
+    <div>
+        <div class="grid grid-cols-2 pb-2">
             <div>
-                <MarkdownEditor value={$modalStore[0].meta.value} on:input={event => (text = event.detail)} />
+                <h2 class="text-lg">Replacement tags</h2>
+                <ol class="list">
+                    {#if replacementTags.length > 0}
+                        {#each replacementTags as tag}
+                            <li>• {tag}</li>
+                        {/each}
+                    {:else}
+                        <li>• No replacement tags found</li>
+                    {/if}
+                </ol>
+            </div>
+
+            <div>
+                <h2 class="text-lg">Warning tags</h2>
+                <ul>
+                    {#if warningTags.length > 0}
+                        {#each warningTags as tag}
+                            <li>• {tag}</li>
+                        {/each}
+                    {:else}
+                        <li>• No warning tags found</li>
+                    {/if}
+                </ul>
             </div>
         </div>
-
-        <button disabled={isLoading} class="btn variant-filled-primary" on:click={onSubmit}>Save</button>
+        <div>
+            <MarkdownEditor value={startingText} on:input={event => (text = event.detail)} />
+        </div>
     </div>
-{/if}
+
+    <button disabled={isLoading} class="btn variant-filled-primary" onclick={localOnSubmit}>Save</button>
+</div>
