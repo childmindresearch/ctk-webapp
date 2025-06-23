@@ -53,8 +53,8 @@
     <div class="mb-8">
         <h3 class="h3 mb-4">Intake Reports</h3>
         <p class="text-surface-800 dark:text-surface-300 leading-relaxed">
-            This page is used to generate intake reports for patients. Please enter the MRN of the patient you would
-            like to generate a report for.
+            This page is used to generate intake reports for patients. Please enter the MRN you would like to generate a
+            report for.
         </p>
     </div>
 
@@ -70,7 +70,7 @@
                     <span class="label-text font-medium text-surface-700 dark:text-surface-200"> MRN </span>
                     <input
                         class="input w-full max-w-md mt-2"
-                        placeholder="Enter patient MRN"
+                        placeholder="Enter MRN"
                         bind:value={redcapSurveyId}
                         data-testid="intakeInput"
                         required
