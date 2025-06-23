@@ -1,19 +1,18 @@
 <script lang="ts">
     import LoadingBar from "$lib/components/LoadingBar.svelte"
-    import { getToastStore } from "@skeletonlabs/skeleton"
+    import { toaster } from "$lib/utils"
     import { DecisionTree } from "./DecisionTree.svelte"
 
-    import { nodesToMarkdown } from "./TemplatesDirectory/templateExport"
     import { downloadBlob } from "$lib/utils"
+    import { nodesToMarkdown } from "./TemplatesDirectory/templateExport"
 
     export let nodes: DecisionTree
 
     let isLoading = false
-    const toastStore = getToastStore()
 
     function exportTemplates() {
         if (!nodes) {
-            toastStore.trigger({ message: "Templates have not finished loading.", background: "variant-filled-error" })
+            toaster.error({ title: "Templates have not finished loading." })
             return
         }
         isLoading = true
@@ -37,7 +36,7 @@
                 isLoading = false
             })
             .catch(error => {
-                toastStore.trigger({ message: error.message, background: "variant-filled-error" })
+                toaster.error({ title: error.message })
                 isLoading = false
             })
     }
@@ -48,7 +47,7 @@
 {:else}
     <button
         disabled={isLoading}
-        class="btn variant-filled-primary hover:variant-soft-primary"
+        class="btn preset-filled-primary-500 hover:preset-soft-primary-500"
         on:click={exportTemplates}
     >
         Export Templates

@@ -6,26 +6,27 @@ describe("LoadingBar Component", () => {
     test("should render without crashing", () => {
         const { getByTestId } = render(LoadingBar)
 
-        expect(getByTestId("progress-radial")).toBeInTheDocument()
+        expect(getByTestId("progress-ring")).toBeInTheDocument()
     })
 
     test("should show progress radial", () => {
         const { getByTestId } = render(LoadingBar)
 
-        expect(getByTestId("progress-radial")).toBeInTheDocument()
+        expect(getByTestId("progress-ring")).toBeInTheDocument()
     })
 
     test("should handle undefined value correctly", () => {
         const { getByTestId } = render(LoadingBar)
 
-        expect(getByTestId("progress-radial")).toHaveAttribute("aria-valuetext", "Indeterminate Spinner")
+        console.log(getByTestId("progress-ring"))
+        expect(getByTestId("progress-ring")).toHaveAttribute("data-state", "indeterminate")
     })
 
     test("should display correct value when provided", () => {
         const value = 50
         const { getByTestId } = render(LoadingBar, { value })
 
-        expect(getByTestId("progress-radial")).toHaveAttribute("aria-valuenow", value.toString())
+        expect(getByTestId("progress-ring")).toHaveAttribute("data-value", value.toString())
     })
 
     test("should not render label when undefined", () => {

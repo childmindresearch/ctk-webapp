@@ -1,40 +1,24 @@
 <script lang="ts">
     import LoadingBar from "$lib/components/LoadingBar.svelte"
-    import QuestionMarkCircleIcon from "$lib/icons/QuestionMarkCircleIcon.svelte"
     import { downloadBlob } from "$lib/utils"
-    import { getModalStore, getToastStore, type ModalSettings } from "@skeletonlabs/skeleton"
     import { onMount } from "svelte"
+    import { toaster } from "$lib/utils"
 
     let redcapSurveyId = $state("")
     let isLoading = $state(false)
     let redcapIdentifierImage: HTMLImageElement
 
     const model = "anthropic.claude-3-5-sonnet-20241022-v2:0"
-    const toastStore = getToastStore()
-    const modalStore = getModalStore()
-
-    let modalOpen = $derived($modalStore.length > 0)
 
     onMount(() => {
         redcapIdentifierImage = new Image()
         redcapIdentifierImage.src = "redcap_identifier.png"
     })
 
-    function explainMRN() {
-        const modal: ModalSettings = {
-            type: "alert",
-            title: "MRN",
-            body: "The MRN can be found in the top right corner of the intake form.",
-            image: redcapIdentifierImage.src
-        }
-        modalStore.trigger(modal)
-    }
-
     function onSubmit() {
         if (redcapSurveyId === "") {
-            toastStore.trigger({
-                background: "variant-filled-error",
-                message: "Please enter an MRN."
+            toaster.error({
+                title: "Please enter an MRN."
             })
             return
         }
@@ -53,9 +37,8 @@
                 downloadBlob(blob, filename)
             })
             .catch(error => {
-                toastStore.trigger({
-                    background: "variant-filled-error",
-                    message: error.message
+                toaster.error({
+                    title: error.message
                 })
                 isLoading = false
             })
@@ -65,25 +48,47 @@
     }
 </script>
 
-<h3 class="h3">Intake Reports</h3>
-<p>
-    This page is used to generate intake reports for patients. Please enter the MRN of the patient you would like to
-    generate a report for.
-</p>
-<br />
-{#if isLoading}
-    <LoadingBar label="Loading... This may take a while." />
-{:else}
-    <div class="flex space-x-1">
-        <label for="redcapSurveyId">MRN</label>
-        <button class="hover-highlight" onclick={explainMRN} disabled={modalOpen} tabindex="-1">
-            <QuestionMarkCircleIcon />
-        </button>
+<div class="container mx-auto max-w-2xl p-6">
+    <!-- Header Section -->
+    <div class="mb-8">
+        <h3 class="h3 mb-4">Intake Reports</h3>
+        <p class="text-surface-800 dark:text-surface-300 leading-relaxed">
+            This page is used to generate intake reports for patients. Please enter the MRN you would like to generate a
+            report for.
+        </p>
     </div>
 
-    <form class="space-y-2">
-        <input class="input w-72" placeholder="MRN" bind:value={redcapSurveyId} data-testid="intakeInput" />
-        <br />
-        <button class="btn variant-filled-primary" onclick={onSubmit} disabled={isLoading} data-testid="intakeSubmit"> Submit </button>
-    </form>
-{/if}
+    <!-- Content Section -->
+    <div class="card p-6 bg-surface-50 dark:bg-surface-800 shadow-lg">
+        {#if isLoading}
+            <div class="flex flex-col items-center space-y-4">
+                <LoadingBar label="Loading... This may take a while." />
+            </div>
+        {:else}
+            <form class="space-y-6" onsubmit={onSubmit}>
+                <div class="form-group">
+                    <span class="label-text font-medium text-surface-700 dark:text-surface-200"> MRN </span>
+                    <input
+                        class="input w-full max-w-md mt-2"
+                        placeholder="Enter MRN"
+                        bind:value={redcapSurveyId}
+                        data-testid="intakeInput"
+                        required
+                        autocomplete="off"
+                    />
+                </div>
+
+                <div class="flex justify-start pt-4">
+                    <button
+                        type="submit"
+                        class="btn preset-filled-primary-500 min-w-32"
+                        disabled={isLoading || !redcapSurveyId?.trim()}
+                        data-testid="intakeSubmit"
+                    >
+                        Generate Report
+                    </button>
+                </div>
+            </form>
+        {/if}
+    </div>
+</div>

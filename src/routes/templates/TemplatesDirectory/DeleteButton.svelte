@@ -1,9 +1,9 @@
 <script lang="ts">
-    import TrashIcon from "$lib/icons/TrashIcon.svelte"
     import { shortenText } from "$lib/utils"
-    import { getModalStore, getToastStore, type ModalSettings } from "@skeletonlabs/skeleton"
     import { DecisionTree } from "../DecisionTree.svelte"
     import { openNodeIds } from "./store"
+    import { toaster } from "$lib/utils"
+    import { Trash } from "@lucide/svelte"
 
     type Props = {
         node: DecisionTree
@@ -11,43 +11,35 @@
     }
     let { node }: Props = $props()
 
-    const modalStore = getModalStore()
-    const toastStore = getToastStore()
+    let isModalOpen = $state(false)
+
+    function modalClose() {
+        isModalOpen = false
+    }
 
     async function onDelete() {
-        if (!node.parent) {
-            toastStore.trigger({ message: "Cannot delete the root node.", background: "variant-filled-error" })
-            return
-        }
-        const modal: ModalSettings = {
-            type: "confirm",
-            title: "Delete template",
-            body: `Are you sure you want to delete "${shortenText(node.text)}" and any subdirectories?`,
-            response: async value => {
-                if (!value) return
-                await fetch(`/api/templates/${node.id}`, { method: "DELETE" }).then(response => {
-                    if (!response.ok) {
-                        toastStore.trigger({
-                            message: "Failed to delete the template: " + response.statusText,
-                            background: "variant-filled-error"
-                        })
-                    } else if (!node.parent) {
-                        toastStore.trigger({
-                            message: "Cannot delete the root node.",
-                            background: "variant-filled-error"
-                        })
-                    } else {
-                        const parent = node.parent
-                        openNodeIds.set(new Set([...$openNodeIds].filter(id => id !== node.id)))
-                        parent.deleteChild(node.id)
-                    }
+        const confirmed = confirm(`Are you sure you wish to delete node ${shortenText(node.text)}?`)
+        if (!confirmed) return
+        await fetch(`/api/templates/${node.id}`, { method: "DELETE" }).then(response => {
+            if (!response.ok) {
+                toaster.error({
+                    title: "Failed to delete the template: " + response.statusText
                 })
+            } else if (!node.parent) {
+                toaster.error({
+                    title: "Cannot delete the root node."
+                })
+            } else {
+                const parent = node.parent
+                openNodeIds.set(new Set([...$openNodeIds].filter(id => id !== node.id)))
+                parent.deleteChild(node.id)
             }
-        }
-        modalStore.trigger(modal)
+        })
+        modalClose()
     }
 </script>
 
-<button onclick={onDelete} class="btn hover:variant-ghost-primary w-[1rem] h-[1.5rem]">
-    <TrashIcon class="text-error-600" />
+<!-- Add bottom padding to align well with Skeleton Modals.-->
+<button class="pb-[6px]" type="button" onclick={onDelete}>
+    <Trash class="text-error-600 hover:text-error-400" size="1.3rem" />
 </button>

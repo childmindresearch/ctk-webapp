@@ -1,35 +1,29 @@
 <script lang="ts">
-    import XIcon from "$lib/icons/XIcon.svelte"
     import type { SqlDsmCodeSchema } from "$lib/server/sql"
     import type { User } from "$lib/types"
-    import { getToastStore, type ToastSettings } from "@skeletonlabs/skeleton"
+    import { toaster } from "$lib/utils"
     import { onMount } from "svelte"
     import CreateButton from "./CreateButton.svelte"
-    import DeleteButton from "./DeleteButton.svelte"
-    import EditButton from "./EditButton.svelte"
+    import ModalDsmForm from "./ModalDsmForm.svelte"
+    import { Modal } from "@skeletonlabs/skeleton-svelte"
     import { indexForNewItemInSortedList } from "./utils"
+    import { X, Pencil } from "@lucide/svelte"
 
     type Props = { data: { user: User } }
     let { data }: Props = $props()
 
     let searchString = $state("")
     let selected: SqlDsmCodeSchema[] = $state([])
-
     let dsmCodes: SqlDsmCodeSchema[] = $state([])
+    let isEditModalOpen = $state(false)
+    let editingItem = $state<SqlDsmCodeSchema | null>(null)
+
     let autoCompeleteOptions = $derived(
         dsmCodes.filter(code => (code.code + " " + code.label).toLowerCase().includes(searchString.toLowerCase()))
     )
-    let inputDiv: HTMLDivElement
 
+    let inputDiv: HTMLDivElement
     const isAdmin = data.user?.is_admin
-    const toastStore = getToastStore()
-    const copyToast: ToastSettings = {
-        message: "The selected DSM codes have been copied to your clipboard."
-    }
-    const noSelectionToast: ToastSettings = {
-        message: "No DSM codes have been selected.",
-        background: "variant-filled-error"
-    }
 
     onMount(() => {
         fetch("/api/dsm")
@@ -52,10 +46,9 @@
 
     function exportToClipboard() {
         if (selected.length === 0) {
-            toastStore.trigger(noSelectionToast)
+            toaster.error({ title: "No DSM codes have been selected." })
             return
         }
-
         function itemToString(item: { label: string; code: string }) {
             if (item.code.length < 13) {
                 return [item.code, item.label].join("\t\t")
@@ -64,28 +57,102 @@
             }
         }
         navigator.clipboard.writeText(selected.map(s => itemToString(s)).join("\n") + "\n")
-        toastStore.trigger(copyToast)
+        toaster.info({ title: "The selected DSM codes have been copied to your clipboard." })
     }
 
-    function onCreate(item: SqlDsmCodeSchema) {
-        const index = indexForNewItemInSortedList(
-            dsmCodes.map(d => d.label),
-            item.label
-        )
-        dsmCodes = [...dsmCodes.slice(0, index), item, ...dsmCodes.slice(index)]
+    async function onCreate(code: string, label: string) {
+        let id: number
+        await fetch(`/api/dsm`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ code, label })
+        }).then(async result => {
+            if (!result.ok) {
+                toaster.error({
+                    title: `Failed to create the DSM code: ${result.statusText}`
+                })
+            } else {
+                id = (await result.json())["id"]
+                const index = indexForNewItemInSortedList(
+                    dsmCodes.map(d => d.label),
+                    label
+                )
+                dsmCodes = [...dsmCodes.slice(0, index), { id, code, label }, ...dsmCodes.slice(index)]
+                toaster.success({
+                    title: `Created the DSM code.`
+                })
+            }
+        })
     }
 
-    function onDelete(item: SqlDsmCodeSchema) {
+    async function onEdit(code: string, label: string, id?: number) {
+        if (!id) return
+        const dsmItems = dsmCodes.filter(code => code.id === id)
+        if (dsmItems.length !== 1) {
+            toaster.error({
+                title: "Unexpected error editing the DSM code."
+            })
+            return
+        }
+        await fetch(`/api/dsm/${id}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ code: code, label: label })
+        }).then(result => {
+            if (!result.ok) {
+                toaster.error({
+                    title: `Failed to edit the DSM code: ${result.statusText}`
+                })
+            } else {
+                dsmItems[0].code = code
+                dsmItems[0].label = label
+                editingItem = null
+                toaster.success({
+                    title: `Edited the DSM code.`
+                })
+            }
+        })
+        isEditModalOpen = false
+    }
+
+    function openEditModal(event: MouseEvent, item: SqlDsmCodeSchema) {
+        event.stopPropagation()
+        editingItem = item
+        isEditModalOpen = true
+    }
+
+    function onDelete(event: MouseEvent, item: SqlDsmCodeSchema) {
+        event.stopPropagation()
+        if (!confirm(`Are you sure you want to delete "${item.label}"?`)) {
+            return
+        }
         dsmCodes = dsmCodes.filter(code => code.id !== item.id)
         selected = selected.filter(code => code.id !== item.id)
+
+        // Also handle API call for deletion
+        fetch(`/api/dsm/${item.id}`, {
+            method: "DELETE"
+        }).then(result => {
+            if (!result.ok) {
+                toaster.error({
+                    title: `Failed to delete the DSM code: ${result.statusText}`
+                })
+                // Restore the item if deletion failed
+                dsmCodes = [...dsmCodes, item].sort((a, b) => a.label.localeCompare(b.label))
+            } else {
+                toaster.success({
+                    title: `Deleted the DSM code.`
+                })
+            }
+        })
     }
 </script>
 
-<span class="flex space-x-2 pb-2 h-12">
-    {#if isAdmin}
+{#if isAdmin}
+    <span class="flex space-x-2 pb-2 h-12">
         <CreateButton {onCreate} />
-    {/if}
-</span>
+    </span>
+{/if}
 
 <div class="flex space-x-2">
     <input
@@ -97,8 +164,7 @@
         autocomplete="off"
         bind:value={searchString}
     />
-
-    <button tabindex="-1" class="btn variant-filled-primary" onclick={exportToClipboard} data-testid="copyButton">
+    <button tabindex="-1" class="btn preset-filled-primary-500" onclick={exportToClipboard} data-testid="copyButton">
         <span>
             <i class="fas fa-copy"></i>
             Copy
@@ -109,33 +175,122 @@
 <span class="ml-2 space-x-2 space-y-1">
     {#each selected as selection}
         <button
-            class="chip variant-filled hover:variant-filled"
+            class="chip preset-filled-surface-500 hover:preset-filled-surface-400"
             onclick={() => (selected = selected.filter(s => s.id !== selection.id))}
         >
-            <span><XIcon /></span>
+            <span><X /></span>
             <span>{selection.label}</span>
         </button>
     {/each}
 </span>
 
-<div class="max-h-[40vh] p-4 overflow-y-auto border-2 bg-white">
-    <ul class="w-full">
-        {#each autoCompeleteOptions as option}
-            <li class:grid-cols-1={!isAdmin} class:grid-cols-[70px_auto]={isAdmin} class="grid w-full">
-                {#if isAdmin}
-                    <span class="grid grid-cols-2 mt-2 gap-3 mr-4">
-                        <EditButton bind:dsmItem={dsmCodes[dsmCodes.findIndex(dsm => dsm.id === option.id)]} />
-                        <DeleteButton dsmItem={option} {onDelete} />
-                    </span>
+<div class="max-h-[50vh] overflow-y-auto bg-white border border-gray-200 rounded-lg shadow-sm">
+    {#if autoCompeleteOptions.length === 0}
+        <div class="p-6 text-center text-gray-500">
+            {#if searchString}
+                No DSM codes found matching "<strong>{searchString}</strong>"
+            {:else}
+                No DSM codes available
+            {/if}
+        </div>
+    {:else}
+        <div
+            class="sticky top-0 bg-gray-50 border-b border-gray-200 px-4 py-2 text-xs font-medium text-gray-600 grid gap-4"
+            class:grid-cols-[150px_1fr_80px]={isAdmin}
+            class:grid-cols-[150px_1fr]={!isAdmin}
+        >
+            <span>Code</span>
+            <span>Description</span>
+            {#if isAdmin}
+                <span>Actions</span>
+            {/if}
+        </div>
+        <ul class="divide-y divide-gray-100">
+            {#each autoCompeleteOptions as option}
+                <li class="hover:bg-gray-50 transition-colors duration-150 group">
+                    <div
+                        class="w-full px-4 py-3 grid gap-4 items-center"
+                        class:grid-cols-[150px_1fr_80px]={isAdmin}
+                        class:grid-cols-[150px_1fr]={!isAdmin}
+                        class:bg-blue-50={selected.some(s => s.id === option.id)}
+                        class:border-l-4={selected.some(s => s.id === option.id)}
+                        class:border-blue-500={selected.some(s => s.id === option.id)}
+                    >
+                        <!-- Code column -->
+                        <button class="text-left" onclick={() => onButtonClick(option)}>
+                            <div class="flex flex-col">
+                                <span class="font-mono text-sm font-medium text-gray-900 group-hover:text-blue-600">
+                                    {option.code}
+                                </span>
+                                {#if selected.some(s => s.id === option.id)}
+                                    <span class="text-xs text-blue-600 font-medium mt-1">✓ Selected</span>
+                                {/if}
+                            </div>
+                        </button>
+
+                        <!-- Description column -->
+                        <button class="text-left min-w-0" onclick={() => onButtonClick(option)}>
+                            <p class="text-sm text-gray-900 group-hover:text-blue-900 leading-relaxed">
+                                {option.label}
+                            </p>
+                        </button>
+
+                        <!-- Actions column  -->
+                        {#if isAdmin}
+                            <div class="flex gap-1 justify-end">
+                                <button
+                                    class="p-1 rounded hover:bg-gray-200 text-gray-600 hover:text-blue-600 transition-colors"
+                                    onclick={e => openEditModal(e, option)}
+                                    title="Edit DSM code"
+                                >
+                                    <Pencil class="w-4 h-4" />
+                                </button>
+                                <button
+                                    class="p-1 rounded hover:bg-red-100 text-gray-600 hover:text-red-600 transition-colors"
+                                    onclick={e => onDelete(e, option)}
+                                    title="Delete DSM code"
+                                >
+                                    <X class="w-4 h-4" />
+                                </button>
+                            </div>
+                        {/if}
+                    </div>
+                </li>
+            {/each}
+        </ul>
+        {#if autoCompeleteOptions.length > 10}
+            <div
+                class="sticky bottom-0 bg-gray-50 border-t border-gray-200 px-4 py-2 text-xs text-gray-500 text-center"
+            >
+                Showing {autoCompeleteOptions.length} results
+                {#if searchString}
+                    for "{searchString}"
                 {/if}
-                <button
-                    class="btn hover:variant-ghost-primary flex justify-start text-left w-full"
-                    class:variant-soft-primary={selected.some(s => s.label === option.label)}
-                    onclick={() => onButtonClick(option)}
-                >
-                    {option.label}
-                </button>
-            </li>
-        {/each}
-    </ul>
+            </div>
+        {/if}
+    {/if}
 </div>
+
+<Modal
+    open={isEditModalOpen}
+    onOpenChange={e => {
+        isEditModalOpen = e.open
+        if (!e.open) {
+            editingItem = null
+        }
+    }}
+    triggerBase="btn"
+    contentBase="card bg-surface-100-900 p-4 space-y-4 shadow-xl w-[48rem] max-w-[90vw]"
+    backdropClasses="backdrop-blur-sm"
+>
+    {#snippet content()}
+        {#if editingItem}
+            <ModalDsmForm
+                code={editingItem.code}
+                label={editingItem.label}
+                onSubmit={(code: string, label: string) => onEdit(code, label, (editingItem as SqlDsmCodeSchema).id)}
+                instructions="Edit the DSM code."
+            />
+        {/if}
+    {/snippet}
+</Modal>

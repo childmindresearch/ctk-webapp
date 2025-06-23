@@ -1,6 +1,7 @@
 <script lang="ts">
     import LoadingBar from "$lib/components/LoadingBar.svelte"
-    import { getToastStore } from "@skeletonlabs/skeleton"
+    import { toaster } from "$lib/utils"
+    import { TriangleAlert } from "@lucide/svelte"
     import type { DecisionTree } from "../DecisionTree.svelte"
     import { allUpperCaseDashToCapitalizedSpace, getTemplateValues, submitMarkdownToDocx } from "./checkoutUtilities"
 
@@ -19,7 +20,7 @@
     const inputTemplates = uniqueTemplates.filter(value => value.type === "input")
     const containsPronouns = uniqueTemplates.some(value => value.type === "pronoun")
     const containsWarnings = uniqueTemplates.some(value => value.type === "warning")
-    const toastStore = getToastStore()
+
     const pronounsArray = [
         ["he", "him", "his", "his", "himself"],
         ["she", "her", "her", "hers", "herself"],
@@ -32,7 +33,7 @@
     async function onSubmit(event: Event) {
         event.preventDefault()
         if (values.some(value => value === "")) {
-            toastStore.trigger({ message: "Please fill all the fields.", background: "variant-filled-error" })
+            toaster.error({ title: "Please fill all the fields." })
             return
         }
 
@@ -55,12 +56,15 @@
 </script>
 
 {#if containsWarnings}
-    <aside class="alert variant-filled-warning mb-3">
-        <div class="alert-message">
-            <h3 class="h3">Not all template values covered.</h3>
-            <p>Some of the template values will have to be filled in in the Word document.</p>
+    <div class="card preset-outlined-warning-500 grid grid-cols-1 items-center gap-4 p-4 lg:grid-cols-[auto_1fr_auto]">
+        <TriangleAlert />
+        <div>
+            <p class="font-bold">Not all template values covered.</p>
+            <p class="text-xs opacity-60">
+                Some of the template values will have to be filled in in the Word document.
+            </p>
         </div>
-    </aside>
+    </div>
 {/if}
 
 <div class="space-y-2">
@@ -86,6 +90,6 @@
     {#if isLoading}
         <LoadingBar />
     {:else}
-        <button class="btn variant-filled-primary" onclick={onSubmit}>Download</button>
+        <button class="btn preset-filled-primary-500" onclick={onSubmit}>Download</button>
     {/if}
 </div>

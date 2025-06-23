@@ -1,37 +1,34 @@
 <script lang="ts">
     import LoadingBar from "$lib/components/LoadingBar.svelte"
-    import { getToastStore, Tab, TabGroup } from "@skeletonlabs/skeleton"
+    import MarkdownEditor from "$lib/components/MarkdownEditor.svelte"
+    import { toaster } from "$lib/utils"
+    import { Tabs } from "@skeletonlabs/skeleton-svelte"
     import { onMount } from "svelte"
+    import type { LayoutProps } from "../$types"
     import Checkout from "./Checkout/Checkout.svelte"
     import { DecisionTree } from "./DecisionTree.svelte"
-    import TemplatesDirectory from "./TemplatesDirectory/TemplatesDirectory.svelte"
     import SelectedNodes from "./SelectedNodes.svelte"
-    import MarkdownEditor from "$lib/components/MarkdownEditor.svelte"
+    import TemplatesDirectory from "./TemplatesDirectory/TemplatesDirectory.svelte"
 
-    export let data
+    let { data }: LayoutProps = $props()
 
-    let selectedNodes: DecisionTree[] = []
-    let tabSet: number = 0
-    let editable: boolean = false
-    let nodes: undefined | DecisionTree = undefined
-    let fetchFailed = false
-
-    const toastStore = getToastStore()
+    let selectedNodes: DecisionTree[] = $state([])
+    let tabSet = $state("templates")
+    let nodes: undefined | DecisionTree = $state(undefined)
+    let fetchFailed = $state(false)
 
     function onAddToCart(node: DecisionTree) {
         if (!node) return
         if (selectedNodes.find(savedNode => savedNode.id === node.id)) {
-            toastStore.trigger({
-                background: "variant-filled-warning",
-                message: "This template is already selected."
+            toaster.warning({
+                title: "This template is already selected."
             })
             return
         }
 
         selectedNodes = [...selectedNodes, node]
-        toastStore.trigger({
-            background: "variant-filled-success",
-            message: "Template added to selection."
+        toaster.success({
+            title: "Template added to selection."
         })
     }
 
@@ -47,7 +44,7 @@
     })
 </script>
 
-{#if editable}
+{#if data.user?.is_admin || false}
     <div class="hidden">
         <!-- Preload to reduce loading time on the Markdown modals.-->
         <MarkdownEditor />
@@ -56,26 +53,31 @@
 
 {#if fetchFailed}
     <p>Failed to fetch data. If this error persists, please contact an administrator.</p>
-{:else if !nodes}
+{:else if nodes === undefined}
     <LoadingBar />
 {:else}
-    <TabGroup>
-        <Tab bind:group={tabSet} name="Templates" value={0}>Templates List</Tab>
-        <Tab bind:group={tabSet} name="Selection" value={1}>{selectedNodes.length} Selections</Tab>
-        <Tab bind:group={tabSet} name="Report" value={2}>Report Generation</Tab>
-
-        <svelte:fragment slot="panel">
-            <div hidden={tabSet !== 0}>
-                <TemplatesDirectory {nodes} {onAddToCart} isAdmin={data.user?.is_admin || false} />
-            </div>
-            <div hidden={tabSet !== 1}>
+    <Tabs value={tabSet} onValueChange={e => (tabSet = e.value)}>
+        {#snippet list()}
+            <Tabs.Control value="templates">Templates List</Tabs.Control>
+            <Tabs.Control value="selection">{selectedNodes.length} Selections</Tabs.Control>
+            <Tabs.Control value="report">Report Generation</Tabs.Control>
+        {/snippet}
+        {#snippet content()}
+            <Tabs.Panel value="templates">
+                <TemplatesDirectory
+                    nodes={nodes as DecisionTree}
+                    {onAddToCart}
+                    isAdmin={data.user?.is_admin || false}
+                />
+            </Tabs.Panel>
+            <Tabs.Panel value="selection">
                 <SelectedNodes bind:nodes={selectedNodes} />
-            </div>
-            <div hidden={tabSet !== 2}>
+            </Tabs.Panel>
+            <Tabs.Panel value="report">
                 {#key selectedNodes}
                     <Checkout nodes={selectedNodes} />
                 {/key}
-            </div>
-        </svelte:fragment>
-    </TabGroup>
+            </Tabs.Panel>
+        {/snippet}
+    </Tabs>
 {/if}
