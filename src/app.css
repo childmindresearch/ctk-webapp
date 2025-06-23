@@ -6,7 +6,7 @@
 @import "@skeletonlabs/skeleton/themes/cerberus";
 
 @source '../node_modules/@skeletonlabs/skeleton-svelte/dist';
-@import "./cmi-light";
+@import "@cmi-dair/skeleton-themes/cmi-light";
 
 /* Vditor does not work well with Tailwinds default list styles.*/
 .vditor-reset {

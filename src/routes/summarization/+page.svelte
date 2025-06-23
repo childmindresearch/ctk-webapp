@@ -1,13 +1,11 @@
 <script lang="ts">
     import { FileUpload } from "@skeletonlabs/skeleton-svelte"
-    import FileUploadIcon from "$lib/icons/FileUploadIcon.svelte"
-    import PaperclipIcon from "$lib/icons/PaperclipIcon.svelte"
+    import { Upload, Paperclip, X } from "@lucide/svelte"
 
     import mammoth from "mammoth"
     import { systemPrompt } from "./prompt"
     import LoadingBar from "$lib/components/LoadingBar.svelte"
     import { toaster } from "$lib/utils"
-    import XIcon from "$lib/icons/XIcon.svelte"
 
     let file: File[] = $state([])
     let loading = $state(false)
@@ -137,9 +135,9 @@
                         onFileChange={e => (file = e.acceptedFiles)}
                         classes="w-full border-2 border-dashed border-surface-300 dark:border-surface-600 hover:border-primary-400 transition-colors"
                     >
-                        {#snippet iconInterface()}<FileUploadIcon class="size-8 text-primary-500" />{/snippet}
-                        {#snippet iconFile()}<PaperclipIcon class="size-4" />{/snippet}
-                        {#snippet iconFileRemove()}<XIcon class="size-4" />{/snippet}
+                        {#snippet iconInterface()}<Upload class="size-8 text-primary-500" />{/snippet}
+                        {#snippet iconFile()}<Paperclip class="size-4" />{/snippet}
+                        {#snippet iconFileRemove()}<X class="size-4" />{/snippet}
                     </FileUpload>
                 </div>
 

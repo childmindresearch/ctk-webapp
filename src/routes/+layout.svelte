@@ -4,7 +4,6 @@
     import NavBar from "$lib/components/NavBar.svelte"
     import Navigation from "$lib/components/Navigation.svelte"
     import { toaster } from "$lib/utils"
-    import "@cmi-dair/skeleton-themes/cmi.postcss"
     import { Toaster } from "@skeletonlabs/skeleton-svelte"
     import "../app.css"
 

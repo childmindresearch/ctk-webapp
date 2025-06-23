@@ -1,9 +1,9 @@
 <script lang="ts">
-    import EditIcon from "$lib/icons/EditIcon.svelte"
     import { DecisionTree } from "../DecisionTree.svelte"
     import { toaster } from "$lib/utils"
     import { Modal } from "@skeletonlabs/skeleton-svelte"
     import ModalMarkdown from "$lib/components/ModalMarkdown.svelte"
+    import { Pencil } from "@lucide/svelte"
 
     type Props = {
         node: DecisionTree
@@ -42,12 +42,12 @@
 <Modal
     open={isModalOpen}
     onOpenChange={e => (isModalOpen = e.open)}
-    triggerBase="btn hover:preset-tonal"
+    triggerBase=""
     contentBase="card bg-surface-100-900 p-4 space-y-4 shadow-xl"
     backdropClasses="backdrop-blur-sm"
 >
     {#snippet trigger()}
-        <EditIcon class="text-warning-600" />
+        <Pencil class="text-warning-600 hover:text-warning-400" size="1.3rem" />
     {/snippet}
     {#snippet content()}
         <ModalMarkdown text={node.text} {onSubmit} {instructions} />

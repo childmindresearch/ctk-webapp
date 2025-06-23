@@ -1,8 +1,7 @@
 <script lang="ts">
-    import EnvelopeIcon from "$lib/icons/EnvelopeIcon.svelte"
     import { Modal, AppBar } from "@skeletonlabs/skeleton-svelte"
     import Navigation from "./Navigation.svelte"
-    import BarsIcon from "$lib/icons/BarsIcon.svelte"
+    import { Menu, Mail } from "@lucide/svelte"
 
     let drawerState = $state(false)
 </script>
@@ -14,7 +13,7 @@
                 open={drawerState}
                 onOpenChange={e => (drawerState = e.open)}
                 triggerBase="btn hover:preset-tonal"
-                contentBase="bg-surface-100-900 p-4 space-y-4 shadow-xl w-[480px] h-screen"
+                contentBase="bg-surface-50 p-4 space-y-4 shadow-xl w-[480px] h-screen"
                 positionerJustify="justify-start"
                 positionerAlign=""
                 positionerPadding=""
@@ -22,7 +21,7 @@
                 transitionsPositionerOut={{ x: -480, duration: 200 }}
             >
                 {#snippet trigger()}
-                    <BarsIcon />
+                    <Menu />
                 {/snippet}
                 {#snippet content()}
                     <Navigation bind:isOpen={drawerState} />
@@ -34,14 +33,16 @@
         </a>
     {/snippet}
     {#snippet trail()}
-        <button class="btn hover:preset-tonal-primary">
+        <button class="btn preset-filled-primary-500">
             <a
                 href="https://chief-resonance-054.notion.site/138229e809388113b654dabf11c4dd33?pvs=105"
                 target="_blank"
                 rel="noreferrer"
             >
-                <EnvelopeIcon class="text-lg" />
-                <span>Feedback</span>
+                <div class="flex space-x-2">
+                    <Mail />
+                    <div>Feedback</div>
+                </div>
             </a>
         </button>
     {/snippet}

@@ -1,14 +1,13 @@
 <script lang="ts">
-    import XIcon from "$lib/icons/XIcon.svelte"
     import type { SqlDsmCodeSchema } from "$lib/server/sql"
     import type { User } from "$lib/types"
     import { toaster } from "$lib/utils"
     import { onMount } from "svelte"
     import CreateButton from "./CreateButton.svelte"
-    import EditIcon from "$lib/icons/EditIcon.svelte"
     import ModalDsmForm from "./ModalDsmForm.svelte"
     import { Modal } from "@skeletonlabs/skeleton-svelte"
     import { indexForNewItemInSortedList } from "./utils"
+    import { X, Pencil } from "@lucide/svelte"
 
     type Props = { data: { user: User } }
     let { data }: Props = $props()
@@ -179,7 +178,7 @@
             class="chip preset-filled-surface-500 hover:preset-filled-surface-400"
             onclick={() => (selected = selected.filter(s => s.id !== selection.id))}
         >
-            <span><XIcon /></span>
+            <span><X /></span>
             <span>{selection.label}</span>
         </button>
     {/each}
@@ -244,14 +243,14 @@
                                     onclick={e => openEditModal(e, option)}
                                     title="Edit DSM code"
                                 >
-                                    <EditIcon class="w-4 h-4" />
+                                    <Pencil class="w-4 h-4" />
                                 </button>
                                 <button
                                     class="p-1 rounded hover:bg-red-100 text-gray-600 hover:text-red-600 transition-colors"
                                     onclick={e => onDelete(e, option)}
                                     title="Delete DSM code"
                                 >
-                                    <XIcon class="w-4 h-4" />
+                                    <X class="w-4 h-4" />
                                 </button>
                             </div>
                         {/if}

@@ -1,9 +1,9 @@
 <script lang="ts">
-    import TrashIcon from "$lib/icons/TrashIcon.svelte"
     import { shortenText } from "$lib/utils"
     import { DecisionTree } from "../DecisionTree.svelte"
     import { openNodeIds } from "./store"
     import { toaster } from "$lib/utils"
+    import { Trash } from "@lucide/svelte"
 
     type Props = {
         node: DecisionTree
@@ -39,6 +39,7 @@
     }
 </script>
 
-<button type="button" class="btn hover:preset-tonal" onclick={onDelete}>
-    <TrashIcon class="text-error-600" />
+<!-- Add bottom padding to align well with Skeleton Modals.-->
+<button class="pb-[6px]" type="button" onclick={onDelete}>
+    <Trash class="text-error-600 hover:text-error-400" size="1.3rem" />
 </button>

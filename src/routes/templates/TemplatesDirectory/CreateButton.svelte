@@ -1,6 +1,6 @@
 <script lang="ts">
     import ModalMarkdown from "$lib/components/ModalMarkdown.svelte"
-    import FileIcon from "$lib/icons/FileIcon.svelte"
+    import { File } from "@lucide/svelte"
     import { toaster } from "$lib/utils"
     import { Modal } from "@skeletonlabs/skeleton-svelte"
     import { DecisionTree } from "../DecisionTree.svelte"
@@ -45,12 +45,12 @@
 <Modal
     open={isModalOpen}
     onOpenChange={e => (isModalOpen = e.open)}
-    triggerBase="btn hover:preset-tonal"
+    triggerBase=""
     contentBase="card p-4 space-y-4"
     backdropClasses="backdrop-blur-sm"
 >
     {#snippet trigger()}
-        <FileIcon class="text-success-600 bg-surface-50" />
+        <File class="text-success-600 hover:text-success-400 bg-surface-50" size="1.3rem" />
     {/snippet}
     {#snippet content()}
         <ModalMarkdown text="" {onSubmit} {instructions} />
