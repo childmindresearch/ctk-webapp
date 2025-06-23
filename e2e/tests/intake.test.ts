@@ -4,6 +4,8 @@ test("the user can navigate to the intake page and request an intake document", 
     test.slow()
 
     await page.goto("/intake")
+    page.getByTestId("intakeInput").waitFor()
+
     const input = page.getByTestId("intakeInput")
     await input.fill("mock")
     const button = page.getByTestId("intakeSubmit")

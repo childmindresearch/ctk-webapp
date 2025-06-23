@@ -1,3 +1,4 @@
+CREATE DATABASE ctk;
 \c ctk;
 
 CREATE TABLE users (
