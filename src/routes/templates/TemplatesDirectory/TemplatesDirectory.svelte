@@ -1,9 +1,12 @@
 <script lang="ts">
     import LoadingBar from "$lib/components/LoadingBar.svelte"
-    import { getModalStore, getToastStore, SlideToggle, type ModalSettings } from "@skeletonlabs/skeleton"
+    import { Switch } from "@skeletonlabs/skeleton-svelte"
     import type { DecisionTree } from "../DecisionTree.svelte"
     import SortableNested from "./SortableNested.svelte"
     import ExportTemplates from "../ExportTemplates.svelte"
+    import { Modal } from "@skeletonlabs/skeleton-svelte"
+    import ModalSearchDecisionTree from "./ModalSearchDecisionTree.svelte"
+    import { openNodeIds } from "./store"
 
     type Props = {
         nodes: DecisionTree
@@ -13,21 +16,14 @@
     let { nodes, onAddToCart, isAdmin = false }: Props = $props()
 
     let filteredNodes: DecisionTree = nodes
-    let editable: boolean = $state(false)
+    let editable = $state(false)
+    let isSearchModalOpen = $state(false)
 
-    const toastStore = getToastStore()
-    const modalStore = getModalStore()
-
-    function openSearchModal() {
-        const modal: ModalSettings = {
-            type: "component",
-            component: "searchDecisionTree",
-            meta: { root: nodes, editable: editable },
-            response: (response: { value: DecisionTree }) => {
-                onAddToCart(response.value)
-            }
-        }
-        modalStore.trigger(modal)
+    function onSearchClick(node: DecisionTree) {
+        const parents = node.getAncestors()
+        const ids = [...parents.map(parent => parent.id), node.id]
+        openNodeIds.set(new Set(ids))
+        isSearchModalOpen = false
     }
 </script>
 
@@ -35,14 +31,32 @@
     <LoadingBar label="Processing templates..." />
 {:else}
     <div class="flex space-x-3 pb-2">
-        <button class="btn variant-filled-primary hover:variant-soft-primary" onclick={openSearchModal}>
-            <i class="fas fa-search mr-2"></i>
-            Search
-        </button>
+        <Modal
+            open={isSearchModalOpen}
+            onOpenChange={e => (isSearchModalOpen = e.open)}
+            triggerBase="btn preset-filled-primary-500"
+            contentBase="card bg-surface-50 p-4 space-y-4 w-[80%]"
+            backdropClasses="backdrop-blur-sm"
+        >
+            {#snippet trigger()}
+                <i class="fas fa-search mr-2"></i>
+                Search
+            {/snippet}
+            {#snippet content()}
+                <ModalSearchDecisionTree root={nodes} {onSearchClick} onSaveClick={onAddToCart} />
+            {/snippet}
+        </Modal>
+
         {#if isAdmin}
             <ExportTemplates bind:nodes />
             <div class="right-0 content-center">
-                <SlideToggle name="slider-editable" size="sm" bind:checked={editable}>Editable</SlideToggle>
+                <Switch
+                    name="slider-editable"
+                    checked={editable}
+                    onCheckedChange={e => {
+                        editable = e.checked
+                    }}>Editable</Switch
+                >
             </div>
         {/if}
     </div>

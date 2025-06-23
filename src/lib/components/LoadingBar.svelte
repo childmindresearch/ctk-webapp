@@ -8,24 +8,22 @@ then it keeps spinning forever.
 @param {string | undefined} label - The label to display below the progress radial.
 -->
 <script lang="ts">
-    import { ProgressRadial } from "@skeletonlabs/skeleton"
+    import { ProgressRing } from "@skeletonlabs/skeleton-svelte"
 
     type Props = {
-        value?: number | undefined
+        value?: number | null
         label?: string | undefined
         hidden?: boolean
     }
-    let { value = undefined, label = undefined, hidden = false }: Props = $props()
+    let { value = null, label = undefined, hidden = false }: Props = $props()
 
-    const stroke = 100
-    const width = "w-12"
-    const meter = "stroke-primary-500"
-    const track = "stroke-primary-500/20"
+    const meterStroke = "stroke-primary-500"
+    const trackStroke = "stroke-primary-500/20"
     const strokeLinecap = "round"
 </script>
 
 <div class="mr-auto flex justify-center items-center" class:hidden>
-    <ProgressRadial {value} {meter} {track} {stroke} {width} {strokeLinecap} />
+    <ProgressRing {value} size="size-14" {meterStroke} {trackStroke} {strokeLinecap} />
 </div>
 {#if label}
     <p class="text-center text-md pt-2">{label}</p>

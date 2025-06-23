@@ -1,7 +1,5 @@
 <script lang="ts">
-    import CartPlusIcon from "$lib/icons/CartPlusIcon.svelte"
-    import FolderClosedIcon from "$lib/icons/FolderClosedIcon.svelte"
-    import FolderOpenIcon from "$lib/icons/FolderOpenIcon.svelte"
+    import { FilePlus2, FolderClosed, FolderOpen } from "@lucide/svelte"
     import Sortable, { type SortableEvent } from "sortablejs"
     import { onMount } from "svelte"
     import SvelteMarkdown from "svelte-markdown"
@@ -75,26 +73,24 @@
     <div class="flex items-center space-x-1">
         <button class="hover-highlight" onclick={node.children.length === 0 ? () => onAddToCart(node) : fold}>
             {#if node.children.length === 0}
-                <CartPlusIcon class="text-secondary-400" />
+                <FilePlus2 class="text-secondary-400 hover:text-secondary-200" size="1.3rem" />
             {:else if isFolded}
-                <FolderClosedIcon class="text-secondary-900" />
+                <FolderClosed class="text-secondary-900 hover:text-secondary-700" size="1.3rem" />
             {:else}
-                <FolderOpenIcon class="text-secondary-600" />
+                <FolderOpen class="text-secondary-600 hover:text-secondary-400" size="1.3rem" />
             {/if}
         </button>
-        <div class="indented-list overflow-y-scroll max-h-[200px]">
+        <div class="indented-list overflow-y-auto max-h-[200px]">
             <SvelteMarkdown source={node.text} />
         </div>
         {#if editable}
-            <div>
-                <span class="grid grid-rows-1 grid-flow-col gap-0">
-                    <CreateButton {node} />
-                    {#if !_isRoot}
-                        <EditButton {node} />
-                        <DeleteButton {node} />
-                    {/if}
-                </span>
-            </div>
+            <span class="grid grid-rows-1 grid-flow-col gap-1 items-center">
+                <CreateButton {node} />
+                {#if !_isRoot}
+                    <EditButton {node} />
+                    <DeleteButton {node} />
+                {/if}
+            </span>
         {/if}
     </div>
 

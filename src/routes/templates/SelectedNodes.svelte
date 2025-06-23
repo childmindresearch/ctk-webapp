@@ -1,21 +1,16 @@
 <script lang="ts">
-    import ArrowDownIcon from "$lib/icons/ArrowDownIcon.svelte"
-    import ArrowUpIcon from "$lib/icons/ArrowUpIcon.svelte"
-    import TrashIcon from "$lib/icons/TrashIcon.svelte"
-    import { getToastStore } from "@skeletonlabs/skeleton"
+    import { toaster } from "$lib/utils"
     import { flip } from "svelte/animate"
     import { quintOut } from "svelte/easing"
     import type { DecisionTree } from "./DecisionTree.svelte"
+    import { ArrowUp, ArrowDown, Trash } from "@lucide/svelte"
 
     export let nodes: DecisionTree[]
 
-    const toastStore = getToastStore()
-
     function removeNode(node: DecisionTree): void {
         nodes = nodes.filter(n => n.id !== node.id)
-        toastStore.trigger({
-            background: "variant-filled-success",
-            message: "Template removed from selection."
+        toaster.success({
+            title: "Template removed from selection."
         })
     }
 
@@ -47,18 +42,18 @@
                 <tr animate:flip={{ delay: 0, duration: 250, easing: quintOut }}>
                     <td class="flex gap-x-2">
                         <button on:click={() => move(node, -1)}>
-                            <ArrowUpIcon />
+                            <ArrowUp class="text-surface-900 hover:text-surface-500" />
                         </button>
                         <button on:click={() => move(node, 1)}>
-                            <ArrowDownIcon />
+                            <ArrowDown class="text-surface-900 hover:text-surface-500" />
                         </button>
                         <div></div>
                         <button on:click={() => removeNode(node)}>
-                            <TrashIcon class="text-error-600" />
+                            <Trash class="text-error-600 hover:text-error-300" />
                         </button>
                     </td>
                     <td width="99%">
-                        <ol class="breadcrumb">
+                        <ol class="breadcrumb flex space-x-2">
                             {#each getNodePath(node) as path, index}
                                 {#if index !== 0}
                                     <li class="crumb-separator" aria-hidden={true}>&rsaquo;</li>
