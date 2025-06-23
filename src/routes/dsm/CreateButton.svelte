@@ -7,6 +7,11 @@
     let isModalOpen = $state(false)
 
     const instructions = "Create a new DSM code."
+
+    function localOnCreate(code: string, label: string) {
+        onCreate(code, label)
+        isModalOpen = false
+    }
 </script>
 
 <Modal
@@ -20,6 +25,6 @@
         <span class="btn preset-filled-primary-500">Create DSM Code</span>
     {/snippet}
     {#snippet content()}
-        <ModalDsmForm code="" label="" onSubmit={onCreate} {instructions} />
+        <ModalDsmForm code="" label="" onSubmit={localOnCreate} {instructions} />
     {/snippet}
 </Modal>
