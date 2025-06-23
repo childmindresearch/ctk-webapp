@@ -1,6 +1,7 @@
 <script lang="ts">
     import LoadingBar from "$lib/components/LoadingBar.svelte"
     import { toaster } from "$lib/utils"
+    import { TriangleAlert } from "@lucide/svelte"
     import type { DecisionTree } from "../DecisionTree.svelte"
     import { allUpperCaseDashToCapitalizedSpace, getTemplateValues, submitMarkdownToDocx } from "./checkoutUtilities"
 
@@ -55,12 +56,15 @@
 </script>
 
 {#if containsWarnings}
-    <aside class="alert preset-filled-warning-500 mb-3">
-        <div class="alert-message">
-            <h3 class="h3">Not all template values covered.</h3>
-            <p>Some of the template values will have to be filled in in the Word document.</p>
+    <div class="card preset-outlined-warning-500 grid grid-cols-1 items-center gap-4 p-4 lg:grid-cols-[auto_1fr_auto]">
+        <TriangleAlert />
+        <div>
+            <p class="font-bold">Not all template values covered.</p>
+            <p class="text-xs opacity-60">
+                Some of the template values will have to be filled in in the Word document.
+            </p>
         </div>
-    </aside>
+    </div>
 {/if}
 
 <div class="space-y-2">
