@@ -43,7 +43,7 @@
         <Navigation isOpen={true} />
     </div>
 
-    <div class="overflow-y-auto px-10 pt-5 flex-1">
+    <div class="overflow-y-auto h-full px-10 pt-5 flex-1">
         {@render children()}
     </div>
 </div>
