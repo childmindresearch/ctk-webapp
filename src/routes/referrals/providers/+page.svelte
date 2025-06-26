@@ -28,11 +28,11 @@
         "maxAge",
         "addresses",
         "subServices",
-        "serviceType"
+        "serviceTypeId"
     ] as const
 
     async function onCreate(data: ProviderFormData) {
-        return await fetch("/api/referrals/providers", {
+        await fetch("/api/referrals/providers", {
             method: "POST",
             body: JSON.stringify(data)
         })
@@ -50,6 +50,7 @@
                     description: reason
                 })
             })
+            .finally(() => (isCreationModalOpen = false))
     }
 
     async function onDelete(row: (typeof providers)[number]) {
@@ -71,6 +72,7 @@
     }
 
     async function onEdit(data: ProviderFormData) {
+        console.log(data)
         return await fetch(`/api/referrals/providers/${data.id}`, {
             method: "PUT",
             body: JSON.stringify(data)
@@ -92,6 +94,7 @@
                     description: reason
                 })
             })
+            .finally(() => (isEditModalOpen = false))
     }
 </script>
 

@@ -89,6 +89,7 @@ The component uses a cascading filter approach where filters are applied in sequ
 </script>
 
 <div class="flex flex-col gap-3 p-3">
+    <!-- Top Level Filters -->
     {#each Object.entries(topLevelFilterNames) as [key, name]}
         <div class="w-full">
             <MultiSelectFilter
@@ -103,6 +104,7 @@ The component uses a cascading filter approach where filters are applied in sequ
         </div>
     {/each}
 
+    <!-- Location Filter -->
     <div class="w-full">
         <MultiSelectFilter
             options={locations}

@@ -31,7 +31,7 @@ export type GetSingleProviderResponse = {
     minAge: number
     maxAge: number
     addresses: Address[]
-    serviceType: string | null
+    serviceTypeId: string | null
     subServices: SubService[]
 }
 

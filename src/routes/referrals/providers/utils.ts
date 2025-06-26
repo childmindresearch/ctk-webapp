@@ -66,7 +66,7 @@ function formatAddresses(provider: GetSingleProviderResponse) {
                     .join(", ")
             }
         })
-        .join("; ")
+        .join("\n\n")
 }
 
 function formatLocations(provider: GetSingleProviderResponse) {

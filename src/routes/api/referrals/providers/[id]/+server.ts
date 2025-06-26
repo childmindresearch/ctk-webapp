@@ -1,9 +1,9 @@
 import { db } from "$lib/server/db"
-import { provider, providerAddress } from "$lib/server/db/schema"
+import { provider, providerAddress, providerSubServices, serviceType, subServiceType } from "$lib/server/db/schema"
 import { logger } from "$lib/server/logging"
 import { isModel, zodValidateOr400 } from "$lib/server/zod_utils.js"
 import { json } from "@sveltejs/kit"
-import { eq } from "drizzle-orm"
+import { eq, and } from "drizzle-orm"
 import { z } from "zod"
 import { getProviders } from "../fetchers"
 
@@ -48,13 +48,14 @@ const PutProviderRequestSchema = z.object({
     acceptsInsurance: z.boolean(),
     insuranceDetails: z.string().nullable().optional(),
     minAge: z.number(),
-    maxAge: z.number()
+    maxAge: z.number(),
+    serviceType: z.string(),
+    subServices: z.array(z.string()).nullable().optional()
 })
 
 export async function PUT({ params, request }) {
     const id = Number(params.id)
     const providerData = await request.json()
-    console.log(providerData)
 
     const providerRequest = zodValidateOr400(PutProviderRequestSchema, providerData)
     if (!isModel(PutProviderRequestSchema, providerRequest)) {
@@ -63,6 +64,50 @@ export async function PUT({ params, request }) {
 
     try {
         await db.transaction(async tx => {
+            // Get or insert servicetype
+            const serviceTypeId = await tx
+                .select()
+                .from(serviceType)
+                .where(eq(serviceType.name, providerRequest.serviceType))
+                .then(service => {
+                    if (service.length > 0) {
+                        return service[0].id
+                    } else {
+                        return tx
+                            .insert(serviceType)
+                            .values({ name: providerRequest.serviceType })
+                            .returning()
+                            .then(res => res[0].id)
+                    }
+                })
+
+            if (!serviceTypeId) {
+                return new Response("Service type not found or could not be created.", { status: 400 })
+            }
+
+            // Get or insert subservices
+            let subServiceIds: number[] = []
+            if (providerRequest.subServices && providerRequest.subServices.length > 0) {
+                subServiceIds = await Promise.all(
+                    providerRequest.subServices.map(async name => {
+                        const subService = await tx
+                            .select()
+                            .from(subServiceType)
+                            .where(and(eq(subServiceType.name, name), eq(subServiceType.serviceTypeId, serviceTypeId)))
+                        if (subService.length > 0) {
+                            return subService[0].id
+                        } else {
+                            const newSubService = await tx
+                                .insert(subServiceType)
+                                .values({ name: name, serviceTypeId: serviceTypeId })
+                                .returning()
+                            return newSubService[0].id
+                        }
+                    })
+                )
+            }
+
+            // Replace provider details.
             await tx
                 .update(provider)
                 .set({
@@ -70,10 +115,23 @@ export async function PUT({ params, request }) {
                     acceptsInsurance: providerRequest.acceptsInsurance,
                     insuranceDetails: providerRequest.insuranceDetails,
                     minAge: providerRequest.minAge,
-                    maxAge: providerRequest.maxAge
+                    maxAge: providerRequest.maxAge,
+                    serviceTypeId: serviceTypeId
                 })
                 .where(eq(provider.id, id))
 
+            // Replace subservices.
+            await tx.delete(providerSubServices).where(eq(providerSubServices.providerId, id))
+            await Promise.all(
+                subServiceIds.map(subServiceId =>
+                    tx
+                        .insert(providerSubServices)
+                        .values({ providerId: id, subServiceTypeId: subServiceId })
+                        .onConflictDoNothing()
+                )
+            )
+
+            // Replace addresses.
             await tx.delete(providerAddress).where(eq(providerAddress.providerId, id))
             if (providerRequest.addresses && providerRequest.addresses.length > 0) {
                 const addresses = providerRequest.addresses.map(address => ({

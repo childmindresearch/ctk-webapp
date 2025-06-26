@@ -40,7 +40,7 @@ const PostProviderRequestSchema = z.object({
     minAge: z.number(),
     maxAge: z.number(),
     serviceType: z.string(),
-    subServiceTypes: z.array(z.string())
+    subServices: z.array(z.string())
 })
 
 export async function POST({ request }) {
@@ -51,7 +51,7 @@ export async function POST({ request }) {
     }
 
     try {
-        const newProvider = await db.transaction(async tx => {
+        const providerId = await db.transaction(async tx => {
             let service = await tx.select().from(serviceType).where(eq(serviceType.name, providerRequest.serviceType))
             if (service.length == 0) {
                 service = await tx.insert(serviceType).values({ name: providerRequest.serviceType }).returning()
@@ -59,7 +59,7 @@ export async function POST({ request }) {
             const serviceId = service[0].id
 
             const subServices = await Promise.all(
-                providerRequest.subServiceTypes.map(async name => {
+                providerRequest.subServices.map(async name => {
                     let subService = await tx
                         .select()
                         .from(subServiceType)
@@ -100,10 +100,11 @@ export async function POST({ request }) {
                     tx.insert(providerSubServices).values({ providerId, subServiceTypeId: subService.id })
                 })
             )
-
-            return (await getProviders(providerId))[0]
+            return providerId
         })
 
+        const newProvider = (await getProviders(providerId))[0]
+        console.log(newProvider)
         return json(newProvider, { status: 201 })
     } catch (error) {
         console.error("Error creating provider:", error)
