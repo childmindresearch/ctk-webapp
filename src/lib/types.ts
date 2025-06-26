@@ -24,7 +24,6 @@ export type SubService = {
 }
 
 export type GetSingleProviderResponse = {
-    [key: string]: string | number | boolean | null | Address[] | SubService[]
     id: number
     name: string
     acceptsInsurance: boolean

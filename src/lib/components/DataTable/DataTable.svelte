@@ -7,7 +7,6 @@
     @param {Function} [onCreate] - Optional callback function when create button is clicked
     @param {Function} [onEdit] - Optional callback function when edit button is clicked, receives row data
     @param {Function} [onDelete] - Optional callback function when delete button is clicked, receives row data
-    @param {Function} [unpack] - Optional function uses to process row data into strings.
 
     Example:
     ```svelte
@@ -21,12 +20,8 @@
     ```
 -->
 <script lang="ts" generics="T extends Record<string, any>">
-    import EditIcon from "$lib/icons/EditIcon.svelte"
-    import TrashIcon from "$lib/icons/TrashIcon.svelte"
+    import { ArrowDown, ArrowDownUp, ArrowUp, Pencil, Trash } from "@lucide/svelte"
     import { flip } from "svelte/animate"
-    import SortBothArrows from "$lib/icons/SortBothArrows.svelte"
-    import SortDownArrow from "$lib/icons/SortDownArrow.svelte"
-    import SortUpArrow from "$lib/icons/SortUpArrow.svelte"
 
     type Props<T extends Record<string, any>> = {
         data: T[]
@@ -35,7 +30,6 @@
         onCreate?: () => void
         onEdit?: (row: (typeof data)[number]) => void
         onDelete?: (row: (typeof data)[number]) => void
-        unpack?: (value: T) => { [K in keyof T]: string }
     }
 
     let { data, idColumn, hiddenColumns, onCreate, onEdit, onDelete }: Props<T> = $props()
@@ -73,87 +67,90 @@
     }
 </script>
 
-<table class="table-fixed table table-hover overflow-x-auto">
-    <thead>
-        <tr>
-            {#if showControls}
-                <td>Controls</td>
-            {/if}
-            {#each columns as name}
-                <td
-                    >{titleCase((name as string).replace("_", " "))}
-
-                    <button
-                        onclick={() => {
-                            sortKey = name
-                            sortDirection -= 1
-                            if (sortDirection === -2) sortDirection = 1
-                        }}
-                    >
-                        {#if sortKey !== name || sortDirection === 0}
-                            <SortBothArrows />
-                        {:else if sortDirection === -1}
-                            <SortDownArrow />
-                        {:else}
-                            <SortUpArrow />
+<div class="table-container min-w-[16rem] overflow-x-auto">
+    <div class="hidden lg:block w-full overflow-x-auto">
+        <table class="table caption-bottom min-w-full">
+            <thead>
+                <tr>
+                    {#if showControls}
+                        <td>Controls</td>
+                    {/if}
+                    {#each columns as name}
+                        <td class="whitespace-nowrap px-2">
+                            {titleCase((name as string).replace("_", " "))}
+                            <button
+                                onclick={() => {
+                                    sortKey = name
+                                    sortDirection -= 1
+                                    if (sortDirection === -2) sortDirection = 1
+                                }}
+                            >
+                                {#if sortKey !== name || sortDirection === 0}
+                                    <ArrowDownUp size="13" />
+                                {:else if sortDirection === -1}
+                                    <ArrowDown size="13" />
+                                {:else}
+                                    <ArrowUp size="13" />
+                                {/if}
+                            </button>
+                        </td>
+                    {/each}
+                </tr>
+            </thead>
+            <tbody class="[&>tr]:hover:preset-tonal-primary">
+                {#each paginated as row (row[idColumn])}
+                    <tr animate:flip={{ duration: 350 }}>
+                        {#if showControls}
+                            <td class="px-2 min-w-[5rem]">
+                                <div class="text-center space-x-2">
+                                    {#if onEdit}
+                                        <button
+                                            aria-label="edit"
+                                            class="text-warning-600 hover:text-warning-300 transition-colors duration-150"
+                                            onclick={() => {
+                                                const target = data.find(dataRow => dataRow.id == row.id)
+                                                if (target) onEdit(target)
+                                            }}
+                                        >
+                                            <Pencil />
+                                        </button>
+                                    {/if}
+                                    {#if onDelete}
+                                        <button
+                                            aria-label="delete"
+                                            class="text-error-600 hover:text-error-300 transition-colors duration-150"
+                                            onclick={() => {
+                                                const target = data.find(dataRow => dataRow.id == row.id)
+                                                if (target) onDelete(target)
+                                            }}
+                                        >
+                                            <Trash />
+                                        </button>
+                                    {/if}
+                                </div>
+                            </td>
                         {/if}
-                    </button>
-                </td>
-            {/each}
-        </tr>
-    </thead>
-
-    <tbody>
-        {#each paginated as row (row[idColumn])}
-            <tr animate:flip={{ duration: 350 }}>
-                {#if showControls}
-                    <td>
-                        <div class="text-center space-x-2">
-                            {#if onEdit}
-                                <button
-                                    aria-label="edit"
-                                    class="text-warning-600 hover:text-warning-300 transition-colors duration-150"
-                                    onclick={() => {
-                                        const target = data.find(dataRow => dataRow.id == row.id)
-                                        if (target) onEdit(target)
-                                    }}
-                                >
-                                    <EditIcon />
-                                </button>
-                            {/if}
-                            {#if onDelete}
-                                <button
-                                    aria-label="delete"
-                                    class="text-error-600 hover:text-error-300 transition-colors duration-150"
-                                    onclick={() => {
-                                        const target = data.find(dataRow => dataRow.id == row.id)
-                                        if (target) onDelete(target)
-                                    }}
-                                >
-                                    <TrashIcon />
-                                </button>
-                            {/if}
-                        </div>
-                    </td>
-                {/if}
-                {#each columns as column}
-                    <td class="break-words"> {row[column]} </td>
+                        {#each columns as column}
+                            <td class="px-2 py-1 min-w-24 max-w-32 truncate"> {row[column]} </td>
+                        {/each}
+                    </tr>
                 {/each}
-            </tr>
-        {/each}
-    </tbody>
-</table>
+            </tbody>
+        </table>
+    </div>
 
+    <div class="lg:hidden space-y-4">Page too narrow to display table.</div>
+</div>
 <div class="pt-2 flex w-full justify-between">
     {#if onCreate}
-        <button class="btn variant-filled-primary" onclick={onCreate}> Create </button>
+        <button class="btn preset-filled-primary-500" onclick={onCreate}> Create </button>
     {/if}
 
     <div class="space-x-2">
         {#each Array(maxPages).keys() as val}
             <button
                 class:variant-filled-secondary={currentPage === val}
-                class="btn variant-filled-primary"
+                class="btn preset-filled-primary-500"
                 onclick={() => (currentPage = val)}
             >
                 {val + 1}

@@ -6,7 +6,7 @@ requires that the table contains only an `id` and `name` property.
 -->
 
 <script lang="ts">
-    import { getToastStore } from "@skeletonlabs/skeleton"
+    import { toaster } from "$lib/utils"
     import { onMount } from "svelte"
 
     type Props = {
@@ -21,7 +21,6 @@ requires that the table contains only an `id` and `name` property.
     let postValue = $state("")
 
     let selections: { id: number; name: string; selected: boolean }[] = $state([])
-    const toastStore = getToastStore()
 
     onMount(async () => {
         const entries: { id: number; name: string }[] = await (await fetch(endpoint)).json()
@@ -37,9 +36,9 @@ requires that the table contains only an `id` and `name` property.
         if (!postValue) return
         await fetch(endpoint, { method: "POST", body: JSON.stringify({ name: postValue }) }).then(async response => {
             if (!response.ok) {
-                toastStore.trigger({
-                    message: `Failed to post a new ${name} because of ${await response.text()}.`,
-                    background: "variant-error"
+                toaster.error({
+                    title: `Failed to post a new ${name}.`,
+                    description: await response.text()
                 })
                 return
             }

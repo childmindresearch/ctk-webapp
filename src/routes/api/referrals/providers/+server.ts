@@ -20,14 +20,14 @@ export async function GET() {
 }
 
 const ProviderAddressSchema = z.object({
-    addressId: z.number().optional(),
-    providerId: z.number().optional(),
-    addressLine1: z.string().optional(),
-    addressLine2: z.string().optional(),
+    addressId: z.number().nullable().optional(),
+    providerId: z.number().nullable().optional(),
+    addressLine1: z.string().nullable().optional(),
+    addressLine2: z.string().nullable().optional(),
     location: z.string(),
-    city: z.string().optional(),
-    state: z.string().optional(),
-    zipCode: z.string().optional(),
+    city: z.string().nullable().optional(),
+    state: z.string().nullable().optional(),
+    zipCode: z.string().nullable().optional(),
     contacts: z.array(z.string()),
     isRemote: z.boolean()
 })

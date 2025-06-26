@@ -30,23 +30,23 @@ export async function DELETE({ params }) {
 }
 
 const ProviderAddressSchema = z.object({
-    addressId: z.number().optional(),
-    providerId: z.number().optional(),
-    addressLine1: z.string().optional(),
-    addressLine2: z.string().optional(),
+    addressId: z.number().nullable().optional(),
+    providerId: z.number().nullable().optional(),
+    addressLine1: z.string().nullable().optional(),
+    addressLine2: z.string().nullable().optional(),
     isRemote: z.boolean(),
     location: z.string(),
-    city: z.string().optional(),
-    state: z.string().optional(),
-    zipCode: z.string().optional(),
-    contacts: z.array(z.string()).optional()
+    city: z.string().nullable().optional(),
+    state: z.string().nullable().optional(),
+    zipCode: z.string().nullable().optional(),
+    contacts: z.array(z.string()).nullable().optional()
 })
 
 const PutProviderRequestSchema = z.object({
     name: z.string(),
-    addresses: z.array(ProviderAddressSchema).optional(),
+    addresses: z.array(ProviderAddressSchema).nullable().optional(),
     acceptsInsurance: z.boolean(),
-    insuranceDetails: z.string().optional(),
+    insuranceDetails: z.string().nullable().optional(),
     minAge: z.number(),
     maxAge: z.number()
 })
@@ -54,6 +54,7 @@ const PutProviderRequestSchema = z.object({
 export async function PUT({ params, request }) {
     const id = Number(params.id)
     const providerData = await request.json()
+    console.log(providerData)
 
     const providerRequest = zodValidateOr400(PutProviderRequestSchema, providerData)
     if (!isModel(PutProviderRequestSchema, providerRequest)) {

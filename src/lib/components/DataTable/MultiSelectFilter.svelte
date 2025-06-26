@@ -1,26 +1,27 @@
-<script lang="ts" generics="T extends string">
-    type Props<T extends string> = {
-        options: T[]
+<script lang="ts">
+    type Props = {
+        options: string[]
         name: string
-        onChange: (selection: T[]) => void
+        value: string | undefined
+        onChange: (selection: string[]) => void
     }
 
-    const { options, name, onChange }: Props<T> = $props()
-    let selected: string = $state("")
-    let activeFilters: T[] = $derived(
+    const { options, name, onChange, value = "" }: Props = $props()
+    let selected: string = $state(value)
+    let activeFilters = $derived(
         selected
             .split(",")
             .map(s => s.trim())
-            .filter(s => options.find(opt => opt === s))
-    ) as T[]
+            .filter(s => s !== "")
+    )
 
     $effect(() => onChange(activeFilters))
 
-    function addFilterValue(value: T) {
+    function addFilterValue(value: string) {
         selected = [...activeFilters, value].join(", ")
     }
 
-    function removeFilterValue(value: T) {
+    function removeFilterValue(value: string) {
         selected = selected
             .split(",")
             .map(s => s.trim())
@@ -36,7 +37,8 @@
                 {name}
             </label>
             <input
-                id="filter-name}"
+                id="filter-{name}"
+                autocomplete="off"
                 class="input input-sm flex-1 max-w-md"
                 type="text"
                 bind:value={selected}
