@@ -12,6 +12,7 @@
         { name: "Intake", href: "/intake" },
         { name: "Pyrite Reports", href: "/pyrite", badge: "Alpha" },
         { name: "Summarization", href: "/summarization" },
+        { name: "Referrals", href: "/referrals/providers" },
         { name: "Templates", href: "/templates" }
     ]
 

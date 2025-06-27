@@ -11,7 +11,7 @@ type Endpoint = {
     method: "GET" | "PATCH" | "POST" | "PUT" | "DELETE"
 }
 
-const ADMIN_ENDPOINT_PATHS = ["/api/templates/.*?", "/api/dsm/.*?"]
+const ADMIN_ENDPOINT_PATHS = ["/api/templates/.*?", "/api/dsm/.*?", "/referrals/admin/.*"]
 const ADMIN_SPECIFIC_ENDPOINTS: Endpoint[] = [{ path: "/api/dsm", method: "POST" }]
 
 /* Logs outgoing fetches and their responses. */
