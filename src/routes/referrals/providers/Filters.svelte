@@ -76,7 +76,7 @@ The component uses a cascading filter approach where filters are applied in sequ
             .filter(provider => {
                 return Object.entries(topLevelFilters).every(([key, value]) => {
                     if (!value) return true
-                    const providerValue = String(provider[key]).toLowerCase()
+                    const providerValue = String(provider[key as keyof typeof provider]).toLowerCase()
                     const filterValues = value.split(",").map(val => val.trim().toLowerCase())
                     return filterValues.some(filterVal => providerValue.includes(filterVal))
                 })
@@ -93,7 +93,7 @@ The component uses a cascading filter approach where filters are applied in sequ
     {#each Object.entries(topLevelFilterNames) as [key, name]}
         <div class="w-full">
             <MultiSelectFilter
-                options={providers.map(p => String(p[key])).filter(onlyUnique)}
+                options={providers.map(p => String(p[key as keyof typeof p])).filter(onlyUnique)}
                 {name}
                 onChange={s => (topLevelFilters[key as keyof typeof topLevelFilters] = s.join(", "))}
                 value={(topLevelFilters[key as keyof typeof topLevelFilters]
