@@ -70,7 +70,7 @@
 <div class="table-container min-w-[16rem] overflow-x-auto">
     <div class="hidden lg:block w-full overflow-x-auto">
         <table class="table caption-bottom min-w-full">
-            <thead>
+            <thead class="font-semibold">
                 <tr>
                     {#if showControls}
                         <td>Controls</td>
@@ -149,7 +149,7 @@
     <div class="space-x-2">
         {#each Array(maxPages).keys() as val}
             <button
-                class:variant-filled-secondary={currentPage === val}
+                class:preset-filled-secondary-500={currentPage === val}
                 class="btn preset-filled-primary-500"
                 onclick={() => (currentPage = val)}
             >

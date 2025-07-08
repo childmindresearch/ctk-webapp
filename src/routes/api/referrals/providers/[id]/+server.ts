@@ -1,5 +1,11 @@
 import { db } from "$lib/server/db"
-import { provider, providerAddress, providerSubServices, serviceType, subServiceType } from "$lib/server/db/schema"
+import {
+    referralProviders,
+    referralAddresses,
+    referralSubServices,
+    referralServices,
+    referralProviderSubServices
+} from "$lib/server/db/schema"
 import { logger } from "$lib/server/logging"
 import { isModel, zodValidateOr400 } from "$lib/server/zod_utils.js"
 import { json } from "@sveltejs/kit"
@@ -21,7 +27,7 @@ export async function GET({ params }) {
 export async function DELETE({ params }) {
     const id = Number(params.id)
     try {
-        await db.delete(provider).where(eq(provider.id, id))
+        await db.delete(referralProviders).where(eq(referralProviders.id, id))
         return new Response(null, { status: 200 })
     } catch (error) {
         logger.error(`Error deleting provider ${id}`, error)
@@ -65,23 +71,23 @@ export async function PUT({ params, request }) {
     try {
         await db.transaction(async tx => {
             // Get or insert servicetype
-            const serviceTypeId = await tx
+            const serviceId = await tx
                 .select()
-                .from(serviceType)
-                .where(eq(serviceType.name, providerRequest.serviceType))
+                .from(referralServices)
+                .where(eq(referralServices.name, providerRequest.serviceType))
                 .then(service => {
                     if (service.length > 0) {
                         return service[0].id
                     } else {
                         return tx
-                            .insert(serviceType)
+                            .insert(referralServices)
                             .values({ name: providerRequest.serviceType })
                             .returning()
                             .then(res => res[0].id)
                     }
                 })
 
-            if (!serviceTypeId) {
+            if (!serviceId) {
                 return new Response("Service type not found or could not be created.", { status: 400 })
             }
 
@@ -92,14 +98,16 @@ export async function PUT({ params, request }) {
                     providerRequest.subServices.map(async name => {
                         const subService = await tx
                             .select()
-                            .from(subServiceType)
-                            .where(and(eq(subServiceType.name, name), eq(subServiceType.serviceTypeId, serviceTypeId)))
+                            .from(referralSubServices)
+                            .where(
+                                and(eq(referralSubServices.name, name), eq(referralSubServices.serviceId, serviceId))
+                            )
                         if (subService.length > 0) {
                             return subService[0].id
                         } else {
                             const newSubService = await tx
-                                .insert(subServiceType)
-                                .values({ name: name, serviceTypeId: serviceTypeId })
+                                .insert(referralSubServices)
+                                .values({ name: name, serviceId: serviceId })
                                 .returning()
                             return newSubService[0].id
                         }
@@ -109,36 +117,36 @@ export async function PUT({ params, request }) {
 
             // Replace provider details.
             await tx
-                .update(provider)
+                .update(referralProviders)
                 .set({
                     name: providerRequest.name,
                     acceptsInsurance: providerRequest.acceptsInsurance,
                     insuranceDetails: providerRequest.insuranceDetails,
                     minAge: providerRequest.minAge,
                     maxAge: providerRequest.maxAge,
-                    serviceTypeId: serviceTypeId
+                    serviceId: serviceId
                 })
-                .where(eq(provider.id, id))
+                .where(eq(referralProviders.id, id))
 
             // Replace subservices.
-            await tx.delete(providerSubServices).where(eq(providerSubServices.providerId, id))
+            await tx.delete(referralProviderSubServices).where(eq(referralProviderSubServices.providerId, id))
             await Promise.all(
                 subServiceIds.map(subServiceId =>
                     tx
-                        .insert(providerSubServices)
-                        .values({ providerId: id, subServiceTypeId: subServiceId })
+                        .insert(referralProviderSubServices)
+                        .values({ providerId: id, subServiceId: subServiceId })
                         .onConflictDoNothing()
                 )
             )
 
             // Replace addresses.
-            await tx.delete(providerAddress).where(eq(providerAddress.providerId, id))
+            await tx.delete(referralAddresses).where(eq(referralAddresses.providerId, id))
             if (providerRequest.addresses && providerRequest.addresses.length > 0) {
                 const addresses = providerRequest.addresses.map(address => ({
                     ...address,
                     providerId: id
                 }))
-                await tx.insert(providerAddress).values(addresses)
+                await tx.insert(referralAddresses).values(addresses)
             }
         })
 

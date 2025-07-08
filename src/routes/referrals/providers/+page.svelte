@@ -14,6 +14,7 @@
     let isEditModalOpen = $state(false)
     let editModalData: Partial<ProviderFormData> = $state({})
     let filterDrawerState = $state(false)
+    let serviceTypes = data.data.map(p => p.serviceType)
     type columnNames = keyof (typeof providers)[number]
 
     // Filters need to be bound in order to persist after opening/closing the drawer.
@@ -28,7 +29,7 @@
         "maxAge",
         "addresses",
         "subServices",
-        "serviceTypeId"
+        "serviceId"
     ] as const
 
     async function onCreate(data: ProviderFormData) {
@@ -166,7 +167,7 @@
     backdropClasses="backdrop-blur-sm"
 >
     {#snippet content()}
-        <ModalProviderForm provider={{}} onSubmit={onCreate} />
+        <ModalProviderForm provider={{}} onSubmit={onCreate} serviceTypeAutoCompletions={serviceTypes} />
     {/snippet}
 </Modal>
 
@@ -181,6 +182,6 @@
     backdropClasses="backdrop-blur-sm"
 >
     {#snippet content()}
-        <ModalProviderForm provider={editModalData} onSubmit={onEdit} />
+        <ModalProviderForm provider={editModalData} onSubmit={onEdit} serviceTypeAutoCompletions={serviceTypes} />
     {/snippet}
 </Modal>

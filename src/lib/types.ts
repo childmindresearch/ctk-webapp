@@ -20,7 +20,7 @@ export type Address = {
 export type SubService = {
     id: number
     name: string
-    serviceTypeId: number
+    serviceId: number
 }
 
 export type GetSingleProviderResponse = {
@@ -31,7 +31,8 @@ export type GetSingleProviderResponse = {
     minAge: number
     maxAge: number
     addresses: Address[]
-    serviceTypeId: string | null
+    serviceId: number
+    serviceType: string
     subServices: SubService[]
 }
 

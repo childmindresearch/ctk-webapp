@@ -17,6 +17,25 @@ CREATE TABLE templates (
     parent_id INTEGER,
     priority INTEGER NOT NULL
 );
+
+
+CREATE TABLE referral_services (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL
+);
+
+-- Referral network tables
+CREATE TABLE referral_providers (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(500) NOT NULL,
+    accepts_insurance BOOLEAN NOT NULL,
+    insurance_details VARCHAR(1024),
+    min_age INTEGER DEFAULT 0,
+    max_age INTEGER DEFAULT 120,
+    service_id INTEGER REFERENCES referral_services(id)
+);
+
+
 -- Create function to set priority
 CREATE OR REPLACE FUNCTION set_template_priority()
 RETURNS TRIGGER AS $$
@@ -33,29 +52,11 @@ CREATE TRIGGER trigger_set_template_priority
     BEFORE INSERT ON templates
     FOR EACH ROW
     EXECUTE FUNCTION set_template_priority();
--- Service types and sub-service types
-CREATE TABLE service_types (
+
+-- Fix the provider address table reference
+CREATE TABLE referral_addresses (
     id SERIAL PRIMARY KEY,
-    name VARCHAR(255) NOT NULL
-);
-CREATE TABLE sub_service_types (
-    id SERIAL PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,
-    service_type_id INTEGER NOT NULL REFERENCES service_types(id) ON DELETE CASCADE
-);
--- Referral network tables
-CREATE TABLE provider (
-    id SERIAL PRIMARY KEY,
-    name VARCHAR(500) NOT NULL,
-    accepts_insurance BOOLEAN NOT NULL,
-    insurance_details VARCHAR(1024),
-    min_age INTEGER DEFAULT 0,
-    max_age INTEGER DEFAULT 120,
-    service_type_id INTEGER REFERENCES service_types(id)
-);
-CREATE TABLE provider_address (
-    id SERIAL PRIMARY KEY,
-    provider_id INTEGER NOT NULL REFERENCES provider(id) ON DELETE CASCADE,
+    provider_id INTEGER NOT NULL REFERENCES referral_providers(id) ON DELETE CASCADE,
     is_remote BOOLEAN,
     location VARCHAR(255),
     address_line1 VARCHAR(255),
@@ -65,349 +66,172 @@ CREATE TABLE provider_address (
     zip_code VARCHAR(20),
     contacts VARCHAR(255)[]
 );
--- Junction table for providers and their sub-service types
-CREATE TABLE provider_sub_services (
+
+
+CREATE TABLE referral_sub_services (
     id SERIAL PRIMARY KEY,
-    provider_id INTEGER NOT NULL REFERENCES provider(id) ON DELETE CASCADE,
-    sub_service_type_id INTEGER NOT NULL REFERENCES sub_service_types(id) ON DELETE CASCADE,
-    UNIQUE(provider_id, sub_service_type_id)
+    name VARCHAR(255) NOT NULL,
+    service_id INTEGER NOT NULL REFERENCES referral_services(id) ON DELETE CASCADE
 );
+
+CREATE TABLE referral_provider_sub_services (
+    id SERIAL PRIMARY KEY,
+    provider_id INTEGER NOT NULL REFERENCES referral_providers(id) ON DELETE CASCADE,
+    sub_service_id INTEGER NOT NULL REFERENCES referral_sub_services(id) ON DELETE CASCADE,
+    UNIQUE(provider_id, sub_service_id)
+);
+
+-- Add the missing semicolon
+CREATE TABLE referral_set (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    service_ids INTEGER[] NOT NULL,
+    locations VARCHAR(255)[] NOT NULL
+);
+
+
 -- Insert initial data
 INSERT INTO users (email, is_admin) VALUES
     ('lea@crossworlds-guild.org', true);
--- Insert 20 essential DSM codes
+
+-- Insert DSM codes (top 10 most common)
 INSERT INTO dsm_codes (code, label) VALUES
     ('314.01/F90.2', 'ADHD, Combined presentation'),
-    ('299.00/F84.0', 'Autism Spectrum Disorder'),
-    ('296.23/F32.2', 'Major Depressive Disorder, Single episode, Severe'),
-    ('296.33/F33.2', 'Major Depressive Disorder, Recurrent episode, Severe'),
-    ('300.4/F34.1', 'Persistent Depressive Disorder (Dysthymia)'),
-    ('300.01/F41.0', 'Panic Disorder'),
+    ('296.23/F32.2', 'Major Depressive Disorder'),
     ('300.02/F41.1', 'Generalized Anxiety Disorder'),
     ('300.23/F40.10', 'Social Anxiety Disorder'),
-    ('300.3/F42.2', 'Obsessive-Compulsive Disorder'),
     ('309.81/F43.10', 'Posttraumatic Stress Disorder'),
-    ('296.43/F31.13', 'Bipolar I Disorder, Most recent episode manic, Severe'),
-    ('296.89/F31.81', 'Bipolar II Disorder'),
-    ('307.1/F50.02', 'Anorexia Nervosa, Binge-eating/purging type'),
-    ('307.51/F50.2', 'Bulimia Nervosa'),
-    ('305.00/F10.10', 'Alcohol Use Disorder, Mild'),
-    ('304.30/F12.20', 'Cannabis Use Disorder, Moderate'),
-    ('304.00/F11.20', 'Opioid Use Disorder, Moderate'),
-    ('301.83/F60.3', 'Borderline Personality Disorder'),
-    ('301.81/F60.81', 'Narcissistic Personality Disorder'),
-    ('295.90/F20.9', 'Schizophrenia');
--- Insert 20 templates with proper leaf structure
-INSERT INTO templates (id, text, parent_id, priority) VALUES
-    -- Root category
-    (1, 'CrossCode Clinical Templates', NULL, 1),
+    ('296.43/F31.13', 'Bipolar I Disorder'),
+    ('300.3/F42.2', 'Obsessive-Compulsive Disorder'),
+    ('305.00/F10.10', 'Alcohol Use Disorder'),
+    ('299.00/F84.0', 'Autism Spectrum Disorder'),
+    ('301.83/F60.3', 'Borderline Personality Disorder');
 
-    -- Main categories (branches only)
-    (2, 'Assessment Templates', 1, 2),
-    (3, 'Progress Notes', 1, 3),
-    (4, 'Treatment Plans', 1, 4),
-    (5, 'Crisis Management', 1, 5),
+-- Insert templates (simplified structure)
+INSERT INTO templates (text, parent_id, priority) VALUES
+    ('Clinical Templates', NULL, 1),
+    ('Assessment Templates', 1, 2),
+    ('Progress Notes', 1, 3),
+    ('Treatment Plans', 1, 4),
+    ('Initial Assessment: Chief complaint and current symptoms. Include digital wellness concerns.', 2, 5),
+    ('Mental Status Exam: Appearance, mood, thought process, and reality testing.', 2, 6),
+    ('Individual Progress: Session engagement, interventions used, client response.', 3, 7),
+    ('Group Progress: Group dynamics, participation, and therapeutic progress.', 3, 8),
+    ('Individual Plan: Goals, objectives, and specific interventions for treatment.', 4, 9),
+    ('Family Plan: Communication, boundaries, and family system interventions.', 4, 10);
 
-    -- Assessment subcategories (branches only)
-    (6, 'Initial Assessments', 2, 6),
-    (7, 'Specialized Assessments', 2, 7),
-
-    -- Progress subcategories (branches only)
-    (8, 'Individual Progress', 3, 8),
-    (9, 'Group Progress', 3, 9),
-
-    -- Treatment subcategories (branches only)
-    (10, 'Individual Plans', 4, 10),
-    (11, 'Family Plans', 4, 11),
-
-    -- Crisis subcategories (branches only)
-    (12, 'Safety Planning', 5, 12),
-    (13, 'Risk Assessment', 5, 13),
-
-    -- Leaf templates (actual content - no further branches)
-    (14, 'Chief complaint and reason for seeking treatment. Include current CrossCode usage patterns and any digital world-related stressors affecting real-world functioning.', 6, 14),
-    (15, 'Mental status examination including appearance, behavior, mood, thought process, and reality testing. Note any CrossCode addiction behaviors or virtual reality confusion.', 6, 15),
-    (16, 'Comprehensive trauma assessment including real-world and virtual trauma experiences. Document any PTSD symptoms related to CrossCode combat or guild conflicts.', 7, 16),
-    (17, 'Individual therapy session progress including client engagement, interventions used, and response to treatment. Note progress with CrossCode addiction if applicable.', 8, 17),
-    (18, 'Group therapy session dynamics, member participation, and therapeutic progress. Document peer support and social skills development outside CrossCode environment.', 9, 18),
-    (19, 'Individual treatment plan with specific goals, objectives, and interventions. Include strategies for healthy CrossCode usage and real-world skill development.', 10, 19),
-    (20, 'Family therapy treatment plan addressing communication, boundaries, and CrossCode-related family conflicts. Include digital wellness education components.', 11, 20);
--- Set the sequence to continue from where we left off
-SELECT setval('templates_id_seq', 20);
 -- Insert service types
-INSERT INTO service_types (name) VALUES
+INSERT INTO referral_services (name) VALUES
     ('Mental Health'),
     ('Substance Abuse'),
     ('Family Therapy'),
     ('Specialized Therapy');
--- Insert sub-service types
-INSERT INTO sub_service_types (name, service_type_id) VALUES
-    -- Mental Health sub-services
-    ('Anxiety Disorders', 1),
-    ('Depression Treatment', 1),
-    ('PTSD/Trauma Therapy', 1),
-    ('ADHD Assessment', 1),
-    ('CrossCode Addiction', 1),
-    -- Substance Abuse sub-services
-    ('Alcohol Treatment', 2),
-    ('Drug Rehabilitation', 2),
-    -- Family Therapy sub-services
-    ('Couples Counseling', 3),
-    ('Child Psychology', 3),
-    -- Specialized Therapy sub-services
-    ('Cognitive Behavioral Therapy', 4),
-    ('Group Therapy', 4),
-    ('Telehealth Services', 4);
--- Insert 32 providers with CrossCode theme
-INSERT INTO provider (name, accepts_insurance, insurance_details, min_age, max_age, service_type_id) VALUES
-    ('CrossWorlds Guild Counseling Network', TRUE, 'CrossWorlds Health Alliance, Gott Statue Medical', 13, 120, 1),
+
+-- Insert providers (8 providers)
+INSERT INTO referral_providers (name, accepts_insurance, insurance_details, min_age, max_age, service_id) VALUES
+    ('CrossWorlds Guild Counseling', TRUE, 'CrossWorlds Health Alliance', 13, 120, 1),
     ('Rookie Harbor Youth Center', TRUE, 'CrossWorlds Health Alliance', 5, 18, 3),
-    ('Bergen Village Healing Collective', FALSE, NULL, 18, 65, 1),
-    ('Autumn''s Rise Digital Wellness Group', TRUE, 'Forest Guild Insurance, Mountain Climbers United', 16, 35, 4),
-    ('Ba''kii Kum Desert Recovery Centers', TRUE, 'Shad''gan Tribal Health, CrossWorlds Health Alliance', 21, 120, 2),
-    ('Sapphire Ridge Telehealth Services', TRUE, 'CrossWorlds Health Alliance, Virtual Care Network', 12, 120, 4),
-    ('Gaia''s Garden Mind & Body Therapy', FALSE, NULL, 0, 120, 3),
-    ('Basin Keep Combat Trauma Specialists', TRUE, 'Veterans CrossCode Benefits, Warrior Guild Insurance', 18, 65, 1),
-    ('Rhombus Square Tech Addiction Center', TRUE, 'Digital Health Solutions, CrossWorlds Health Alliance', 14, 40, 2),
-    ('Vermillion Wasteland Survival Therapy', FALSE, NULL, 16, 120, 1),
-    ('Temple Mine Depth Psychology Institute', TRUE, 'Underground Miners Union Health, Deep Healing Network', 18, 80, 1),
-    ('Maroon Valley Family Counseling', TRUE, 'Family First Insurance, CrossWorlds Health Alliance', 0, 120, 3),
-    ('Faj''ro Temple Mindfulness Center', FALSE, NULL, 12, 120, 4),
-    ('Zir''vitar Temple Spiritual Healing', TRUE, 'Sacred Arts Medical, Spiritual Wellness Network', 18, 120, 1),
-    ('Cold Dng. Cave Isolation Therapy Clinic', TRUE, 'Spelunker''s Health Insurance, Dark Therapy Associates', 21, 65, 1),
-    ('Grand Krys''kajo Crystal Energy Healing', FALSE, NULL, 16, 120, 4),
-    ('Cargo Ship Mobility & Anxiety Support', TRUE, 'Merchant Marine Health, Travel Anxiety Specialists', 18, 75, 1),
-    ('First Scholars'' Guild Study Skills Center', TRUE, 'Academic Excellence Insurance, Student Mental Health Network', 8, 22, 4),
-    ('Second Scholars'' Advanced Behavioral Analysis', TRUE, 'Research Psychology Network, Higher Learning Health', 16, 120, 1),
-    ('Heat Area Anger Management Institute', TRUE, 'Emotional Regulation Insurance, Fire Guild Benefits', 14, 80, 4),
-    ('Jungle Dungeon Phobia Treatment Center', TRUE, 'Nature Fear Recovery Network, Wilderness Therapy Alliance', 12, 70, 1),
-    ('Electric Dungeon Shock Therapy Alternatives', FALSE, NULL, 18, 120, 1),
-    ('So''najiz Temple Ancient Wisdom Counseling', TRUE, 'Traditional Healing Arts Insurance, Elder Wisdom Network', 25, 120, 3),
-    ('Treehouse Hideout Child Development Center', TRUE, 'Children''s Forest Health, Tree Climbers'' Medical', 3, 17, 3),
-    ('Gott Statue Memorial Grief Counseling', TRUE, 'Bereavement Support Network, Memorial Health Services', 10, 120, 1),
-    ('CrossCode Beta Tester PTSD Support Group', TRUE, 'Gaming Industry Health, Virtual Reality Medical', 16, 45, 1),
-    ('Lea''s Legacy Leadership Development Therapy', FALSE, NULL, 16, 35, 4),
-    ('Sergey''s Tech Solutions Autism Spectrum Support', TRUE, 'Neurodiversity Health Network, Tech Worker Benefits', 5, 120, 1),
-    ('Apollo''s Music Therapy & Emotional Expression', TRUE, 'Creative Arts Medical, Sound Healing Alliance', 6, 120, 4),
-    ('Shizuka''s Silent Strength Selective Mutism Center', TRUE, 'Communication Disorders Network, Introvert Health Alliance', 4, 25, 3),
-    ('C''tron''s Robotic Behavioral Modification Clinic', FALSE, NULL, 18, 120, 4),
-    ('Gautham''s Meditation & Mindfulness Institute', TRUE, 'Zen Practice Medical, Contemplative Health Network', 12, 120, 1);
-
--- Insert provider addresses with multiple locations per provider
-INSERT INTO provider_address (provider_id, location, is_remote, address_line1, address_line2, city, state, zip_code, contacts) VALUES
-    -- CrossWorlds Guild Counseling Network (4 locations)
-    (1, 'Rookie Harbor', FALSE, '1 Guild Plaza', 'Main Counseling Wing', 'Rookie Harbor', 'CW', '00001', ARRAY['+1 555 GUILD-01', 'rookie@crossworldsguild.cw', 'www.crossworldsguildcounseling.cw']),
-    (1, 'Gaia''s Garden', FALSE, '45 Twilight Boulevard', 'Healing Arts Center', 'Gaia''s Garden', 'CW', '40001', ARRAY['+1 555 GUILD-02', 'macanu@crossworldsguild.cw']),
-    (1, 'Basin Keep', FALSE, '88 Warrior''s Rest Avenue', 'Combat Recovery Unit', 'Basin Keep', 'CW', '50001', ARRAY['+1 555 GUILD-03', 'fortouph@crossworldsguild.cw']),
-    (1, 'Remote', TRUE, NULL, NULL, NULL, NULL, NULL, ARRAY['+1 555 GUILD-99', 'telehealth@crossworldsguild.cw', 'portal.crossworldsguild.cw']),
-
-    -- Rookie Harbor Youth Center (3 locations)
-    (2, 'Rookie Harbor', FALSE, '15 Training Grounds Way', 'Youth Development Center', 'Rookie Harbor', 'CW', '00015', ARRAY['+1 555 YOUTH-01', 'main@rookieharboryouth.cw']),
-    (2, 'Bergen Village', FALSE, '7 Harmony Grove Circle', 'Nature Youth Center', 'Bergen Village', 'CW', '10007', ARRAY['+1 555 YOUTH-02', 'bergen@rookieharboryouth.cw']),
-    (2, 'Remote', TRUE, NULL, NULL, NULL, NULL, NULL, ARRAY['+1 555 YOUTH-99', 'virtual@rookieharboryouth.cw']),
-
-    -- Bergen Village Healing Collective (2 locations)
-    (3, 'Bergen Village', FALSE, '23 Ancient Tree Lane', 'Elder''s Healing Grove', 'Bergen Village', 'CW', '10023', ARRAY['+1 555 TREE-01', 'grove@bergenhealing.cw']),
-    (3, 'Autumn''s Rise', FALSE, '56 Golden Path Drive', 'Mountain Retreat Center', 'Autumn''s Rise', 'CW', '20056', ARRAY['+1 555 TREE-02', 'mountain@bergenhealing.cw']),
-
-    -- Autumn's Rise Digital Wellness Group (3 locations)
-    (4, 'Autumn''s Rise', FALSE, '99 Summit Peak Drive', 'Digital Detox Center', 'Autumn''s Rise', 'CW', '20099', ARRAY['+1 555 AUTUMN-01', 'summit@autumndigital.cw']),
-    (4, 'Gaia''s Garden', FALSE, '12 Tech Balance Boulevard', 'Virtual Reality Therapy', 'Gaia''s Garden', 'CW', '40012', ARRAY['+1 555 AUTUMN-02', 'macanu@autumndigital.cw']),
-    (4, 'Remote', TRUE, NULL, NULL, NULL, NULL, NULL, ARRAY['+1 555 AUTUMN-99', 'online@autumndigital.cw']),
-
-    -- Ba'kii Kum Desert Recovery Centers (3 locations)
-    (5, 'Ba''kii Kum', FALSE, '77 Oasis Springs Road', 'Main Recovery Campus', 'Ba''kii Kum', 'CW', '30077', ARRAY['+1 555 DESERT-01', 'oasis@bakiikumrecovery.cw']),
-    (5, 'Basin Keep', FALSE, '33 Warrior''s Recovery Way', 'Combat Addiction Center', 'Basin Keep', 'CW', '50033', ARRAY['+1 555 DESERT-02', 'warrior@bakiikumrecovery.cw']),
-    (5, 'Rookie Harbor', FALSE, '8 New Beginnings Street', 'Outpatient Services', 'Rookie Harbor', 'CW', '00008', ARRAY['+1 555 DESERT-03', 'rookie@bakiikumrecovery.cw']),
-
-    -- Sapphire Ridge Telehealth Services (Remote + 2 physical)
-    (6, 'Remote', TRUE, NULL, NULL, NULL, NULL, NULL, ARRAY['+1 555 SAPPHIRE-99', 'portal@sapphireridge.cw', 'therapy.sapphireridge.cw']),
-    (6, 'Sapphire Ridge', FALSE, '101 Crystal Peak Avenue', 'Tech Support Hub', 'Sapphire Ridge', 'CW', '60101', ARRAY['+1 555 SAPPHIRE-01', 'crystal@sapphireridge.cw']),
-    (6, 'Gaia''s Garden', FALSE, '25 Virtual Care Plaza', 'Regional Office', 'Gaia''s Garden', 'CW', '40025', ARRAY['+1 555 SAPPHIRE-02', 'regional@sapphireridge.cw']),
-
-    -- Gaia's Garden Mind & Body Therapy (2 locations)
-    (7, 'Gaia''s Garden', FALSE, '50 Twilight Healing Circle', 'Mind-Body Wellness Center', 'Gaia''s Garden', 'CW', '40050', ARRAY['+1 555 MACANU-01', 'twilight@macanumind.cw']),
-    (7, 'Bergen Village', FALSE, '18 Forest Therapy Trail', 'Nature Integration Center', 'Bergen Village', 'CW', '10018', ARRAY['+1 555 MACANU-02', 'forest@macanumind.cw']),
-
-    -- Basin Keep Combat Trauma Specialists (2 locations)
-    (8, 'Basin Keep', FALSE, '200 Veterans Memorial Drive', 'Combat PTSD Center', 'Basin Keep', 'CW', '50200', ARRAY['+1 555 COMBAT-01', 'ptsd@fortouphtrauma.cw']),
-    (8, 'Ba''kii Kum', FALSE, '44 Warrior''s Oasis Road', 'Desert Healing Outpost', 'Ba''kii Kum', 'CW', '30044', ARRAY['+1 555 COMBAT-02', 'desert@fortouphtrauma.cw']),
-
-    -- Rhombus Square Tech Addiction Center (2 locations)
-    (9, 'Rhombus Square', FALSE, '404 Error Recovery Lane', 'Digital Detox Main Campus', 'Rhombus Square', 'CW', '70404', ARRAY['+1 555 RHOMBUS-01', 'detox@rhombustech.cw']),
-    (9, 'Remote', TRUE, NULL, NULL, NULL, NULL, NULL, ARRAY['+1 555 RHOMBUS-99', 'virtual@rhombustech.cw']),
-
-    -- Vermillion Wasteland Survival Therapy (2 locations)
-    (10, 'Vermillion Wasteland', FALSE, '999 Barren Hope Road', 'Survival Skills Center', 'Vermillion Wasteland', 'CW', '80999', ARRAY['+1 555 WASTELAND-01', 'survive@vermilliontherapy.cw']),
-    (10, 'Basin Keep', FALSE, '66 Warrior Support Plaza', 'Outreach Office', 'Basin Keep', 'CW', '50066', ARRAY['+1 555 WASTELAND-02', 'outreach@vermilliontherapy.cw']),
-
-    -- Temple Mine Depth Psychology Institute (1 location)
-    (11, 'Temple Mine', FALSE, '777 Underground Boulevard', 'Deep Therapy Complex', 'Temple Mine', 'CW', '90777', ARRAY['+1 555 TEMPLE-01', 'deep@templemine.cw']),
-
-    -- Maroon Valley Family Counseling (2 locations)
-    (12, 'Maroon Valley', FALSE, '123 Family Harmony Street', 'Main Family Center', 'Maroon Valley', 'CW', '11123', ARRAY['+1 555 MAROON-01', 'family@maroonvalley.cw']),
-    (12, 'Bergen Village', FALSE, '45 Community Circle', 'Village Outreach', 'Bergen Village', 'CW', '10045', ARRAY['+1 555 MAROON-02', 'village@maroonvalley.cw']),
-
-    -- Faj'ro Temple Mindfulness Center (1 location)
-    (13, 'Faj''ro Temple', FALSE, '888 Sacred Fire Avenue', 'Meditation Hall Complex', 'Faj''ro Temple', 'CW', '12888', ARRAY['+1 555 FAJRO-01', 'mindful@fajrotemple.cw']),
-
-    -- Zir'vitar Temple Spiritual Healing (1 location)
-    (14, 'Zir''vitar Temple', FALSE, '222 Ancient Wisdom Way', 'Spiritual Healing Sanctuary', 'Zir''vitar Temple', 'CW', '13222', ARRAY['+1 555 ZIRVITAR-01', 'spirit@zirvitartemple.cw']),
-
-    -- Cold Dng. Cave Isolation Therapy Clinic (1 location)
-    (15, 'Cold Dng. Cave', FALSE, '111 Isolation Therapy Path', 'Cave Therapy Complex', 'Cold Dng. Cave', 'CW', '14111', ARRAY['+1 555 COLDCAVE-01', 'isolate@colddngcave.cw']),
-
-    -- Grand Krys'kajo Crystal Energy Healing (1 location)
-    (16, 'Grand Krys''kajo', FALSE, '555 Crystal Energy Plaza', 'Crystal Healing Center', 'Grand Krys''kajo', 'CW', '15555', ARRAY['+1 555 CRYSTAL-01', 'energy@grandkryskajo.cw']),
-
-    -- Cargo Ship Mobility & Anxiety Support (2 locations)
-    (17, 'Cargo Ship', FALSE, '321 Mobile Therapy Deck', 'Floating Therapy Platform', 'Cargo Ship', 'CW', '16321', ARRAY['+1 555 CARGO-01', 'mobile@cargoship.cw']),
-    (17, 'Rookie Harbor', FALSE, '87 Port Therapy Street', 'Harbor Anxiety Center', 'Rookie Harbor', 'CW', '00087', ARRAY['+1 555 CARGO-02', 'harbor@cargoship.cw']),
-
-    -- First Scholars' Guild Study Skills Center (1 location)
-    (18, 'First Scholars'' Guild', FALSE, '100 Academic Excellence Drive', 'Learning Support Center', 'First Scholars'' Guild', 'CW', '17100', ARRAY['+1 555 SCHOLARS-01', 'study@firstscholars.cw']),
-
-    -- Second Scholars' Advanced Behavioral Analysis (1 location)
-    (19, 'Second Scholars'' Guild', FALSE, '200 Research Psychology Lane', 'Behavioral Analysis Lab', 'Second Scholars'' Guild', 'CW', '18200', ARRAY['+1 555 ADVANCED-01', 'research@secondscholars.cw']),
-
-    -- Heat Area Anger Management Institute (1 location)
-    (20, 'Heat Area', FALSE, '999 Cooling Down Boulevard', 'Anger Management Center', 'Heat Area', 'CW', '19999', ARRAY['+1 555 HEAT-01', 'cool@heatarea.cw']),
-
-    -- Jungle Dungeon Phobia Treatment Center (1 location)
-    (21, 'Jungle Dungeon', FALSE, '444 Fear Conquering Trail', 'Phobia Treatment Facility', 'Jungle Dungeon', 'CW', '20444', ARRAY['+1 555 JUNGLE-01', 'conquer@jungledungeon.cw']),
-
-    -- Electric Dungeon Shock Therapy Alternatives (1 location)
-    (22, 'Electric Dungeon', FALSE, '777 Alternative Treatment Circuit', 'Non-Shock Therapy Center', 'Electric Dungeon', 'CW', '21777', ARRAY['+1 555 ELECTRIC-01', 'alternative@electricdungeon.cw']),
-
-    -- So'najiz Temple Ancient Wisdom Counseling (1 location)
-    (23, 'So''najiz Temple', FALSE, '333 Ancient Wisdom Circle', 'Elder Counseling Hall', 'So''najiz Temple', 'CW', '22333', ARRAY['+1 555 SONAJIZ-01', 'wisdom@sonajiztemple.cw']),
-
-    -- Treehouse Hideout Child Development Center (2 locations)
-    (24, 'Treehouse Hideout', FALSE, '123 Climbing Branch Lane', 'Main Treehouse Therapy', 'Treehouse Hideout', 'CW', '23123', ARRAY['+1 555 TREEHOUSE-01', 'climb@treehousehideout.cw']),
-    (24, 'Bergen Village', FALSE, '78 Forest Play Avenue', 'Village Tree Center', 'Bergen Village', 'CW', '10078', ARRAY['+1 555 TREEHOUSE-02', 'forest@treehousehideout.cw']),
-
-    -- Gott Statue Memorial Grief Counseling (1 location)
-    (25, 'Gott Statue', FALSE, '1 Memorial Plaza', 'Grief Support Center', 'Gott Statue', 'CW', '24001', ARRAY['+1 555 GOTT-01', 'grief@gottstatue.cw']),
-
-    -- CrossCode Beta Tester PTSD Support Group (2 locations)
-    (26, 'Rhombus Square', FALSE, '505 Beta Tester Boulevard', 'Gaming PTSD Center', 'Rhombus Square', 'CW', '70505', ARRAY['+1 555 BETA-01', 'support@betatester.cw']),
-    (26, 'Remote', TRUE, NULL, NULL, NULL, NULL, NULL, ARRAY['+1 555 BETA-99', 'virtual@betatester.cw']),
-
-    -- Lea's Legacy Leadership Development Therapy (1 location)
-    (27, 'Rookie Harbor', FALSE, '1 Lea''s Legacy Lane', 'Leadership Development Center', 'Rookie Harbor', 'CW', '00001', ARRAY['+1 555 LEA-01', 'leadership@lealegacy.cw']),
-
-    -- Sergey's Tech Solutions Autism Spectrum Support (2 locations)
-    (28, 'Rhombus Square', FALSE, '777 Tech Solutions Drive', 'Autism Tech Center', 'Rhombus Square', 'CW', '70777', ARRAY['+1 555 SERGEY-01', 'tech@sergeytech.cw']),
-    (28, 'Remote', TRUE, NULL, NULL, NULL, NULL, NULL, ARRAY['+1 555 SERGEY-99', 'virtual@sergeytech.cw']),
-
-    -- Apollo's Music Therapy & Emotional Expression (2 locations)
-    (29, 'Gaia''s Garden', FALSE, '88 Melody Circle', 'Music Therapy Studio', 'Gaia''s Garden', 'CW', '40088', ARRAY['+1 555 APOLLO-01', 'music@apollomusic.cw']),
-    (29, 'Faj''ro Temple', FALSE, '99 Harmony Heights', 'Sacred Music Therapy', 'Faj''ro Temple', 'CW', '12099', ARRAY['+1 555 APOLLO-02', 'sacred@apollomusic.cw']),
-
-    -- Shizuka's Silent Strength Selective Mutism Center (1 location)
-    (30, 'Bergen Village', FALSE, '11 Quiet Strength Street', 'Silent Communication Center', 'Bergen Village', 'CW', '10011', ARRAY['+1 555 SHIZUKA-01', 'silent@shizukastrength.cw']),
-
-    -- C'tron's Robotic Behavioral Modification Clinic (1 location)
-    (31, 'Rhombus Square', FALSE, '808 Circuit Therapy Lane', 'Robotic Behavior Center', 'Rhombus Square', 'CW', '70808', ARRAY['+1 555 CTRON-01', 'robotic@ctronbehavior.cw']),
-
-    -- Gautham's Meditation & Mindfulness Institute (2 locations)
-    (32, 'So''najiz Temple', FALSE, '444 Meditation Grove', 'Mindfulness Training Center', 'So''najiz Temple', 'CW', '22444', ARRAY['+1 555 GAUTHAM-01', 'meditate@gauthamzen.cw']),
-    (32, 'Zir''vitar Temple', FALSE, '555 Inner Peace Plaza', 'Advanced Meditation Hall', 'Zir''vitar Temple', 'CW', '13555', ARRAY['+1 555 GAUTHAM-02', 'peace@gauthamzen.cw']);
-
--- Assign exactly 2 sub-services per provider (64 total assignments for 32 providers)
-INSERT INTO provider_sub_services (provider_id, sub_service_type_id) VALUES
-    -- CrossWorlds Guild Counseling Network (General Mental Health)
-    (1, 1), (1, 2), -- Anxiety Disorders, Depression Treatment
-
-    -- Rookie Harbor Youth Center (Youth-focused)
-    (2, 9), (2, 5), -- Child Psychology, CrossCode Addiction
-
-    -- Bergen Village Healing Collective (Adult therapy)
-    (3, 1), (3, 3), -- Anxiety Disorders, PTSD/Trauma Therapy
-
-    -- Autumn's Rise Digital Wellness Group (Tech addiction focus)
-    (4, 5), (4, 10), -- CrossCode Addiction, Cognitive Behavioral Therapy
-
-    -- Ba'kii Kum Desert Recovery Centers (Substance abuse)
-    (5, 6), (5, 7), -- Alcohol Treatment, Drug Rehabilitation
-
-    -- Sapphire Ridge Telehealth Services (Remote services)
-    (6, 12), (6, 2), -- Telehealth Services, Depression Treatment
-
-    -- Gaia's Garden Mind & Body Therapy (Family focus)
-    (7, 8), (7, 9), -- Couples Counseling, Child Psychology
-
-    -- Basin Keep Combat Trauma Specialists (Trauma focus)
-    (8, 3), (8, 11), -- PTSD/Trauma Therapy, Group Therapy
-
-    -- Rhombus Square Tech Addiction Center
-    (9, 5), (9, 6), -- CrossCode Addiction, Alcohol Treatment
-
-    -- Vermillion Wasteland Survival Therapy
-    (10, 3), (10, 1), -- PTSD/Trauma Therapy, Anxiety Disorders
-
-    -- Temple Mine Depth Psychology Institute
-    (11, 2), (11, 10), -- Depression Treatment, Cognitive Behavioral Therapy
-
-    -- Maroon Valley Family Counseling
-    (12, 8), (12, 9), -- Couples Counseling, Child Psychology
-
-    -- Faj'ro Temple Mindfulness Center
-    (13, 1), (13, 11), -- Anxiety Disorders, Group Therapy
-
-    -- Zir'vitar Temple Spiritual Healing
-    (14, 2), (14, 3), -- Depression Treatment, PTSD/Trauma Therapy
-
-    -- Cold Dng. Cave Isolation Therapy Clinic
-    (15, 1), (15, 2), -- Anxiety Disorders, Depression Treatment
-
-    -- Grand Krys'kajo Crystal Energy Healing
-    (16, 11), (16, 10), -- Group Therapy, Cognitive Behavioral Therapy
-
-    -- Cargo Ship Mobility & Anxiety Support
-    (17, 1), (17, 12), -- Anxiety Disorders, Telehealth Services
-
-    -- First Scholars' Guild Study Skills Center
-    (18, 4), (18, 10), -- ADHD Assessment, Cognitive Behavioral Therapy
-
-    -- Second Scholars' Advanced Behavioral Analysis
-    (19, 4), (19, 1), -- ADHD Assessment, Anxiety Disorders
-
-    -- Heat Area Anger Management Institute
-    (20, 11), (20, 10), -- Group Therapy, Cognitive Behavioral Therapy
-
-    -- Jungle Dungeon Phobia Treatment Center
-    (21, 1), (21, 10), -- Anxiety Disorders, Cognitive Behavioral Therapy
-
-    -- Electric Dungeon Shock Therapy Alternatives
-    (22, 2), (22, 3), -- Depression Treatment, PTSD/Trauma Therapy
-
-    -- So'najiz Temple Ancient Wisdom Counseling
-    (23, 8), (23, 2), -- Couples Counseling, Depression Treatment
-
-    -- Treehouse Hideout Child Development Center
-    (24, 9), (24, 4), -- Child Psychology, ADHD Assessment
-
-    -- Gott Statue Memorial Grief Counseling
-    (25, 2), (25, 11), -- Depression Treatment, Group Therapy
-
-    -- CrossCode Beta Tester PTSD Support Group
-    (26, 3), (26, 5), -- PTSD/Trauma Therapy, CrossCode Addiction
-
-    -- Lea's Legacy Leadership Development Therapy
-    (27, 10), (27, 11), -- Cognitive Behavioral Therapy, Group Therapy
-
-    -- Sergey's Tech Solutions Autism Spectrum Support
-    (28, 4), (28, 12), -- ADHD Assessment, Telehealth Services
-
-    -- Apollo's Music Therapy & Emotional Expression
-    (29, 2), (29, 9), -- Depression Treatment, Child Psychology
-
-    -- Shizuka's Silent Strength Selective Mutism Center
-    (30, 9), (30, 1), -- Child Psychology, Anxiety Disorders
-
-    -- C'tron's Robotic Behavioral Modification Clinic
-    (31, 10), (31, 4), -- Cognitive Behavioral Therapy, ADHD Assessment
-
-    -- Gautham's Meditation & Mindfulness Institute
-    (32, 1), (32, 2); -- Anxiety Disorders, Depression Treatment
+    ('Bergen Village Healing', FALSE, NULL, 18, 65, 1),
+    ('Digital Wellness Group', TRUE, 'Tech Worker Benefits', 16, 35, 4),
+    ('Desert Recovery Centers', TRUE, 'CrossWorlds Health Alliance', 21, 120, 2),
+    ('Telehealth Services Hub', TRUE, 'Virtual Care Network', 12, 120, 4),
+    ('Combat Trauma Specialists', TRUE, 'Veterans Benefits', 18, 65, 1),
+    ('Tech Addiction Center', TRUE, 'Digital Health Solutions', 14, 40, 2);
+
+-- Insert addresses (1-2 per provider)
+INSERT INTO referral_addresses (provider_id, location, is_remote, address_line1, city, state, zip_code, contacts) VALUES
+    (1, 'Rookie Harbor', FALSE, '1 Guild Plaza', 'Rookie Harbor', 'CW', '00001', ARRAY['+1-555-GUILD', 'contact@guild.cw']),
+    (1, 'Remote', TRUE, NULL, NULL, NULL, NULL, ARRAY['telehealth@guild.cw']),
+    (2, 'Rookie Harbor', FALSE, '15 Training Way', 'Rookie Harbor', 'CW', '00015', ARRAY['+1-555-YOUTH', 'youth@rookie.cw']),
+    (3, 'Bergen Village', FALSE, '23 Tree Lane', 'Bergen Village', 'CW', '10023', ARRAY['+1-555-BERGEN', 'healing@bergen.cw']),
+    (4, 'Autumn Rise', FALSE, '99 Summit Drive', 'Autumn Rise', 'CW', '20099', ARRAY['+1-555-DIGITAL', 'wellness@digital.cw']),
+    (4, 'Remote', TRUE, NULL, NULL, NULL, NULL, ARRAY['online@digital.cw']),
+    (5, 'Ba kii Kum', FALSE, '77 Oasis Road', 'Ba kii Kum', 'CW', '30077', ARRAY['+1-555-RECOVERY', 'help@recovery.cw']),
+    (6, 'Remote', TRUE, NULL, NULL, NULL, NULL, ARRAY['portal@telehealth.cw']),
+    (7, 'Basin Keep', FALSE, '200 Veterans Drive', 'Basin Keep', 'CW', '50200', ARRAY['+1-555-TRAUMA', 'support@trauma.cw']),
+    (8, 'Rhombus Square', FALSE, '404 Detox Lane', 'Rhombus Square', 'CW', '70404', ARRAY['+1-555-TECH', 'detox@tech.cw']);
+
+-- Insert referral sets
+INSERT INTO referral_set (name, service_ids, locations) VALUES
+    ('Youth Network', ARRAY[1, 3], ARRAY['Rookie Harbor', 'Bergen Village']),
+    ('Addiction Recovery', ARRAY[2], ARRAY['Ba kii Kum', 'Rhombus Square']),
+    ('Trauma Specialists', ARRAY[1], ARRAY['Basin Keep', 'Ba kii Kum']),
+    ('Digital Wellness', ARRAY[2, 4], ARRAY['Autumn Rise', 'Remote']);
+
+-- Insert sub-services for each main service
+INSERT INTO referral_sub_services (name, service_id) VALUES
+    ('Individual Therapy', 1),
+    ('Group Therapy', 1),
+    ('Psychiatric Evaluation', 1),
+    ('Crisis Intervention', 1),
+    ('Anxiety Treatment', 1),
+    ('Depression Treatment', 1),
+    ('PTSD Treatment', 1),
+    ('Detoxification', 2),
+    ('Inpatient Treatment', 2),
+    ('Outpatient Treatment', 2),
+    ('Relapse Prevention', 2),
+    ('Dual Diagnosis', 2),
+    ('Technology Addiction', 2),
+    ('Couples Counseling', 3),
+    ('Family Systems Therapy', 3),
+    ('Parent-Child Therapy', 3),
+    ('Adolescent Family Therapy', 3),
+    ('Divorce Counseling', 3),
+    ('Digital Wellness Coaching', 4),
+    ('Telehealth Services', 4),
+    ('Specialized Assessments', 4),
+    ('Occupational Therapy', 4),
+    ('Art/Music Therapy', 4);
+
+-- Link providers to their specific sub-services
+INSERT INTO referral_provider_sub_services (provider_id, sub_service_id) VALUES
+    -- CrossWorlds Guild Counseling (provider_id = 1)
+    (1, 1), -- Individual Therapy
+    (1, 2), -- Group Therapy
+    (1, 3), -- Psychiatric Evaluation
+    (1, 4), -- Crisis Intervention
+    (1, 5), -- Anxiety Treatment
+    (1, 6), -- Depression Treatment
+    (1, 22), -- Telehealth Services
+
+    -- Rookie Harbor Youth Center (provider_id = 2)
+    (2, 1), -- Individual Therapy
+    (2, 2), -- Group Therapy
+    (2, 16), -- Family Systems Therapy
+    (2, 17), -- Parent-Child Therapy
+    (2, 18), -- Adolescent Family Therapy
+
+    -- Bergen Village Healing (provider_id = 3)
+    (3, 1), -- Individual Therapy
+    (3, 5), -- Anxiety Treatment
+    (3, 6), -- Depression Treatment
+
+    -- Digital Wellness Group (provider_id = 4)
+    (4, 21), -- Digital Wellness Coaching
+    (4, 12), -- Technology Addiction
+
+    -- Desert Recovery Centers (provider_id = 5)
+    (5, 8), -- Detoxification
+    (5, 9), -- Inpatient Treatment
+    (5, 10), -- Outpatient Treatment
+    (5, 11), -- Relapse Prevention
+    (5, 12), -- Dual Diagnosis
+
+    -- Telehealth Services Hub (provider_id = 6)
+    (6, 22), -- Telehealth Services
+    (6, 1), -- Individual Therapy
+    (6, 2), -- Group Therapy
+    (6, 23), -- Specialized Assessments
+
+    -- Combat Trauma Specialists (provider_id = 7)
+    (7, 7), -- PTSD Treatment
+    (7, 1), -- Individual Therapy
+    (7, 2), -- Group Therapy
+    (7, 4), -- Crisis Intervention
+
+    -- Tech Addiction Center (provider_id = 8)
+    (8, 12), -- Technology Addiction
+    (8, 10), -- Outpatient Treatment
+    (8, 11), -- Relapse Prevention
+    (8, 13); -- Dual Diagnosis

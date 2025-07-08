@@ -1,54 +1,40 @@
 import { db } from "$lib/server/db"
-import { provider, providerAddress, serviceType, providerSubServices, subServiceType } from "$lib/server/db/schema.js"
+import {
+    referralProviders,
+    referralAddresses,
+    referralServices,
+    referralProviderSubServices,
+    referralSubServices
+} from "$lib/server/db/schema.js"
 import type { GetProviderResponse } from "$lib/types"
 import { inArray, eq } from "drizzle-orm"
 
 export async function getProviders(ids: number | number[] | undefined = undefined): Promise<GetProviderResponse> {
     let providers
     if (ids === undefined) {
-        providers = await db.select().from(provider)
+        providers = await db.select().from(referralProviders)
     } else {
         ids = Array.isArray(ids) ? ids : [ids]
-        providers = await db.select().from(provider).where(inArray(provider.id, ids))
+        providers = await db.select().from(referralProviders).where(inArray(referralProviders.id, ids))
     }
 
     const [addresses, serviceTypesData, subServicesData] = await Promise.all([
+        db.select().from(referralAddresses),
+        db.select().from(referralServices),
         db
             .select({
-                providerId: providerAddress.providerId,
-                id: providerAddress.id,
-                isRemote: providerAddress.isRemote,
-                location: providerAddress.location,
-                addressLine1: providerAddress.addressLine1,
-                addressLine2: providerAddress.addressLine2,
-                city: providerAddress.city,
-                state: providerAddress.state,
-                zipCode: providerAddress.zipCode,
-                contacts: providerAddress.contacts
+                providerId: referralProviderSubServices.providerId,
+                subServiceId: referralSubServices.id,
+                subServiceName: referralSubServices.name,
+                serviceId: referralSubServices.serviceId
             })
-            .from(providerAddress),
-
-        db
-            .select({
-                id: serviceType.id,
-                name: serviceType.name
-            })
-            .from(serviceType),
-
-        db
-            .select({
-                providerId: providerSubServices.providerId,
-                subServiceId: subServiceType.id,
-                subServiceName: subServiceType.name,
-                serviceTypeId: subServiceType.serviceTypeId
-            })
-            .from(subServiceType)
-            .innerJoin(providerSubServices, eq(providerSubServices.subServiceTypeId, subServiceType.id))
+            .from(referralProviderSubServices)
+            .innerJoin(referralSubServices, eq(referralProviderSubServices.subServiceId, referralSubServices.id))
     ])
 
     const groupedAddresses = groupById(addresses, "providerId")
-    const groupedSubServices = groupById(subServicesData, "providerId")
     const serviceTypesMap = Object.fromEntries(serviceTypesData.map(st => [st.id, st.name]))
+    const groupedSubServices = groupById(subServicesData, "providerId")
 
     const providersWithRelations: GetProviderResponse = providers.map(providerData => {
         const providerId = providerData.id
@@ -57,11 +43,11 @@ export async function getProviders(ids: number | number[] | undefined = undefine
         return {
             ...providerData,
             addresses: groupedAddresses[providerId] || [],
-            serviceType: providerData.serviceTypeId ? serviceTypesMap[providerData.serviceTypeId] : null,
+            serviceType: serviceTypesMap[providerData.serviceId],
             subServices: providerSubServices.map(subService => ({
                 id: subService.subServiceId,
                 name: subService.subServiceName,
-                serviceTypeId: subService.serviceTypeId
+                serviceId: subService.serviceId
             }))
         }
     })

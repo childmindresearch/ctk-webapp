@@ -30,6 +30,7 @@
                 })
             })
         await exportPromise
+        exportPromise = null
     }
 </script>
 

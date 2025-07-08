@@ -1,36 +1,54 @@
 import { pgTable, serial, varchar, integer, text, boolean, unique } from "drizzle-orm/pg-core"
 import { relations } from "drizzle-orm"
 
-export const serviceType = pgTable("service_types", {
+export const referralServices = pgTable("referral_services", {
     id: serial("id").primaryKey(),
     name: varchar("name", { length: 255 }).notNull()
 })
 
-export const subServiceType = pgTable("sub_service_types", {
+export const referralSubServices = pgTable("referral_sub_services", {
     id: serial("id").primaryKey(),
     name: varchar("name", { length: 255 }).notNull(),
-    serviceTypeId: integer("service_type_id")
+    serviceId: integer("service_id")
         .notNull()
-        .references(() => serviceType.id, { onDelete: "cascade" })
+        .references(() => referralServices.id, { onDelete: "cascade" })
 })
 
-export const provider = pgTable("provider", {
+export const referralProviderSubServices = pgTable(
+    "referral_provider_sub_services",
+    {
+        id: serial("id").primaryKey(),
+        providerId: integer("provider_id")
+            .notNull()
+            .references(() => referralProviders.id, { onDelete: "cascade" }),
+        subServiceId: integer("sub_service_id")
+            .notNull()
+            .references(() => referralSubServices.id, { onDelete: "cascade" })
+    },
+    table => ({
+        uniqueProviderSubService: unique().on(table.providerId, table.subServiceId)
+    })
+)
+
+export const referralProviders = pgTable("referral_providers", {
     id: serial("id").primaryKey(),
     name: varchar("name", { length: 500 }).notNull(),
     acceptsInsurance: boolean("accepts_insurance").notNull(),
-    minAge: integer("min_age").notNull(),
-    maxAge: integer("max_age").notNull(),
+    minAge: integer("min_age").default(0).notNull(),
+    maxAge: integer("max_age").default(120).notNull(),
     insuranceDetails: varchar("insurance_details", { length: 1024 }),
-    serviceTypeId: integer("service_type_id").references(() => serviceType.id)
+    serviceId: integer("service_id")
+        .references(() => referralServices.id)
+        .notNull()
 })
 
-export const providerAddress = pgTable("provider_address", {
+export const referralAddresses = pgTable("referral_addresses", {
     id: serial("id").primaryKey(),
-    location: varchar("location", { length: 255 }).notNull(),
     providerId: integer("provider_id")
         .notNull()
-        .references(() => provider.id),
+        .references(() => referralProviders.id, { onDelete: "cascade" }),
     isRemote: boolean("is_remote").notNull(),
+    location: varchar("location", { length: 255 }).notNull(),
     addressLine1: varchar("address_line1", { length: 255 }),
     addressLine2: varchar("address_line2", { length: 255 }),
     city: varchar("city", { length: 100 }),
@@ -39,53 +57,50 @@ export const providerAddress = pgTable("provider_address", {
     contacts: text("contacts").array()
 })
 
-export const providerSubServices = pgTable(
-    "provider_sub_services",
-    {
-        id: serial("id").primaryKey(),
-        providerId: integer("provider_id")
-            .notNull()
-            .references(() => provider.id, { onDelete: "cascade" }),
-        subServiceTypeId: integer("sub_service_type_id")
-            .notNull()
-            .references(() => subServiceType.id, { onDelete: "cascade" })
-    },
-    table => ({
-        uniqueProviderSubService: unique().on(table.providerId, table.subServiceTypeId)
-    })
-)
+export const referralSet = pgTable("referral_set", {
+    id: serial("id").primaryKey(),
+    name: varchar("name", { length: 255 }).notNull(),
+    serviceIds: integer("service_ids").array().notNull(),
+    locations: varchar("locations", { length: 255 }).array().notNull()
+})
 
-export const serviceTypesRelations = relations(serviceType, ({ many }) => ({
-    subServiceTypes: many(subServiceType),
-    providers: many(provider)
+// Relations
+export const referralServicesRelations = relations(referralServices, ({ many }) => ({
+    subServices: many(referralSubServices),
+    providers: many(referralProviders)
 }))
 
-export const subServiceTypesRelations = relations(subServiceType, ({ one, many }) => ({
-    serviceType: one(serviceType, {
-        fields: [subServiceType.serviceTypeId],
-        references: [serviceType.id]
+export const referralSubServicesRelations = relations(referralSubServices, ({ one, many }) => ({
+    service: one(referralServices, {
+        fields: [referralSubServices.serviceId],
+        references: [referralServices.id]
     }),
-    providerSubServices: many(providerSubServices)
+    providerSubServices: many(referralProviderSubServices)
 }))
 
-export const providerSubServicesRelations = relations(providerSubServices, ({ one }) => ({
-    provider: one(provider, {
-        fields: [providerSubServices.providerId],
-        references: [provider.id]
+export const referralProvidersRelations = relations(referralProviders, ({ one, many }) => ({
+    service: one(referralServices, {
+        fields: [referralProviders.serviceId],
+        references: [referralServices.id]
     }),
-    subServiceType: one(subServiceType, {
-        fields: [providerSubServices.subServiceTypeId],
-        references: [subServiceType.id]
+    addresses: many(referralAddresses),
+    providerSubServices: many(referralProviderSubServices)
+}))
+
+export const referralProviderAddressesRelations = relations(referralAddresses, ({ one }) => ({
+    provider: one(referralProviders, {
+        fields: [referralAddresses.providerId],
+        references: [referralProviders.id]
     })
 }))
 
-export const providerRelations = relations(provider, ({ many }) => ({
-    addresses: many(providerAddress)
-}))
-
-export const providerAddressRelations = relations(providerAddress, ({ one }) => ({
-    provider: one(provider, {
-        fields: [providerAddress.providerId],
-        references: [provider.id]
+export const referralProviderSubServicesRelations = relations(referralProviderSubServices, ({ one }) => ({
+    provider: one(referralProviders, {
+        fields: [referralProviderSubServices.providerId],
+        references: [referralProviders.id]
+    }),
+    subService: one(referralSubServices, {
+        fields: [referralProviderSubServices.subServiceId],
+        references: [referralSubServices.id]
     })
 }))

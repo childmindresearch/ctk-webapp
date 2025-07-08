@@ -1,12 +1,21 @@
 <script lang="ts">
     import { Slider } from "@skeletonlabs/skeleton-svelte"
-    import { type ProviderFormData } from "./utils"
+    import { Combobox } from "@skeletonlabs/skeleton-svelte"
+    import { onlyUnique, type ProviderFormData } from "./utils"
+    import FormInput from "$lib/components/FormInput.svelte"
+    import { toaster } from "$lib/utils"
+    import { slide } from "svelte/transition"
 
-    const {
-        provider: initialProvider,
-        onSubmit
-    }: { provider: Partial<ProviderFormData>; onSubmit: (provider: ProviderFormData) => void } = $props()
-    let provider = $state({ ...initialProvider })
+    type Props = {
+        provider: Partial<ProviderFormData>
+        onSubmit: (provider: ProviderFormData) => void
+        serviceTypeAutoCompletions?: string[]
+    }
+    let { provider: initialProvider, onSubmit, serviceTypeAutoCompletions = [] }: Props = $props()
+    let provider = $state({ name: initialProvider.name || "", ...initialProvider })
+    const serviceCompletions = serviceTypeAutoCompletions.filter(onlyUnique).map(s => {
+        return { label: s, value: s }
+    })
 
     $effect(() => {
         if (!provider.acceptsInsurance) {
@@ -25,13 +34,20 @@
             city: null,
             state: null,
             zipCode: null,
-            contacts: null,
+            contacts: [""],
             location: ""
         })
     }
 
+    if (!provider.addresses) {
+        addAddress()
+    }
+
     function removeAddress(index: number) {
-        if (!provider.addresses) return
+        if (!provider.addresses || provider.addresses.length < 2) {
+            toaster.error({ title: "Cannot remove the last address." })
+            return
+        }
         provider.addresses = provider.addresses.filter((_, i) => i !== index)
     }
 
@@ -55,6 +71,7 @@
 
     function removeContact(address: NonNullable<typeof provider.addresses>[number], index: number) {
         if (!address.contacts || address.contacts.length < 2) {
+            toaster.error({ title: "Cannot remove the last contact." })
             return
         }
         address.contacts = address.contacts.filter((_: string, i: number) => i !== index)
@@ -92,12 +109,12 @@
             </div>
 
             <div class="grid gap-6">
-                <label class="label">
-                    <span class="text-sm font-semibold text-surface-700-200-token"
-                        >Provider Name <span class="text-error-500">*</span></span
-                    >
-                    <input class="input mt-2" required bind:value={provider.name} placeholder="Enter provider name" />
-                </label>
+                <FormInput
+                    label="Provider Name"
+                    required
+                    placeholder="Enter provider name"
+                    bind:value={provider.name}
+                />
 
                 <div class="space-y-4">
                     <label class="flex items-center space-x-3 cursor-pointer">
@@ -106,15 +123,14 @@
                     </label>
 
                     {#if provider.acceptsInsurance}
-                        <div class="ml-6 transition-all duration-200">
-                            <label class="label">
-                                <span class="text-sm text-surface-600-400-token">Insurance Details</span>
-                                <input
-                                    class="input mt-2"
-                                    placeholder="Enter accepted insurance types, coverage details, etc."
-                                    bind:value={provider.insuranceDetails}
-                                />
-                            </label>
+                        <div transition:slide={{ duration: 200 }}>
+                            <FormInput
+                                label="Insurance Details"
+                                required
+                                bind:value={provider.insuranceDetails}
+                                placeholder="Enter accepted insurance types, coverage details, etc."
+                                labelClass="ml-6"
+                            />
                         </div>
                     {/if}
                 </div>
@@ -131,10 +147,16 @@
             <div class="grid gap-6">
                 <label class="label">
                     <span class="text-sm font-semibold text-surface-700-200-token">Primary Service Type</span>
-                    <input
-                        class="input mt-2"
-                        bind:value={provider.serviceType}
-                        placeholder="e.g., Mental Health, Physical Therapy, etc."
+                    <Combobox
+                        data={serviceCompletions}
+                        value={[provider.serviceType || ""]}
+                        defaultValue={[provider.serviceType || ""]}
+                        onValueChange={e => (provider.serviceType = e.value[0])}
+                        label="Select or type a service"
+                        placeholder="Select..."
+                        allowCustomValue
+                        zIndex="2"
+                        required
                     />
                 </label>
 
@@ -173,6 +195,9 @@
                     <span class="text-sm font-semibold text-surface-700-200-token"
                         >Age Range: {provider.minAge || 0}-{provider.maxAge || 120}</span
                     >
+                    <div class="text-sm">
+                        Note: Age range is inclusive on both sides i.e. "only minors" would be "0-17".
+                    </div>
                     <Slider
                         min={0}
                         max={120}
@@ -223,73 +248,46 @@
                             </label>
 
                             {#if !address.isRemote}
-                                <div class="grid gap-4">
+                                <div transition:slide={{ duration: 200 }} class="grid gap-4">
                                     <label class="label">
                                         <span class="text-sm font-semibold text-surface-700-200-token"
                                             >Location Name <span class="text-error-500">*</span></span
                                         >
                                         <input
                                             class="input mt-2"
-                                            bind:value={address.location}
-                                            placeholder="e.g., Main Office, Downtown Branch"
-                                        />
-                                    </label>
-
-                                    <label class="label">
-                                        <span class="text-sm font-semibold text-surface-700-200-token"
-                                            >Street Address <span class="text-error-500">*</span></span
-                                        >
-                                        <input
-                                            class="input mt-2"
                                             required
-                                            bind:value={address.addressLine1}
-                                            placeholder="Enter street address"
+                                            bind:value={address.location}
+                                            placeholder="e.g., Brooklyn, Manhattan"
                                         />
                                     </label>
 
-                                    <label class="label">
-                                        <span class="text-sm text-surface-600-400-token">Address Line 2</span>
-                                        <input
-                                            class="input mt-2"
-                                            bind:value={address.addressLine2}
-                                            placeholder="Apt, suite, unit, etc. (optional)"
-                                        />
-                                    </label>
+                                    <FormInput
+                                        label="Address Line 1"
+                                        required
+                                        placeholder="Enter street address"
+                                        bind:value={address.addressLine1}
+                                    />
+
+                                    <FormInput
+                                        label="Address Line 2"
+                                        placeholder="Apt, suite, unit, etc..."
+                                        bind:value={address.addressLine2}
+                                    />
 
                                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                        <label class="label md:col-span-1">
-                                            <span class="text-sm font-semibold text-surface-700-200-token"
-                                                >City <span class="text-error-500">*</span></span
-                                            >
-                                            <input
-                                                class="input mt-2"
-                                                required
-                                                bind:value={address.city}
-                                                placeholder="City"
-                                            />
-                                        </label>
-                                        <label class="label">
-                                            <span class="text-sm font-semibold text-surface-700-200-token"
-                                                >State <span class="text-error-500">*</span></span
-                                            >
-                                            <input
-                                                class="input mt-2"
-                                                required
-                                                bind:value={address.state}
-                                                placeholder="State"
-                                            />
-                                        </label>
-                                        <label class="label">
-                                            <span class="text-sm font-semibold text-surface-700-200-token"
-                                                >ZIP Code <span class="text-error-500">*</span></span
-                                            >
-                                            <input
-                                                class="input mt-2"
-                                                required
-                                                bind:value={address.zipCode}
-                                                placeholder="ZIP"
-                                            />
-                                        </label>
+                                        <FormInput label="City" placeholder="City" required bind:value={address.city} />
+                                        <FormInput
+                                            label="State"
+                                            placeholder="State"
+                                            required
+                                            bind:value={address.state}
+                                        />
+                                        <FormInput
+                                            label="Zip Code"
+                                            placeholder="Zip Code"
+                                            required
+                                            bind:value={address.zipCode}
+                                        />
                                     </div>
                                 </div>
                             {/if}
@@ -311,21 +309,14 @@
                                 <div class="space-y-3">
                                     {#if address.contacts}
                                         {#each address.contacts as _, contact_index}
-                                            <div
-                                                class="flex gap-3 items-center p-4 bg-surface-50-900-token rounded-lg border border-surface-200-700-token"
-                                            >
-                                                <div class="flex-1">
-                                                    <label class="label">
-                                                        <span class="text-xs text-surface-600-400-token"
-                                                            >Contact {contact_index + 1}</span
-                                                        >
-                                                        <input
-                                                            class="input mt-1"
-                                                            bind:value={address.contacts[contact_index]}
-                                                            placeholder="Phone, email, website, etc."
-                                                        />
-                                                    </label>
-                                                </div>
+                                            <div class="flex gap-3 items-center p-4 bg-surface-50-900-token rounded-lg">
+                                                <FormInput
+                                                    label={`Contact ${contact_index + 1}`}
+                                                    placeholder="Phone, email, website, etc..."
+                                                    required
+                                                    bind:value={address.contacts[contact_index]}
+                                                />
+
                                                 <button
                                                     type="button"
                                                     class="btn btn-sm preset-filled-error-500"
