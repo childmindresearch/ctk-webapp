@@ -1,17 +1,18 @@
-import { json } from "@sveltejs/kit"
 import { db } from "$lib/server/db"
-import { logger } from "$lib/server/logging.js"
 import {
-    referralProviders,
     referralAddresses,
-    referralSubServices,
+    referralLocations,
+    referralProviders,
+    referralProviderSubServices,
     referralServices,
-    referralProviderSubServices
+    referralSubServices
 } from "$lib/server/db/schema"
+import { logger } from "$lib/server/logging.js"
+import { isModel, zodValidateOr400 } from "$lib/server/zod_utils.js"
+import { json } from "@sveltejs/kit"
+import { and, eq } from "drizzle-orm"
 import { z } from "zod"
-import { zodValidateOr400, isModel } from "$lib/server/zod_utils.js"
 import { getProviders } from "../fetchers.js"
-import { eq, and } from "drizzle-orm"
 
 export async function GET() {
     logger.info("Getting all providers.")
@@ -27,7 +28,7 @@ export async function GET() {
 
 const ProviderAddressSchema = z.object({
     addressId: z.number().nullable().optional(),
-    providerId: z.number().nullable().optional(),
+    providerId: z.number(),
     addressLine1: z.string().nullable().optional(),
     addressLine2: z.string().nullable().optional(),
     location: z.string(),
@@ -97,10 +98,23 @@ export async function POST({ request }) {
             const providerId = providerIds[0].id
 
             if (providerRequest.addresses) {
-                const addresses = providerRequest.addresses.map(address => ({
-                    ...address,
-                    providerId
-                }))
+                const locationIds = await tx
+                    .insert(referralLocations)
+                    .values(
+                        providerRequest.addresses.map(address => ({
+                            name: address.location
+                        }))
+                    )
+                    .onConflictDoNothing()
+                    .returning({ id: referralLocations.id })
+
+                const addresses = providerRequest.addresses.map((address, index) => {
+                    return {
+                        ...address,
+                        locationId: locationIds[index].id
+                    }
+                })
+
                 await tx.insert(referralAddresses).values(addresses)
             }
 
@@ -113,7 +127,6 @@ export async function POST({ request }) {
         })
 
         const newProvider = (await getProviders(providerId))[0]
-        console.log(newProvider)
         return json(newProvider, { status: 201 })
     } catch (error) {
         console.error("Error creating provider:", error)

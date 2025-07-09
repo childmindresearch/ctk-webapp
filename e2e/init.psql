@@ -1,16 +1,19 @@
 CREATE DATABASE ctk;
 \c ctk;
+
 -- Templates and DSM codes
 CREATE TABLE users (
     id SERIAL PRIMARY KEY,
     email VARCHAR(255) NOT NULL,
     is_admin BOOLEAN
 );
+
 CREATE TABLE dsm_codes (
     id SERIAL PRIMARY KEY,
     code VARCHAR(255) NOT NULL,
     label VARCHAR(255) NOT NULL
 );
+
 CREATE TABLE templates (
     id SERIAL PRIMARY KEY ,
     text VARCHAR(8000) NOT NULL,
@@ -18,10 +21,15 @@ CREATE TABLE templates (
     priority INTEGER NOT NULL
 );
 
-
 CREATE TABLE referral_services (
     id SERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL
+);
+
+-- Create locations lookup table
+CREATE TABLE referral_locations (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) UNIQUE NOT NULL
 );
 
 -- Referral network tables
@@ -35,7 +43,6 @@ CREATE TABLE referral_providers (
     service_id INTEGER REFERENCES referral_services(id)
 );
 
-
 -- Create function to set priority
 CREATE OR REPLACE FUNCTION set_template_priority()
 RETURNS TRIGGER AS $$
@@ -47,18 +54,19 @@ BEGIN
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
+
 -- Create trigger
 CREATE TRIGGER trigger_set_template_priority
     BEFORE INSERT ON templates
     FOR EACH ROW
     EXECUTE FUNCTION set_template_priority();
 
--- Fix the provider address table reference
+-- Updated addresses table to reference locations
 CREATE TABLE referral_addresses (
     id SERIAL PRIMARY KEY,
     provider_id INTEGER NOT NULL REFERENCES referral_providers(id) ON DELETE CASCADE,
+    location_id INTEGER NOT NULL REFERENCES referral_locations(id),
     is_remote BOOLEAN,
-    location VARCHAR(255),
     address_line1 VARCHAR(255),
     address_line2 VARCHAR(255),
     city VARCHAR(100),
@@ -66,7 +74,6 @@ CREATE TABLE referral_addresses (
     zip_code VARCHAR(20),
     contacts VARCHAR(255)[]
 );
-
 
 CREATE TABLE referral_sub_services (
     id SERIAL PRIMARY KEY,
@@ -81,24 +88,52 @@ CREATE TABLE referral_provider_sub_services (
     UNIQUE(provider_id, sub_service_id)
 );
 
+-- Updated filter sets table without locations array
 CREATE TABLE referral_filter_sets (
     id SERIAL PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,
-    locations VARCHAR(255)[] NOT NULL
+    name VARCHAR(255) NOT NULL
 );
 
-CREATE TABLE referral_filter_sets_service_relationship (
+-- Junction table for filter sets and locations
+CREATE TABLE referral_filter_set_locations_relations (
+    id SERIAL PRIMARY KEY,
+    filter_set_id INTEGER NOT NULL REFERENCES referral_filter_sets(id) ON DELETE CASCADE,
+    location_id INTEGER NOT NULL REFERENCES referral_locations(id) ON DELETE CASCADE,
+    UNIQUE(filter_set_id, location_id)
+);
+
+CREATE TABLE referral_filter_sets_service_relations (
     id SERIAL PRIMARY KEY,
     filter_set_id INTEGER NOT NULL REFERENCES referral_filter_sets(id) ON DELETE CASCADE,
     service_id INTEGER NOT NULL REFERENCES referral_services(id) ON DELETE CASCADE,
     UNIQUE(filter_set_id, service_id)
 );
 
+-- Function to clean up unused locations
+CREATE OR REPLACE FUNCTION cleanup_unused_locations()
+RETURNS TRIGGER AS $$
+BEGIN
+    -- Delete locations that are no longer referenced by any address
+    DELETE FROM referral_locations
+    WHERE id NOT IN (
+        SELECT DISTINCT location_id
+        FROM referral_addresses
+        WHERE location_id IS NOT NULL
+    );
+
+    RETURN NULL;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Trigger to cleanup locations after address changes
+CREATE TRIGGER trigger_cleanup_unused_locations
+    AFTER DELETE OR UPDATE ON referral_addresses
+    FOR EACH STATEMENT
+    EXECUTE FUNCTION cleanup_unused_locations();
 
 -- Insert initial data
 INSERT INTO users (email, is_admin) VALUES
     ('development.user.admin@example.com', true);
-
 
 -- Insert DSM codes (top 10 most common)
 INSERT INTO dsm_codes (code, label) VALUES
@@ -133,6 +168,16 @@ INSERT INTO referral_services (name) VALUES
     ('Family Therapy'),
     ('Specialized Therapy');
 
+-- Insert locations first
+INSERT INTO referral_locations (name) VALUES
+    ('Rookie Harbor'),
+    ('Remote'),
+    ('Bergen Village'),
+    ('Autumn Rise'),
+    ('Ba kii Kum'),
+    ('Basin Keep'),
+    ('Rhombus Square');
+
 -- Insert providers (8 providers)
 INSERT INTO referral_providers (name, accepts_insurance, insurance_details, min_age, max_age, service_id) VALUES
     ('CrossWorlds Guild Counseling', TRUE, 'CrossWorlds Health Alliance', 13, 120, 1),
@@ -144,25 +189,40 @@ INSERT INTO referral_providers (name, accepts_insurance, insurance_details, min_
     ('Combat Trauma Specialists', TRUE, 'Veterans Benefits', 18, 65, 1),
     ('Tech Addiction Center', TRUE, 'Digital Health Solutions', 14, 40, 2);
 
--- Insert addresses (1-2 per provider)
-INSERT INTO referral_addresses (provider_id, location, is_remote, address_line1, city, state, zip_code, contacts) VALUES
-    (1, 'Rookie Harbor', FALSE, '1 Guild Plaza', 'Rookie Harbor', 'CW', '00001', ARRAY['+1-555-GUILD', 'contact@guild.cw']),
-    (1, 'Remote', TRUE, NULL, NULL, NULL, NULL, ARRAY['telehealth@guild.cw']),
-    (2, 'Rookie Harbor', FALSE, '15 Training Way', 'Rookie Harbor', 'CW', '00015', ARRAY['+1-555-YOUTH', 'youth@rookie.cw']),
-    (3, 'Bergen Village', FALSE, '23 Tree Lane', 'Bergen Village', 'CW', '10023', ARRAY['+1-555-BERGEN', 'healing@bergen.cw']),
-    (4, 'Autumn Rise', FALSE, '99 Summit Drive', 'Autumn Rise', 'CW', '20099', ARRAY['+1-555-DIGITAL', 'wellness@digital.cw']),
-    (4, 'Remote', TRUE, NULL, NULL, NULL, NULL, ARRAY['online@digital.cw']),
-    (5, 'Ba kii Kum', FALSE, '77 Oasis Road', 'Ba kii Kum', 'CW', '30077', ARRAY['+1-555-RECOVERY', 'help@recovery.cw']),
-    (6, 'Remote', TRUE, NULL, NULL, NULL, NULL, ARRAY['portal@telehealth.cw']),
-    (7, 'Basin Keep', FALSE, '200 Veterans Drive', 'Basin Keep', 'CW', '50200', ARRAY['+1-555-TRAUMA', 'support@trauma.cw']),
-    (8, 'Rhombus Square', FALSE, '404 Detox Lane', 'Rhombus Square', 'CW', '70404', ARRAY['+1-555-TECH', 'detox@tech.cw']);
+-- Insert addresses (1-2 per provider) - now using location_id
+INSERT INTO referral_addresses (provider_id, location_id, is_remote, address_line1, city, state, zip_code, contacts) VALUES
+    (1, 1, FALSE, '1 Guild Plaza', 'Rookie Harbor', 'CW', '00001', ARRAY['+1-555-GUILD', 'contact@guild.cw']),
+    (1, 2, TRUE, NULL, NULL, NULL, NULL, ARRAY['telehealth@guild.cw']),
+    (2, 1, FALSE, '15 Training Way', 'Rookie Harbor', 'CW', '00015', ARRAY['+1-555-YOUTH', 'youth@rookie.cw']),
+    (3, 3, FALSE, '23 Tree Lane', 'Bergen Village', 'CW', '10023', ARRAY['+1-555-BERGEN', 'healing@bergen.cw']),
+    (4, 4, FALSE, '99 Summit Drive', 'Autumn Rise', 'CW', '20099', ARRAY['+1-555-DIGITAL', 'wellness@digital.cw']),
+    (4, 2, TRUE, NULL, NULL, NULL, NULL, ARRAY['online@digital.cw']),
+    (5, 5, FALSE, '77 Oasis Road', 'Ba kii Kum', 'CW', '30077', ARRAY['+1-555-RECOVERY', 'help@recovery.cw']),
+    (6, 2, TRUE, NULL, NULL, NULL, NULL, ARRAY['portal@telehealth.cw']),
+    (7, 6, FALSE, '200 Veterans Drive', 'Basin Keep', 'CW', '50200', ARRAY['+1-555-TRAUMA', 'support@trauma.cw']),
+    (8, 7, FALSE, '404 Detox Lane', 'Rhombus Square', 'CW', '70404', ARRAY['+1-555-TECH', 'detox@tech.cw']);
 
--- Insert referral sets
-INSERT INTO referral_filter_sets (name, locations) VALUES
-    ('Youth Network',  ARRAY['Rookie Harbor', 'Bergen Village']),
-    ('Addiction Recovery',  ARRAY['Ba kii Kum', 'Rhombus Square']),
-    ('Trauma Specialists',  ARRAY['Basin Keep', 'Ba kii Kum']),
-    ('Digital Wellness',  ARRAY['Autumn Rise', 'Remote']);
+-- Insert referral filter sets (without locations array)
+INSERT INTO referral_filter_sets (name) VALUES
+    ('Youth Network'),
+    ('Addiction Recovery'),
+    ('Trauma Specialists'),
+    ('Digital Wellness');
+
+-- Insert filter set locations relationships
+INSERT INTO referral_filter_set_locations_relations (filter_set_id, location_id) VALUES
+    -- Youth Network
+    (1, 1), -- Rookie Harbor
+    (1, 3), -- Bergen Village
+    -- Addiction Recovery
+    (2, 5), -- Ba kii Kum
+    (2, 7), -- Rhombus Square
+    -- Trauma Specialists
+    (3, 6), -- Basin Keep
+    (3, 5), -- Ba kii Kum
+    -- Digital Wellness
+    (4, 4), -- Autumn Rise
+    (4, 2); -- Remote
 
 -- Insert sub-services for each main service
 INSERT INTO referral_sub_services (name, service_id) VALUES
@@ -199,61 +259,50 @@ INSERT INTO referral_provider_sub_services (provider_id, sub_service_id) VALUES
     (1, 4), -- Crisis Intervention
     (1, 5), -- Anxiety Treatment
     (1, 6), -- Depression Treatment
-    (1, 22), -- Telehealth Services
-
+    (1, 20), -- Telehealth Services
     -- Rookie Harbor Youth Center (provider_id = 2)
     (2, 1), -- Individual Therapy
     (2, 2), -- Group Therapy
-    (2, 16), -- Family Systems Therapy
-    (2, 17), -- Parent-Child Therapy
-    (2, 18), -- Adolescent Family Therapy
-
+    (2, 15), -- Family Systems Therapy
+    (2, 16), -- Parent-Child Therapy
+    (2, 17), -- Adolescent Family Therapy
     -- Bergen Village Healing (provider_id = 3)
     (3, 1), -- Individual Therapy
     (3, 5), -- Anxiety Treatment
     (3, 6), -- Depression Treatment
-
     -- Digital Wellness Group (provider_id = 4)
-    (4, 21), -- Digital Wellness Coaching
-    (4, 12), -- Technology Addiction
-
+    (4, 19), -- Digital Wellness Coaching
+    (4, 13), -- Technology Addiction
     -- Desert Recovery Centers (provider_id = 5)
     (5, 8), -- Detoxification
     (5, 9), -- Inpatient Treatment
     (5, 10), -- Outpatient Treatment
     (5, 11), -- Relapse Prevention
     (5, 12), -- Dual Diagnosis
-
     -- Telehealth Services Hub (provider_id = 6)
-    (6, 22), -- Telehealth Services
+    (6, 20), -- Telehealth Services
     (6, 1), -- Individual Therapy
     (6, 2), -- Group Therapy
-    (6, 23), -- Specialized Assessments
-
+    (6, 21), -- Specialized Assessments
     -- Combat Trauma Specialists (provider_id = 7)
     (7, 7), -- PTSD Treatment
     (7, 1), -- Individual Therapy
     (7, 2), -- Group Therapy
     (7, 4), -- Crisis Intervention
-
     -- Tech Addiction Center (provider_id = 8)
-    (8, 12), -- Technology Addiction
+    (8, 13), -- Technology Addiction
     (8, 10), -- Outpatient Treatment
     (8, 11), -- Relapse Prevention
-    (8, 13); -- Dual Diagnosis
+    (8, 12); -- Dual Diagnosis
 
-
-INSERT INTO referral_filter_sets_service_relationship (filter_set_id, service_id) VALUES
+INSERT INTO referral_filter_sets_service_relations (filter_set_id, service_id) VALUES
     -- Youth Network
     (1, 1), -- Mental Health
     (1, 3), -- Family Therapy
-
     -- Addiction Recovery
     (2, 2), -- Substance Abuse
-
     -- Trauma Specialists
     (3, 1), -- Mental Health
-
     -- Digital Wellness
     (4, 2), -- Substance Abuse
     (4, 4); -- Specialized Therapy
