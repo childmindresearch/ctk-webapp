@@ -1,14 +1,11 @@
 import type { GetProviderResponse, GetSingleProviderResponse } from "$lib/types"
+import { isUnique } from "$lib/utils"
 
 export function concatenateTruthyUnique(arr: Array<string | null>, join: string = ", ") {
     return arr
         .filter(val => val)
-        .filter(onlyUnique)
+        .filter(isUnique)
         .join(join)
-}
-
-export function onlyUnique<T>(value: T, index: number, array: Array<T>) {
-    return array.indexOf(value) === index
 }
 
 type Address = {

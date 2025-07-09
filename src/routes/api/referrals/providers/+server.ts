@@ -17,9 +17,7 @@ import { getProviders } from "../fetchers.js"
 export async function GET() {
     logger.info("Getting all providers.")
     try {
-        return json({
-            providers: await getProviders()
-        })
+        return json(await getProviders())
     } catch (error) {
         logger.error("Error fetching providers:", error)
         return new Response("Could not fetch providers.", { status: 500 })
@@ -126,7 +124,7 @@ export async function POST({ request }) {
             return providerId
         })
 
-        const newProvider = (await getProviders(providerId))[0]
+        const newProvider = (await getProviders([providerId]))[0]
         return json(newProvider, { status: 201 })
     } catch (error) {
         console.error("Error creating provider:", error)

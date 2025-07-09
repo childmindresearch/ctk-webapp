@@ -2,6 +2,10 @@ import { createToaster } from "@skeletonlabs/skeleton-svelte"
 
 export const toaster = createToaster()
 
+export function isUnique<T>(value: T, index: number, array: Array<T>) {
+    return array.indexOf(value) === index
+}
+
 export function shortenText(str: string, maxLength = 200) {
     if (str.length > maxLength) {
         return str.substring(0, maxLength).trim() + "..."

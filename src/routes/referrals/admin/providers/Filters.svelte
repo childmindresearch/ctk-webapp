@@ -25,7 +25,7 @@ The component uses a cascading filter approach where filters are applied in sequ
 <script lang="ts">
     import type { GetProviderResponse } from "$lib/types"
     import MultiSelectFilter from "$lib/components/DataTable/MultiSelectFilter.svelte"
-    import { onlyUnique } from "./utils.js"
+    import { isUnique } from "$lib/utils.js"
 
     const topLevelFilterNames = { acceptsInsurance: "Accepts Insurance", serviceType: "Service Type" } as const
 
@@ -48,7 +48,7 @@ The component uses a cascading filter approach where filters are applied in sequ
     const locations = providers
         .map(p => p.addresses.map(addr => addr.location))
         .flat()
-        .filter(onlyUnique)
+        .filter(isUnique)
 
     let filteredProviders = $derived(
         providers
@@ -93,7 +93,7 @@ The component uses a cascading filter approach where filters are applied in sequ
     {#each Object.entries(topLevelFilterNames) as [key, name]}
         <div class="w-full">
             <MultiSelectFilter
-                options={providers.map(p => String(p[key as keyof typeof p])).filter(onlyUnique)}
+                options={providers.map(p => String(p[key as keyof typeof p])).filter(isUnique)}
                 {name}
                 onChange={s => (topLevelFilters[key as keyof typeof topLevelFilters] = s.join(", "))}
                 value={(topLevelFilters[key as keyof typeof topLevelFilters]

@@ -14,7 +14,7 @@ export type Address = {
     state: string | null
     zipCode: string | null
     contacts: string[] | null
-    location: string
+    location: { id: number; name: string }
 }
 
 export type SubService = {
@@ -22,20 +22,6 @@ export type SubService = {
     name: string
     serviceId: number
 }
-
-export type GetSingleProviderResponse = {
-    id: number
-    name: string
-    acceptsInsurance: boolean
-    insuranceDetails: string | null
-    minAge: number
-    maxAge: number
-    addresses: Address[]
-    serviceId: number
-    serviceType: string
-    subServices: SubService[]
-}
-export type GetProviderResponse = GetSingleProviderResponse[]
 
 export type GetSingleFilterSetResponse = {
     id: number

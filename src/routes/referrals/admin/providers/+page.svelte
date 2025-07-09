@@ -8,6 +8,7 @@
     import ExportButton from "./ExportButton.svelte"
 
     let { data } = $props()
+    console.log(data)
 
     let providers = $state(data.data)
     let isCreationModalOpen = $state(false)
@@ -29,7 +30,7 @@
         "maxAge",
         "addresses",
         "subServices",
-        "serviceId"
+        "services"
     ] as const
 
     async function onCreate(data: ProviderFormData) {

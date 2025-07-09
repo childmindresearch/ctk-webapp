@@ -30,9 +30,7 @@ export const referralProviderSubServices = pgTable(
             .notNull()
             .references(() => referralSubServices.id, { onDelete: "cascade" })
     },
-    table => ({
-        uniqueProviderSubService: unique().on(table.providerId, table.subServiceId)
-    })
+    table => [unique().on(table.providerId, table.subServiceId)]
 )
 
 export const referralProviders = pgTable("referral_providers", {
@@ -66,12 +64,27 @@ export const referralAddresses = pgTable("referral_addresses", {
 
 export const referralFilterSets = pgTable("referral_filter_sets", {
     id: serial("id").primaryKey(),
-    name: varchar("name", { length: 255 }).notNull(),
-    locations: varchar("locations", { length: 255 }).array().notNull()
+    name: varchar("name", { length: 255 }).notNull()
 })
 
-// Relations
-export const referralFilterSetLocationsRelations = pgTable(
+// Junction Tables
+export const referralProviderSubServicesJunction = pgTable(
+    "referral_provider_sub_services",
+    {
+        id: serial("id").primaryKey(),
+        providerId: integer("provider_id")
+            .notNull()
+            .references(() => referralProviders.id, { onDelete: "cascade" }),
+        subServiceId: integer("sub_service_id")
+            .notNull()
+            .references(() => referralSubServices.id, { onDelete: "cascade" })
+    },
+    table => {
+        return [unique().on(table.providerId, table.subServiceId)]
+    }
+)
+
+export const referralFilterSetLocationsJunction = pgTable(
     "referral_filter_set_locations_relations",
     {
         id: serial("id").primaryKey(),
@@ -82,13 +95,11 @@ export const referralFilterSetLocationsRelations = pgTable(
             .notNull()
             .references(() => referralLocations.id)
     },
-    table => ({
-        uniqueFilterSetLocation: unique().on(table.filterSetId, table.locationId)
-    })
+    table => [unique().on(table.filterSetId, table.locationId)]
 )
 
-export const referralFilterSetServiceRelations = pgTable(
-    "referral_filter_set_service_relations",
+export const referralFilterSetServiceJunction = pgTable(
+    "referral_filter_set_services_relations",
     {
         id: serial("id").primaryKey(),
         filterSetId: integer("filter_set_id")
@@ -98,14 +109,34 @@ export const referralFilterSetServiceRelations = pgTable(
             .notNull()
             .references(() => referralServices.id, { onDelete: "cascade" })
     },
-    table => ({
-        uniqueFilterSetService: unique().on(table.filterSetId, table.serviceId)
-    })
+    table => [unique().on(table.filterSetId, table.serviceId)]
 )
 
+// Relations
+export const referralProviderRelations = relations(referralProviders, ({ one, many }) => ({
+    service: one(referralServices, {
+        fields: [referralProviders.serviceId],
+        references: [referralServices.id]
+    }),
+    addresses: many(referralAddresses),
+    subServices: many(referralProviderSubServicesJunction)
+}))
+
+export const referralAddressRelations = relations(referralAddresses, ({ one }) => ({
+    provider: one(referralProviders, {
+        fields: [referralAddresses.providerId],
+        references: [referralProviders.id]
+    }),
+    location: one(referralLocations, {
+        fields: [referralAddresses.locationId],
+        references: [referralLocations.id]
+    })
+}))
+
 export const referralServicesRelations = relations(referralServices, ({ many }) => ({
-    subServices: many(referralSubServices),
-    providers: many(referralProviders)
+    providers: many(referralProviders),
+    subservices: many(referralSubServices),
+    filterSets: many(referralFilterSetServiceJunction)
 }))
 
 export const referralSubServicesRelations = relations(referralSubServices, ({ one, many }) => ({
@@ -113,32 +144,48 @@ export const referralSubServicesRelations = relations(referralSubServices, ({ on
         fields: [referralSubServices.serviceId],
         references: [referralServices.id]
     }),
-    providerSubServices: many(referralProviderSubServices)
+    providers: many(referralProviderSubServicesJunction)
 }))
 
-export const referralProvidersRelations = relations(referralProviders, ({ one, many }) => ({
-    service: one(referralServices, {
-        fields: [referralProviders.serviceId],
-        references: [referralServices.id]
-    }),
-    addresses: many(referralAddresses),
-    providerSubServices: many(referralProviderSubServices)
-}))
-
-export const referralProviderAddressesRelations = relations(referralAddresses, ({ one }) => ({
-    provider: one(referralProviders, {
-        fields: [referralAddresses.providerId],
+export const providersToSubServicesRelations = relations(referralProviderSubServicesJunction, ({ one }) => ({
+    providers: one(referralProviders, {
+        fields: [referralProviderSubServicesJunction.providerId],
         references: [referralProviders.id]
+    }),
+    subservices: one(referralSubServices, {
+        fields: [referralProviderSubServicesJunction.subServiceId],
+        references: [referralSubServices.id]
     })
 }))
 
-export const referralProviderSubServicesRelations = relations(referralProviderSubServices, ({ one }) => ({
-    provider: one(referralProviders, {
-        fields: [referralProviderSubServices.providerId],
-        references: [referralProviders.id]
+export const filterSetsRelations = relations(referralFilterSets, ({ many }) => ({
+    locations: many(referralFilterSetLocationsJunction),
+    services: many(referralFilterSetServiceJunction)
+}))
+
+export const locationsRelations = relations(referralLocations, ({ many }) => ({
+    filterSets: many(referralFilterSetLocationsJunction),
+    addresses: many(referralAddresses)
+}))
+
+export const filterSetsToServicesRelations = relations(referralFilterSetServiceJunction, ({ one }) => ({
+    filterSet: one(referralFilterSets, {
+        fields: [referralFilterSetServiceJunction.filterSetId],
+        references: [referralFilterSets.id]
     }),
-    subService: one(referralSubServices, {
-        fields: [referralProviderSubServices.subServiceId],
-        references: [referralSubServices.id]
+    service: one(referralServices, {
+        fields: [referralFilterSetServiceJunction.serviceId],
+        references: [referralServices.id]
+    })
+}))
+
+export const filterSetsToLocationsRelations = relations(referralFilterSetLocationsJunction, ({ one }) => ({
+    filterSet: one(referralFilterSets, {
+        fields: [referralFilterSetLocationsJunction.filterSetId],
+        references: [referralFilterSets.id]
+    }),
+    location: one(referralLocations, {
+        fields: [referralFilterSetLocationsJunction.locationId],
+        references: [referralLocations.id]
     })
 }))

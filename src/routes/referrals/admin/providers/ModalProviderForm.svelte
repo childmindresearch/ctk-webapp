@@ -1,7 +1,8 @@
 <script lang="ts">
     import { Slider } from "@skeletonlabs/skeleton-svelte"
     import { Combobox } from "@skeletonlabs/skeleton-svelte"
-    import { onlyUnique, type ProviderFormData } from "./utils"
+    import { type ProviderFormData } from "./utils"
+    import { isUnique } from "$lib/utils"
     import FormInput from "$lib/components/FormInput.svelte"
     import { toaster } from "$lib/utils"
     import { slide } from "svelte/transition"
@@ -13,7 +14,7 @@
     }
     let { provider: initialProvider, onSubmit, serviceTypeAutoCompletions = [] }: Props = $props()
     let provider = $state({ name: initialProvider.name || "", ...initialProvider })
-    const serviceCompletions = serviceTypeAutoCompletions.filter(onlyUnique).map(s => {
+    const serviceCompletions = serviceTypeAutoCompletions.filter(isUnique).map(s => {
         return { label: s, value: s }
     })
 

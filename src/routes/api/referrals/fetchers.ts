@@ -1,83 +1,30 @@
 import { db } from "$lib/server/db"
-import {
-    referralProviders,
-    referralAddresses,
-    referralServices,
-    referralProviderSubServices,
-    referralSubServices,
-    referralFilterSets
-} from "$lib/server/db/schema.js"
-import type { GetProviderResponse } from "$lib/types"
-import { inArray, eq } from "drizzle-orm"
+import { referralProviders, referralFilterSets } from "$lib/server/db/schema.js"
+import { inArray } from "drizzle-orm"
 
-export async function getProviders(ids: number | number[] | undefined = undefined): Promise<GetProviderResponse> {
-    let providers: (typeof referralProviders.$inferSelect)[]
-    if (ids === undefined) {
-        providers = await db.select().from(referralProviders)
-    } else {
-        ids = Array.isArray(ids) ? ids : [ids]
-        providers = await db.select().from(referralProviders).where(inArray(referralProviders.id, ids))
-    }
-
-    const [addresses, serviceTypesData, subServicesData] = await Promise.all([
-        db.select().from(referralAddresses),
-        db.select().from(referralServices),
-        db
-            .select({
-                providerId: referralProviderSubServices.providerId,
-                subServiceId: referralSubServices.id,
-                subServiceName: referralSubServices.name,
-                serviceId: referralSubServices.serviceId
-            })
-            .from(referralProviderSubServices)
-            .innerJoin(referralSubServices, eq(referralProviderSubServices.subServiceId, referralSubServices.id))
-    ])
-
-    const groupedAddresses = groupById(addresses, "providerId")
-    const serviceTypesMap = Object.fromEntries(serviceTypesData.map(st => [st.id, st.name]))
-    const groupedSubServices = groupById(subServicesData, "providerId")
-
-    const providersWithRelations: GetProviderResponse = providers.map(providerData => {
-        const providerId = providerData.id
-        const providerSubServices = groupedSubServices[providerId] || []
-
-        return {
-            ...providerData,
-            addresses: groupedAddresses[providerId] || [],
-            serviceType: serviceTypesMap[providerData.serviceId],
-            subServices: providerSubServices.map(subService => ({
-                id: subService.subServiceId,
-                name: subService.subServiceName,
-                serviceId: subService.serviceId
-            }))
+export async function getProviders(ids: number[] | undefined = undefined) {
+    const whereCondition = ids ? inArray(referralProviders.id, ids) : undefined
+    return await db.query.referralProviders.findMany({
+        where: whereCondition,
+        with: {
+            service: true,
+            addresses: {
+                with: {
+                    location: true
+                }
+            },
+            subServices: true
         }
     })
-
-    return providersWithRelations
 }
 
-function groupById<Type extends Record<string, unknown>>(
-    values: Array<Type>,
-    property: keyof Type
-): Record<string, Type[]> {
-    return values.reduce(
-        (acc, val) => {
-            const key = val[property] as string
-            if (!acc[key]) acc[key] = []
-            acc[key].push(val)
-            return acc
-        },
-        {} as Record<string | number, Type[]>
-    )
-}
-
-export async function getFilterSets(ids: number | number[] | undefined = undefined) {
-    let filterSets: (typeof referralFilterSets.$inferSelect)[]
-    if (ids === undefined) {
-        filterSets = await db.select().from(referralFilterSets)
-    } else {
-        ids = Array.isArray(ids) ? ids : [ids]
-        filterSets = await db.select().from(referralFilterSets).where(inArray(referralFilterSets.id, ids))
-    }
-    return filterSets
+export async function getFilterSets(ids: number[] | undefined = undefined) {
+    const whereCondition = ids ? inArray(referralFilterSets.id, ids) : undefined
+    return await db.query.referralFilterSets.findMany({
+        where: whereCondition,
+        with: {
+            locations: true,
+            services: true
+        }
+    })
 }
