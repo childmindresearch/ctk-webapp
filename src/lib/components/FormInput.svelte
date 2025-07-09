@@ -1,9 +1,20 @@
-<!--
-    FormInput.svelte
-
+<!--@component
     A form input component with automatic required field indicators.
 
-    @component
+    @prop label - The label text displayed above the input
+    @prop required - Whether the field is required (adds red asterisk)
+    @prop placeholder - Placeholder text for the input
+    @prop value - The input value (bindable)
+    @prop type - HTML input type (text, email, password, etc.)
+    @prop labelClass - Additional CSS classes to apply to the label
+    @prop spanClass - Additional CSS classes to apply to the span
+    @prop inputClass - Additional CSS classes to apply to the input
+    @prop disabled - Whether the input is disabled
+    @prop maxlength - Maximum length of input
+    @prop minlength - Minimum length of input
+    @prop pattern - Pattern for input validation
+    @prop ...restProps - Additional attributes to pass to the input
+
     @example
     ```svelte
     <FormInput
@@ -26,35 +37,19 @@
     ```
 -->
 <script lang="ts">
-    /**
-     * Props interface for the FormInput component
-     */
     interface Props {
-        /** The label text displayed above the input */
         label: string
-        /** Whether the field is required (adds red asterisk) */
         required?: boolean
-        /** Placeholder text for the input */
         placeholder?: string
-        /** The input value (bindable) */
         value?: string | null
-        /** HTML input type (text, email, password, etc.) */
         type?: string
-        /** Additional CSS classes to apply to the label */
         labelClass?: string
-        /** Additonal CSS classes to apply to the span */
         spanClass?: string
-        /** Additional CSS classes to apply to the input */
         inputClass?: string
-        /** Whether the input is disabled */
         disabled?: boolean
-        /** Maximum length of input */
         maxlength?: number
-        /** Minimum length of input */
         minlength?: number
-        /** Pattern for input validation */
         pattern?: string
-        /** Additional attributes to pass to the input */
         [key: string]: any
     }
 

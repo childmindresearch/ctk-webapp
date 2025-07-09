@@ -57,14 +57,29 @@ export const referralAddresses = pgTable("referral_addresses", {
     contacts: text("contacts").array()
 })
 
-export const referralSet = pgTable("referral_set", {
+export const referralFilterSets = pgTable("referral_filter_sets", {
     id: serial("id").primaryKey(),
     name: varchar("name", { length: 255 }).notNull(),
-    serviceIds: integer("service_ids").array().notNull(),
     locations: varchar("locations", { length: 255 }).array().notNull()
 })
 
 // Relations
+export const referralFilterSetRelations = pgTable(
+    "referral_filter_set_service_relationship",
+    {
+        id: serial("id").primaryKey(),
+        filterSetId: integer("filter_set_id")
+            .notNull()
+            .references(() => referralFilterSets.id, { onDelete: "cascade" }),
+        serviceId: integer("service_id")
+            .notNull()
+            .references(() => referralServices.id, { onDelete: "cascade" })
+    },
+    table => ({
+        uniqueFilterSetService: unique().on(table.filterSetId, table.serviceId)
+    })
+)
+
 export const referralServicesRelations = relations(referralServices, ({ many }) => ({
     subServices: many(referralSubServices),
     providers: many(referralProviders)

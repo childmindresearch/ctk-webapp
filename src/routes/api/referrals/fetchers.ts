@@ -4,13 +4,14 @@ import {
     referralAddresses,
     referralServices,
     referralProviderSubServices,
-    referralSubServices
+    referralSubServices,
+    referralFilterSets
 } from "$lib/server/db/schema.js"
 import type { GetProviderResponse } from "$lib/types"
 import { inArray, eq } from "drizzle-orm"
 
 export async function getProviders(ids: number | number[] | undefined = undefined): Promise<GetProviderResponse> {
-    let providers
+    let providers: (typeof referralProviders.$inferSelect)[]
     if (ids === undefined) {
         providers = await db.select().from(referralProviders)
     } else {
@@ -68,4 +69,15 @@ function groupById<Type extends Record<string, unknown>>(
         },
         {} as Record<string | number, Type[]>
     )
+}
+
+export async function getFilterSets(ids: number | number[] | undefined = undefined) {
+    let filterSets: (typeof referralFilterSets.$inferSelect)[]
+    if (ids === undefined) {
+        filterSets = await db.select().from(referralFilterSets)
+    } else {
+        ids = Array.isArray(ids) ? ids : [ids]
+        filterSets = await db.select().from(referralFilterSets).where(inArray(referralFilterSets.id, ids))
+    }
+    return filterSets
 }

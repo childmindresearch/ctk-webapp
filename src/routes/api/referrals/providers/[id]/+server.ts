@@ -11,7 +11,7 @@ import { isModel, zodValidateOr400 } from "$lib/server/zod_utils.js"
 import { json } from "@sveltejs/kit"
 import { eq, and } from "drizzle-orm"
 import { z } from "zod"
-import { getProviders } from "../fetchers"
+import { getProviders } from "../../fetchers"
 
 export async function GET({ params }) {
     const id = Number(params.id)

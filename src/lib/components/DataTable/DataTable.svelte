@@ -1,14 +1,15 @@
-<!--
+<!--@component
     A reusable data table component with sorting, filtering, and pagination capabilities.
 
-    Props:
-    @param {T[]} data - Array of objects to display in the table
-    @param {(keyof T)[]} [hiddenColumns] - Optional array of column keys to hide from display
-    @param {Function} [onCreate] - Optional callback function when create button is clicked
-    @param {Function} [onEdit] - Optional callback function when edit button is clicked, receives row data
-    @param {Function} [onDelete] - Optional callback function when delete button is clicked, receives row data
+    ## Props
+    - data: The data to display in the table.
+    - idColumn: The column name of the unique identifier.
+    - hiddenColumns: Columns to hide in the table.
+    - onCreate: Function to execute on clicking the Create button.
+    - onEdit: Function to execute on clicking the Edit button.
+    - onDelete: Function to execute on clicking the Delete button.
 
-    Example:
+    ## Example
     ```svelte
     <DataTable
         data={myData}
@@ -20,9 +21,6 @@
     ```
 -->
 <script lang="ts" generics="T extends Record<string, any>">
-    import { ArrowDown, ArrowDownUp, ArrowUp, Pencil, Trash } from "@lucide/svelte"
-    import { flip } from "svelte/animate"
-
     type Props<T extends Record<string, any>> = {
         data: T[]
         idColumn: string
@@ -31,6 +29,10 @@
         onEdit?: (row: (typeof data)[number]) => void
         onDelete?: (row: (typeof data)[number]) => void
     }
+
+    import { ArrowDown, ArrowDownUp, ArrowUp } from "@lucide/svelte"
+    import { flip } from "svelte/animate"
+    import Controls from "./Controls.svelte"
 
     let { data, idColumn, hiddenColumns, onCreate, onEdit, onDelete }: Props<T> = $props()
 
@@ -64,6 +66,14 @@
     function applyPagination(data: { [K in keyof T]: string }[]) {
         const skip = nRowsPerPage * currentPage
         return data.slice(skip, skip + nRowsPerPage)
+    }
+
+    function createRowCallback(callback: typeof onEdit | typeof onDelete, rowId: string) {
+        if (!callback) return undefined
+        return () => {
+            const target = data.find(dataRow => dataRow.id === rowId)
+            if (target) callback(target)
+        }
     }
 </script>
 
@@ -102,32 +112,10 @@
                     <tr animate:flip={{ duration: 350 }}>
                         {#if showControls}
                             <td class="px-2 min-w-[5rem]">
-                                <div class="text-center space-x-2">
-                                    {#if onEdit}
-                                        <button
-                                            aria-label="edit"
-                                            class="text-warning-600 hover:text-warning-300 transition-colors duration-150"
-                                            onclick={() => {
-                                                const target = data.find(dataRow => dataRow.id == row.id)
-                                                if (target) onEdit(target)
-                                            }}
-                                        >
-                                            <Pencil />
-                                        </button>
-                                    {/if}
-                                    {#if onDelete}
-                                        <button
-                                            aria-label="delete"
-                                            class="text-error-600 hover:text-error-300 transition-colors duration-150"
-                                            onclick={() => {
-                                                const target = data.find(dataRow => dataRow.id == row.id)
-                                                if (target) onDelete(target)
-                                            }}
-                                        >
-                                            <Trash />
-                                        </button>
-                                    {/if}
-                                </div>
+                                <Controls
+                                    onEdit={createRowCallback(onEdit, row.id)}
+                                    onDelete={createRowCallback(onDelete, row.id)}
+                                />
                             </td>
                         {/if}
                         {#each columns as column}

@@ -35,5 +35,12 @@ export type GetSingleProviderResponse = {
     serviceType: string
     subServices: SubService[]
 }
-
 export type GetProviderResponse = GetSingleProviderResponse[]
+
+export type GetSingleFilterSetResponse = {
+    id: number
+    name: string
+    locations: string[]
+    services: { name: string; id: number }[]
+}
+export type GetFilterSetResponse = GetSingleFilterSetResponse[]

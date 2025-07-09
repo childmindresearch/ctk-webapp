@@ -17,9 +17,9 @@
             name: "Referrals",
             subPages: [
                 { name: "Download", href: "/referrals/download" },
-                { name: "Providers", href: "/referrals/providers" },
-                { name: "Filter Sets", href: "/referrals/filter-sets" },
-                { name: "Selection Sets", href: "/referrals/selection-sets" }
+                { name: "Providers", href: "/referrals/admin/providers" },
+                { name: "Filter Sets", href: "/referrals/admin/filter-sets" },
+                { name: "Selection Sets", href: "/referrals/admin/selection-sets" }
             ]
         },
         { name: "Templates", href: "/templates" }
@@ -39,7 +39,6 @@
             : "text-gray-600 hover:bg-gray-50 hover:text-gray-800"
     )
 
-    // Check if any referrals sub-page is active
     let referralsActive = $derived(page.url.pathname.startsWith("/referrals"))
 </script>
 

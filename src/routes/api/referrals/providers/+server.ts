@@ -1,10 +1,16 @@
 import { json } from "@sveltejs/kit"
 import { db } from "$lib/server/db"
 import { logger } from "$lib/server/logging.js"
-import { provider, providerAddress, providerSubServices, serviceType, subServiceType } from "$lib/server/db/schema"
+import {
+    referralProviders,
+    referralAddresses,
+    referralSubServices,
+    referralServices,
+    referralProviderSubServices
+} from "$lib/server/db/schema"
 import { z } from "zod"
 import { zodValidateOr400, isModel } from "$lib/server/zod_utils.js"
-import { getProviders } from "./fetchers.js"
+import { getProviders } from "../fetchers.js"
 import { eq, and } from "drizzle-orm"
 
 export async function GET() {
@@ -52,9 +58,12 @@ export async function POST({ request }) {
 
     try {
         const providerId = await db.transaction(async tx => {
-            let service = await tx.select().from(serviceType).where(eq(serviceType.name, providerRequest.serviceType))
+            let service = await tx
+                .select()
+                .from(referralServices)
+                .where(eq(referralServices.name, providerRequest.serviceType))
             if (service.length == 0) {
-                service = await tx.insert(serviceType).values({ name: providerRequest.serviceType }).returning()
+                service = await tx.insert(referralServices).values({ name: providerRequest.serviceType }).returning()
             }
             const serviceId = service[0].id
 
@@ -62,12 +71,12 @@ export async function POST({ request }) {
                 providerRequest.subServices.map(async name => {
                     let subService = await tx
                         .select()
-                        .from(subServiceType)
-                        .where(and(eq(subServiceType.name, name), eq(subServiceType.serviceTypeId, serviceId)))
+                        .from(referralSubServices)
+                        .where(and(eq(referralSubServices.name, name), eq(referralSubServices.serviceId, serviceId)))
                     if (subService.length == 0) {
                         subService = await tx
-                            .insert(subServiceType)
-                            .values({ name: name, serviceTypeId: serviceId })
+                            .insert(referralSubServices)
+                            .values({ name: name, serviceId: serviceId })
                             .returning()
                     }
                     return subService[0]
@@ -75,16 +84,16 @@ export async function POST({ request }) {
             )
 
             const providerIds: { id: number }[] = await tx
-                .insert(provider)
+                .insert(referralProviders)
                 .values({
                     name: providerRequest.name,
                     acceptsInsurance: providerRequest.acceptsInsurance,
                     insuranceDetails: providerRequest.insuranceDetails,
                     minAge: providerRequest.minAge,
                     maxAge: providerRequest.maxAge,
-                    serviceTypeId: serviceId
+                    serviceId: serviceId
                 })
-                .returning({ id: provider.id })
+                .returning({ id: referralProviders.id })
             const providerId = providerIds[0].id
 
             if (providerRequest.addresses) {
@@ -92,12 +101,12 @@ export async function POST({ request }) {
                     ...address,
                     providerId
                 }))
-                await tx.insert(providerAddress).values(addresses)
+                await tx.insert(referralAddresses).values(addresses)
             }
 
             await Promise.all(
                 subServices.map(subService => {
-                    tx.insert(providerSubServices).values({ providerId, subServiceTypeId: subService.id })
+                    tx.insert(referralProviderSubServices).values({ providerId, subServiceId: subService.id })
                 })
             )
             return providerId
