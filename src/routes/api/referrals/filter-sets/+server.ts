@@ -1,6 +1,6 @@
 import { json } from "@sveltejs/kit"
 import { logger } from "$lib/server/logging.js"
-import { getFilterSets } from "../fetchers.js"
+import { getFilterSets } from "../crud.js"
 import { z } from "zod"
 import { db } from "$lib/server/db/index.js"
 import {

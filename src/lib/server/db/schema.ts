@@ -39,7 +39,7 @@ export const referralProviders = pgTable("referral_providers", {
     acceptsInsurance: boolean("accepts_insurance").notNull(),
     minAge: integer("min_age").default(0).notNull(),
     maxAge: integer("max_age").default(120).notNull(),
-    insuranceDetails: varchar("insurance_details", { length: 1024 }),
+    insuranceDetails: varchar("insurance_details", { length: 1024 }).notNull(),
     serviceId: integer("service_id")
         .references(() => referralServices.id)
         .notNull()
@@ -50,16 +50,14 @@ export const referralAddresses = pgTable("referral_addresses", {
     providerId: integer("provider_id")
         .notNull()
         .references(() => referralProviders.id, { onDelete: "cascade" }),
-    locationId: integer("location_id")
-        .notNull()
-        .references(() => referralLocations.id),
+    location: varchar("location", { length: 255 }).notNull(),
     isRemote: boolean("is_remote").notNull(),
     addressLine1: varchar("address_line1", { length: 255 }),
     addressLine2: varchar("address_line2", { length: 255 }),
     city: varchar("city", { length: 100 }),
     state: varchar("state", { length: 50 }),
     zipCode: varchar("zip_code", { length: 20 }),
-    contacts: text("contacts").array()
+    contacts: text("contacts").array().notNull()
 })
 
 export const referralFilterSets = pgTable("referral_filter_sets", {
@@ -126,16 +124,12 @@ export const referralAddressRelations = relations(referralAddresses, ({ one }) =
     provider: one(referralProviders, {
         fields: [referralAddresses.providerId],
         references: [referralProviders.id]
-    }),
-    location: one(referralLocations, {
-        fields: [referralAddresses.locationId],
-        references: [referralLocations.id]
     })
 }))
 
 export const referralServicesRelations = relations(referralServices, ({ many }) => ({
     providers: many(referralProviders),
-    subservices: many(referralSubServices),
+    subServices: many(referralSubServices),
     filterSets: many(referralFilterSetServiceJunction)
 }))
 
@@ -152,7 +146,7 @@ export const providersToSubServicesRelations = relations(referralProviderSubServ
         fields: [referralProviderSubServicesJunction.providerId],
         references: [referralProviders.id]
     }),
-    subservices: one(referralSubServices, {
+    subServices: one(referralSubServices, {
         fields: [referralProviderSubServicesJunction.subServiceId],
         references: [referralSubServices.id]
     })

@@ -1,28 +1,41 @@
 <script lang="ts">
+    import { createProviderSchema } from "$api/referrals/providers/schemas.js"
     import DataTable from "$lib/components/DataTable/DataTable.svelte"
-    import { toaster } from "$lib/utils.js"
+    import { isUnique, toaster } from "$lib/utils.js"
     import { Modal } from "@skeletonlabs/skeleton-svelte"
-    import { type ProviderFormData } from "./utils.js"
-    import ModalProviderForm from "./ModalProviderForm.svelte"
-    import Filters from "./Filters.svelte"
+    import { z } from "zod"
     import ExportButton from "./ExportButton.svelte"
+    import Filters from "./Filters.svelte"
+    import ModalProviderForm from "./ModalProviderForm.svelte"
 
     let { data } = $props()
-    console.log(data)
-
-    let providers = $state(data.data)
+    let providers = $state(data.providers)
     let isCreationModalOpen = $state(false)
     let isEditModalOpen = $state(false)
-    let editModalData: Partial<ProviderFormData> = $state({})
+    let editModalData: (typeof providers)[number] | undefined = $state(undefined)
     let filterDrawerState = $state(false)
-    let serviceTypes = data.data.map(p => p.serviceType)
-    type columnNames = keyof (typeof providers)[number]
+    let editId = $state(-1)
+
+    let services = $state(data.providers.map(p => p.service).filter(isUnique))
+    let locations = $state(
+        data.providers
+            .map(p => p.addresses.map(addr => addr.location))
+            .flat()
+            .filter(isUnique)
+    )
+    let subServices = $state(
+        data.providers
+            .map(p => p.subServices.map(sub => sub.name))
+            .flat()
+            .filter(isUnique)
+    )
 
     // Filters need to be bound in order to persist after opening/closing the drawer.
     let topLevelFilters: Partial<Record<string, string>> = $state({})
     let locationFilters: string[] = $state([])
     let participantAge: number | null = $state(null)
 
+    type columnNames = keyof (typeof providers)[number]
     const hiddenColumns: columnNames[] = [
         "id",
         "insuranceDetails",
@@ -30,13 +43,13 @@
         "maxAge",
         "addresses",
         "subServices",
-        "services"
+        "service"
     ] as const
 
-    async function onCreate(data: ProviderFormData) {
+    async function onCreate(form: z.infer<typeof createProviderSchema>) {
         await fetch("/api/referrals/providers", {
             method: "POST",
-            body: JSON.stringify(data)
+            body: JSON.stringify(form)
         })
             .then(async response => {
                 if (!response.ok) throw await response.text()
@@ -73,16 +86,15 @@
         })
     }
 
-    async function onEdit(data: ProviderFormData) {
-        console.log(data)
-        return await fetch(`/api/referrals/providers/${data.id}`, {
+    async function onEdit(data: z.infer<typeof createProviderSchema>) {
+        return await fetch(`/api/referrals/providers/${editId}`, {
             method: "PUT",
             body: JSON.stringify(data)
         })
             .then(async response => {
                 if (!response.ok) throw await response.text()
                 const newProvider = await response.json()
-                const oldProvider = providers.findIndex(prov => prov.id === data.id)
+                const oldProvider = providers.findIndex(prov => prov.id === editId)
                 if (oldProvider !== -1) {
                     providers[oldProvider] = newProvider
                 }
@@ -116,7 +128,7 @@
         {#snippet trigger()}Open filters{/snippet}
         {#snippet content()}
             <Filters
-                providers={data.data}
+                providers={data.providers}
                 onChange={p => (providers = p)}
                 bind:topLevelFilters
                 bind:locationFilters
@@ -135,10 +147,8 @@
             }}
             {onDelete}
             onEdit={data => {
-                editModalData = {
-                    ...data,
-                    subServices: data.subServices?.map(sub => sub.name) || []
-                }
+                editId = data.id
+                editModalData = data
                 isEditModalOpen = true
             }}
             idColumn="id"
@@ -168,7 +178,13 @@
     backdropClasses="backdrop-blur-sm"
 >
     {#snippet content()}
-        <ModalProviderForm provider={{}} onSubmit={onCreate} serviceTypeAutoCompletions={serviceTypes} />
+        <ModalProviderForm
+            provider={{}}
+            onSubmit={onCreate}
+            serviceAutoCompletions={services.map(s => s.name)}
+            locationAutoCompletions={locations}
+            subServiceAutoCompletions={subServices}
+        />
     {/snippet}
 </Modal>
 
@@ -183,6 +199,12 @@
     backdropClasses="backdrop-blur-sm"
 >
     {#snippet content()}
-        <ModalProviderForm provider={editModalData} onSubmit={onEdit} serviceTypeAutoCompletions={serviceTypes} />
+        <ModalProviderForm
+            provider={editModalData!}
+            onSubmit={data => onEdit(data)}
+            serviceAutoCompletions={services.map(s => s.name)}
+            locationAutoCompletions={locations}
+            subServiceAutoCompletions={subServices}
+        />
     {/snippet}
 </Modal>

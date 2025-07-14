@@ -1,18 +1,16 @@
-import { db } from "$lib/server/db"
-import {
-    referralAddresses,
-    referralLocations,
-    referralProviders,
-    referralProviderSubServices,
-    referralServices,
-    referralSubServices
-} from "$lib/server/db/schema"
 import { logger } from "$lib/server/logging.js"
-import { isModel, zodValidateOr400 } from "$lib/server/zod_utils.js"
 import { json } from "@sveltejs/kit"
-import { and, eq } from "drizzle-orm"
+import { getProviders } from "$api/referrals/crud.js"
 import { z } from "zod"
-import { getProviders } from "../fetchers.js"
+import { db } from "$lib/server/db/index.js"
+import {
+    referralProviders,
+    referralServices,
+    referralSubServices,
+    referralProviderSubServices,
+    referralAddresses
+} from "$lib/server/db/schema"
+import { createProviderSchema } from "./schemas.js"
 
 export async function GET() {
     logger.info("Getting all providers.")
@@ -24,113 +22,88 @@ export async function GET() {
     }
 }
 
-const ProviderAddressSchema = z.object({
-    addressId: z.number().nullable().optional(),
-    providerId: z.number(),
-    addressLine1: z.string().nullable().optional(),
-    addressLine2: z.string().nullable().optional(),
-    location: z.string(),
-    city: z.string().nullable().optional(),
-    state: z.string().nullable().optional(),
-    zipCode: z.string().nullable().optional(),
-    contacts: z.array(z.string()),
-    isRemote: z.boolean()
-})
-
-const PostProviderRequestSchema = z.object({
-    name: z.string(),
-    addresses: z.array(ProviderAddressSchema),
-    acceptsInsurance: z.boolean(),
-    insuranceDetails: z.string(),
-    minAge: z.number(),
-    maxAge: z.number(),
-    serviceType: z.string(),
-    subServices: z.array(z.string())
-})
-
 export async function POST({ request }) {
-    const providerData = await request.json()
-    const providerRequest = zodValidateOr400(PostProviderRequestSchema, providerData)
-    if (!isModel(PostProviderRequestSchema, providerRequest)) {
-        return providerRequest
-    }
+    logger.info("Creating new provider with sub-services.")
 
     try {
+        const body = await request.json()
+        const validatedData = createProviderSchema.parse(body)
+
         const providerId = await db.transaction(async tx => {
-            let service = await tx
-                .select()
-                .from(referralServices)
-                .where(eq(referralServices.name, providerRequest.serviceType))
-            if (service.length == 0) {
-                service = await tx.insert(referralServices).values({ name: providerRequest.serviceType }).returning()
-            }
-            const serviceId = service[0].id
+            const [service] = await tx
+                .insert(referralServices)
+                .values({ name: validatedData.service } as typeof referralServices.$inferInsert)
+                .onConflictDoNothing()
+                .returning()
 
             const subServices = await Promise.all(
-                providerRequest.subServices.map(async name => {
-                    let subService = await tx
-                        .select()
-                        .from(referralSubServices)
-                        .where(and(eq(referralSubServices.name, name), eq(referralSubServices.serviceId, serviceId)))
-                    if (subService.length == 0) {
-                        subService = await tx
-                            .insert(referralSubServices)
-                            .values({ name: name, serviceId: serviceId })
-                            .returning()
-                    }
-                    return subService[0]
+                validatedData.subServices.map(async subServiceName => {
+                    const [subService] = await tx
+                        .insert(referralSubServices)
+                        .values({
+                            name: subServiceName,
+                            serviceId: service.id
+                        } as typeof referralSubServices.$inferInsert)
+                        .onConflictDoNothing()
+                        .returning()
+                    return subService
                 })
             )
 
-            const providerIds: { id: number }[] = await tx
+            const [provider] = await tx
                 .insert(referralProviders)
                 .values({
-                    name: providerRequest.name,
-                    acceptsInsurance: providerRequest.acceptsInsurance,
-                    insuranceDetails: providerRequest.insuranceDetails,
-                    minAge: providerRequest.minAge,
-                    maxAge: providerRequest.maxAge,
-                    serviceId: serviceId
-                })
-                .returning({ id: referralProviders.id })
-            const providerId = providerIds[0].id
+                    ...validatedData,
+                    serviceId: service.id,
+                    acceptsInsurance:
+                        validatedData.insuranceDetails !== null && validatedData.insuranceDetails !== undefined
+                } as typeof referralProviders.$inferInsert)
+                .returning()
 
-            if (providerRequest.addresses) {
-                const locationIds = await tx
-                    .insert(referralLocations)
-                    .values(
-                        providerRequest.addresses.map(address => ({
-                            name: address.location
-                        }))
+            if (subServices.length > 0) {
+                await tx.insert(referralProviderSubServices).values(
+                    subServices.map(
+                        subService =>
+                            ({
+                                providerId: provider.id,
+                                subServiceId: subService.id
+                            }) as typeof referralProviderSubServices.$inferInsert
                     )
-                    .onConflictDoNothing()
-                    .returning({ id: referralLocations.id })
-
-                const addresses = providerRequest.addresses.map((address, index) => {
-                    return {
-                        ...address,
-                        locationId: locationIds[index].id
-                    }
-                })
-
-                await tx.insert(referralAddresses).values(addresses)
+                )
             }
 
-            await Promise.all(
-                subServices.map(subService => {
-                    tx.insert(referralProviderSubServices).values({ providerId, subServiceId: subService.id })
-                })
-            )
-            return providerId
+            if (validatedData.addresses.length > 0) {
+                await tx.insert(referralAddresses).values(
+                    validatedData.addresses.map(
+                        addr =>
+                            ({
+                                providerId: provider.id,
+                                ...addr
+                            }) as typeof referralAddresses.$inferInsert
+                    )
+                )
+            }
+
+            return provider.id
         })
 
-        const newProvider = (await getProviders([providerId]))[0]
-        return json(newProvider, { status: 201 })
+        const completeProvider = await getProviders([providerId])
+
+        logger.info(`Successfully created provider: ${validatedData.name}`)
+        return json(completeProvider, { status: 201 })
     } catch (error) {
-        console.error("Error creating provider:", error)
-        return new Response(JSON.stringify({ error: "Failed to create provider" }), {
-            status: 500,
-            headers: { "Content-Type": "application/json" }
-        })
+        if (error instanceof z.ZodError) {
+            logger.error("Validation error:", error.errors)
+            return json(
+                {
+                    error: "Validation failed",
+                    details: error.errors
+                },
+                { status: 400 }
+            )
+        }
+
+        logger.error("Error creating provider:", error)
+        return new Response("Could not create provider.", { status: 500 })
     }
 }

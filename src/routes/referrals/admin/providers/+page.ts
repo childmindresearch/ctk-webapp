@@ -1,6 +1,6 @@
-import type { GetProviderResponse } from "$lib/types.js"
+import type { getProviders } from "$api/referrals/crud.js"
 
 export const load = async ({ fetch }) => {
-    const data = (await fetch("/api/referrals/providers").then(response => response.json())) as GetProviderResponse
-    return { data }
+    const providers = await fetch("/api/referrals/providers").then(response => response.json())
+    return { providers } as { providers: Awaited<ReturnType<typeof getProviders>> }
 }

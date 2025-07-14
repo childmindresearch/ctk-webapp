@@ -1,4 +1,4 @@
-import type { GetProviderResponse, GetSingleProviderResponse } from "$lib/types"
+import type { getProviders } from "$api/referrals/crud.js"
 import { isUnique } from "$lib/utils"
 
 export function concatenateTruthyUnique(arr: Array<string | null>, join: string = ", ") {
@@ -15,23 +15,22 @@ type Address = {
     city: string | null
     state: string | null
     zipCode: string | null
-    contacts: string[] | null
+    contacts: string[]
     location: string
 }
 
 export type ProviderFormData = {
-    [key: string]: string | number | boolean | null | Address[] | string[]
     name: string
     acceptsInsurance: boolean
-    insuranceDetails: string | null
+    insuranceDetails: string
     minAge: number
     maxAge: number
     addresses: Address[]
-    serviceType: string | null
-    subServices: string[]
+    service: { id?: number; name: string }
+    subServices: { id?: number; name: string }[]
 }
 
-export function exportProviders(providers: GetProviderResponse) {
+export function exportProviders(providers: Awaited<ReturnType<typeof getProviders>>) {
     const exportColumns = {
         name: "Name",
         location: "Location",
@@ -51,7 +50,7 @@ export function exportProviders(providers: GetProviderResponse) {
     return [headers, ...rows]
 }
 
-function formatAddresses(provider: GetSingleProviderResponse) {
+function formatAddresses(provider: Awaited<ReturnType<typeof getProviders>>[number]) {
     return provider.addresses
         ?.map(addr => {
             const contacts = addr.contacts?.join(", ")
@@ -66,6 +65,6 @@ function formatAddresses(provider: GetSingleProviderResponse) {
         .join("\n\n")
 }
 
-function formatLocations(provider: GetSingleProviderResponse) {
+function formatLocations(provider: Awaited<ReturnType<typeof getProviders>>[number]) {
     return provider.addresses?.map(addr => addr.location).join(", ") || ""
 }

@@ -7,16 +7,16 @@ import {
     referralProviderSubServices
 } from "$lib/server/db/schema"
 import { logger } from "$lib/server/logging"
-import { isModel, zodValidateOr400 } from "$lib/server/zod_utils.js"
 import { json } from "@sveltejs/kit"
 import { eq, and } from "drizzle-orm"
 import { z } from "zod"
-import { getProviders } from "../../fetchers"
+import { getProviders } from "../../crud"
+import { createProviderSchema } from "../schemas"
 
 export async function GET({ params }) {
     const id = Number(params.id)
     try {
-        const provider = (await getProviders(id))[0]
+        const provider = (await getProviders([id]))[0]
         return json(provider)
     } catch (error) {
         logger.error(`Error fetching provider ${id}:`, error)
@@ -35,37 +35,19 @@ export async function DELETE({ params }) {
     }
 }
 
-const ProviderAddressSchema = z.object({
-    addressId: z.number().nullable().optional(),
-    providerId: z.number().nullable().optional(),
-    addressLine1: z.string().nullable().optional(),
-    addressLine2: z.string().nullable().optional(),
-    isRemote: z.boolean(),
-    location: z.string(),
-    city: z.string().nullable().optional(),
-    state: z.string().nullable().optional(),
-    zipCode: z.string().nullable().optional(),
-    contacts: z.array(z.string()).nullable().optional()
-})
-
-const PutProviderRequestSchema = z.object({
-    name: z.string(),
-    addresses: z.array(ProviderAddressSchema).nullable().optional(),
-    acceptsInsurance: z.boolean(),
-    insuranceDetails: z.string().nullable().optional(),
-    minAge: z.number(),
-    maxAge: z.number(),
-    serviceType: z.string(),
-    subServices: z.array(z.string()).nullable().optional()
-})
-
 export async function PUT({ params, request }) {
     const id = Number(params.id)
     const providerData = await request.json()
 
-    const providerRequest = zodValidateOr400(PutProviderRequestSchema, providerData)
-    if (!isModel(PutProviderRequestSchema, providerRequest)) {
-        return providerRequest
+    let providerRequest: z.infer<typeof createProviderSchema>
+    try {
+        providerRequest = createProviderSchema.parse(providerData)
+    } catch (error) {
+        logger.error("Invalid provider data format", error)
+        return new Response(JSON.stringify({ error: "Invalid request format", details: error }), {
+            status: 400,
+            headers: { "Content-Type": "application/json" }
+        })
     }
 
     try {
@@ -74,14 +56,14 @@ export async function PUT({ params, request }) {
             const serviceId = await tx
                 .select()
                 .from(referralServices)
-                .where(eq(referralServices.name, providerRequest.serviceType))
+                .where(eq(referralServices.name, providerRequest.service))
                 .then(service => {
                     if (service.length > 0) {
                         return service[0].id
                     } else {
                         return tx
                             .insert(referralServices)
-                            .values({ name: providerRequest.serviceType })
+                            .values({ name: providerRequest.service })
                             .returning()
                             .then(res => res[0].id)
                     }
@@ -150,7 +132,7 @@ export async function PUT({ params, request }) {
             }
         })
 
-        const updatedProvider = (await getProviders(id))[0]
+        const updatedProvider = (await getProviders([id]))[0]
         return json(updatedProvider)
     } catch (error) {
         logger.error(`Error updating provider ${id}:`, error)

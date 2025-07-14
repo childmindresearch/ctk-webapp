@@ -6,15 +6,34 @@
     import FormInput from "$lib/components/FormInput.svelte"
     import { toaster } from "$lib/utils"
     import { slide } from "svelte/transition"
+    import { createProviderSchema } from "$api/referrals/providers/schemas"
+    import { z } from "zod"
 
     type Props = {
         provider: Partial<ProviderFormData>
-        onSubmit: (provider: ProviderFormData) => void
-        serviceTypeAutoCompletions?: string[]
+        onSubmit: (provider: z.infer<typeof createProviderSchema>) => void
+        serviceAutoCompletions?: string[]
+        locationAutoCompletions?: string[]
+        subServiceAutoCompletions?: string[]
     }
-    let { provider: initialProvider, onSubmit, serviceTypeAutoCompletions = [] }: Props = $props()
-    let provider = $state({ name: initialProvider.name || "", ...initialProvider })
-    const serviceCompletions = serviceTypeAutoCompletions.filter(isUnique).map(s => {
+    let {
+        provider: initialProvider,
+        onSubmit,
+        serviceAutoCompletions = [],
+        locationAutoCompletions = [],
+        subServiceAutoCompletions = []
+    }: Props = $props()
+    let provider = $state({
+        name: "",
+        acceptsInsurance: false,
+        minAge: 0,
+        maxAge: 120,
+        addresses: [],
+        service: { name: "" },
+        subServices: [],
+        ...initialProvider
+    })
+    const serviceCompletions = serviceAutoCompletions.filter(isUnique).map(s => {
         return { label: s, value: s }
     })
 
@@ -53,25 +72,18 @@
     }
 
     function addSubService() {
-        if (!provider.subServices) {
-            provider.subServices = []
-        }
-        provider.subServices.push("")
+        provider.subServices.push({ id: undefined, name: "" })
     }
     function removeSubService(index: number) {
-        if (!provider.subServices) return
         provider.subServices = provider.subServices.filter((_: any, i: number) => i !== index)
     }
 
-    function addContact(address: NonNullable<typeof provider.addresses>[number]) {
-        if (!address.contacts) {
-            address.contacts = []
-        }
+    function addContact(address: (typeof provider.addresses)[number]) {
         address.contacts.push("")
     }
 
-    function removeContact(address: NonNullable<typeof provider.addresses>[number], index: number) {
-        if (!address.contacts || address.contacts.length < 2) {
+    function removeContact(address: (typeof provider.addresses)[number], index: number) {
+        if (address.contacts.length < 2) {
             toaster.error({ title: "Cannot remove the last contact." })
             return
         }
@@ -79,24 +91,30 @@
     }
 
     function localOnSubmit() {
-        if (provider.addresses) {
-            for (let address of provider.addresses) {
-                if (!address.isRemote) {
-                    if (!address.addressLine1 || !address.city || !address.state || !address.zipCode) {
-                        alert("Please fill in all required address fields.")
-                        return
-                    }
-                } else {
-                    address.location = "Remote"
-                    address.addressLine1 = null
-                    address.addressLine2 = null
-                    address.city = null
-                    address.state = null
-                    address.zipCode = null
+        for (let address of provider.addresses) {
+            if (!address.isRemote) {
+                if (!address.addressLine1 || !address.city || !address.state || !address.zipCode) {
+                    alert("Please fill in all required address fields.")
+                    return
                 }
+            } else {
+                address.location = "Remote"
+                address.addressLine1 = null
+                address.addressLine2 = null
+                address.city = null
+                address.state = null
+                address.zipCode = null
             }
         }
-        onSubmit(provider as ProviderFormData)
+
+        const data = {
+            ...provider,
+            insuranceDetails: "",
+            service: provider.service.name,
+            subServices: provider.subServices.map(s => s.name)
+        }
+
+        onSubmit(data)
     }
 </script>
 
@@ -150,9 +168,9 @@
                     <span class="text-sm font-semibold text-surface-700-200-token">Primary Service Type</span>
                     <Combobox
                         data={serviceCompletions}
-                        value={[provider.serviceType || ""]}
-                        defaultValue={[provider.serviceType || ""]}
-                        onValueChange={e => (provider.serviceType = e.value[0])}
+                        value={[provider.service.name || ""]}
+                        defaultValue={[provider.service.name || ""]}
+                        onValueChange={e => (provider.service = { name: e.value[0] })}
                         label="Select or type a service"
                         placeholder="Select..."
                         allowCustomValue
@@ -254,11 +272,15 @@
                                         <span class="text-sm font-semibold text-surface-700-200-token"
                                             >Location Name <span class="text-error-500">*</span></span
                                         >
-                                        <input
-                                            class="input mt-2"
-                                            required
-                                            bind:value={address.location}
+                                        <Combobox
+                                            data={locationAutoCompletions.map(loc => ({ label: loc, value: loc }))}
+                                            value={[address.location || ""]}
+                                            defaultValue={[address.location || ""]}
+                                            onValueChange={e => (address.location = e.value[0])}
+                                            label="Select or type a location"
                                             placeholder="e.g., Brooklyn, Manhattan"
+                                            allowCustomValue
+                                            required
                                         />
                                     </label>
 
