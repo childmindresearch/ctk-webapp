@@ -85,10 +85,16 @@ CREATE TABLE referral_provider_sub_services (
     UNIQUE(provider_id, sub_service_id)
 );
 
--- Updated filter sets table without locations array
-CREATE TABLE referral_filter_sets (
+CREATE TABLE referral_filter_groups (
     id SERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL UNIQUE
+);
+
+CREATE TABLE referral_filter_sets (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    locations VARCHAR(255)[] DEFAULT '{}'::VARCHAR[],
+    group_id INTEGER NOT NULL REFERENCES referral_filter_groups(id) ON DELETE CASCADE
 );
 
 
@@ -160,13 +166,6 @@ INSERT INTO referral_addresses (provider_id, location, location_type, address_li
     (6, 'Remote', 'in-person', NULL, NULL, NULL, NULL, ARRAY['portal@telehealth.cw']),
     (7, 'Basin Keep', 'in-person', '200 Veterans Drive', 'Basin Keep', 'CW', '50200', ARRAY['+1-555-TRAUMA', 'support@trauma.cw']),
     (8, 'Rhombus Square', 'in-person', '404 Detox Lane', 'Rhombus Square', 'CW', '70404', ARRAY['+1-555-TECH', 'detox@tech.cw']);
-
--- Insert referral filter sets (without locations array)
-INSERT INTO referral_filter_sets (name) VALUES
-    ('Youth Network'),
-    ('Addiction Recovery'),
-    ('Trauma Specialists'),
-    ('Digital Wellness');
 
 
 -- Insert sub-services for each main service
@@ -240,14 +239,56 @@ INSERT INTO referral_provider_sub_services (provider_id, sub_service_id) VALUES
     (8, 11), -- Relapse Prevention
     (8, 12); -- Dual Diagnosis
 
+-- Insert filter groups
+INSERT INTO referral_filter_groups (name) VALUES
+    ('Age-Based Networks'),
+    ('Specialty Care'),
+    ('Geographic Regions'),
+    ('Treatment Modalities'),
+    ('Insurance Networks');
+
+-- Insert filter sets with proper group references
+INSERT INTO referral_filter_sets (name, locations, group_id) VALUES
+    ('Youth Network', ARRAY['Rookie Harbor'], 1),
+    ('Adult Services', ARRAY['Bergen Village', 'Basin Keep', 'Autumn Rise'], 1),
+    ('Addiction Recovery', ARRAY['Ba''kii Kum', 'Rhombus Square'], 2),
+    ('Trauma Specialists', ARRAY['Basin Keep'], 2),
+    ('Digital Wellness', ARRAY['Autumn Rise', 'Remote'], 2),
+    ('Northern Region', ARRAY['Rookie Harbor', 'Bergen Village'], 3),
+    ('Southern Region', ARRAY['Ba''kii Kum', 'Basin Keep'], 3),
+    ('Remote Services', ARRAY['Remote'], 4),
+    ('In-Person Only', ARRAY['Bergen Village', 'Basin Keep', 'Rhombus Square'], 4),
+    ('CrossWorlds Alliance', ARRAY['Rookie Harbor', 'Ba''kii Kum'], 5);
+
+-- Update the services relations to match the new filter sets
 INSERT INTO referral_filter_set_services_relations (filter_set_id, service_id) VALUES
     -- Youth Network
     (1, 1), -- Mental Health
     (1, 3), -- Family Therapy
-    -- Addiction Recovery
+    -- Adult Services
+    (2, 1), -- Mental Health
     (2, 2), -- Substance Abuse
+    (2, 4), -- Specialized Therapy
+    -- Addiction Recovery
+    (3, 2), -- Substance Abuse
     -- Trauma Specialists
-    (3, 1), -- Mental Health
+    (4, 1), -- Mental Health
     -- Digital Wellness
-    (4, 2), -- Substance Abuse
-    (4, 4); -- Specialized Therapy
+    (5, 2), -- Substance Abuse
+    (5, 4), -- Specialized Therapy
+    -- Northern Region
+    (6, 1), -- Mental Health
+    (6, 3), -- Family Therapy
+    -- Southern Region
+    (7, 1), -- Mental Health
+    (7, 2), -- Substance Abuse
+    -- Remote Services
+    (8, 1), -- Mental Health
+    (8, 4), -- Specialized Therapy
+    -- In-Person Only
+    (9, 1), -- Mental Health
+    (9, 2), -- Substance Abuse
+    -- CrossWorlds Alliance
+    (10, 1), -- Mental Health
+    (10, 2), -- Substance Abuse
+    (10, 3); -- Family Therapy

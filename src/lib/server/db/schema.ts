@@ -1,4 +1,4 @@
-import { pgTable, serial, varchar, integer, text, boolean, unique, pgEnum } from "drizzle-orm/pg-core"
+import { pgTable, serial, varchar, integer, text, boolean, unique } from "drizzle-orm/pg-core"
 import { relations } from "drizzle-orm"
 
 export const referralServices = pgTable("referral_services", {
@@ -12,11 +12,6 @@ export const referralSubServices = pgTable("referral_sub_services", {
     serviceId: integer("service_id")
         .notNull()
         .references(() => referralServices.id, { onDelete: "cascade" })
-})
-
-export const referralLocations = pgTable("referral_locations", {
-    id: serial("id").primaryKey(),
-    name: varchar("name", { length: 255 }).notNull()
 })
 
 export const referralProviderSubServices = pgTable(
@@ -62,9 +57,18 @@ export const referralAddresses = pgTable("referral_addresses", {
     contacts: text("contacts").array().notNull()
 })
 
-export const referralFilterSets = pgTable("referral_filter_sets", {
+export const referralFilterGroups = pgTable("referral_filter_groups", {
     id: serial("id").primaryKey(),
     name: varchar("name", { length: 255 }).notNull()
+})
+
+export const referralFilterSets = pgTable("referral_filter_sets", {
+    id: serial("id").primaryKey(),
+    name: varchar("name", { length: 255 }).notNull(),
+    locations: varchar("locations", { length: 255 }).array().default([]).notNull(),
+    groupId: integer("group_id")
+        .notNull()
+        .references(() => referralFilterGroups.id, { onDelete: "cascade" })
 })
 
 // Junction Tables
@@ -82,20 +86,6 @@ export const referralProviderSubServicesJunction = pgTable(
     table => {
         return [unique().on(table.providerId, table.subServiceId)]
     }
-)
-
-export const referralFilterSetLocationsJunction = pgTable(
-    "referral_filter_set_locations_relations",
-    {
-        id: serial("id").primaryKey(),
-        filterSetId: integer("filter_set_id")
-            .notNull()
-            .references(() => referralFilterSets.id),
-        locationId: integer("location_id")
-            .notNull()
-            .references(() => referralLocations.id)
-    },
-    table => [unique().on(table.filterSetId, table.locationId)]
 )
 
 export const referralFilterSetServiceJunction = pgTable(
@@ -154,14 +144,12 @@ export const providersToSubServicesRelations = relations(referralProviderSubServ
     })
 }))
 
-export const filterSetsRelations = relations(referralFilterSets, ({ many }) => ({
-    locations: many(referralFilterSetLocationsJunction),
+export const filterSetsRelations = relations(referralFilterSets, ({ one, many }) => ({
+    group: one(referralFilterGroups, {
+        fields: [referralFilterSets.groupId],
+        references: [referralFilterGroups.id]
+    }),
     services: many(referralFilterSetServiceJunction)
-}))
-
-export const locationsRelations = relations(referralLocations, ({ many }) => ({
-    filterSets: many(referralFilterSetLocationsJunction),
-    addresses: many(referralAddresses)
 }))
 
 export const filterSetsToServicesRelations = relations(referralFilterSetServiceJunction, ({ one }) => ({
@@ -175,13 +163,6 @@ export const filterSetsToServicesRelations = relations(referralFilterSetServiceJ
     })
 }))
 
-export const filterSetsToLocationsRelations = relations(referralFilterSetLocationsJunction, ({ one }) => ({
-    filterSet: one(referralFilterSets, {
-        fields: [referralFilterSetLocationsJunction.filterSetId],
-        references: [referralFilterSets.id]
-    }),
-    location: one(referralLocations, {
-        fields: [referralFilterSetLocationsJunction.locationId],
-        references: [referralLocations.id]
-    })
+export const referralFilterGroupsRelations = relations(referralFilterGroups, ({ many }) => ({
+    filterSets: many(referralFilterSets)
 }))

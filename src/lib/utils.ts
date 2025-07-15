@@ -2,8 +2,24 @@ import { createToaster } from "@skeletonlabs/skeleton-svelte"
 
 export const toaster = createToaster()
 
+function deepEqual(a: any, b: any): boolean {
+    if (a === b) return true
+    if (a == null || b == null) return false
+    if (typeof a !== typeof b) return false
+
+    if (typeof a === "object") {
+        const keysA = Object.keys(a)
+        const keysB = Object.keys(b)
+        if (keysA.length !== keysB.length) return false
+
+        return keysA.every(key => deepEqual(a[key], b[key]))
+    }
+
+    return false
+}
+
 export function isUnique<T>(value: T, index: number, array: Array<T>) {
-    return array.indexOf(value) === index
+    return array.findIndex(item => deepEqual(item, value)) === index
 }
 
 export function shortenText(str: string, maxLength = 200) {
