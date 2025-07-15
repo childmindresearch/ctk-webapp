@@ -6,7 +6,7 @@
     import { z } from "zod"
     import ExportButton from "./ExportButton.svelte"
     import Filters from "./Filters.svelte"
-    import ModalProviderForm from "./ModalProviderForm.svelte"
+    import ModalProviderForm from "./ModalProviderForm/ModalProviderForm.svelte"
 
     let { data } = $props()
     let providers = $state(data.providers)
@@ -16,18 +16,30 @@
     let filterDrawerState = $state(false)
     let editId = $state(-1)
 
-    let services = $state(data.providers.map(p => p.service).filter(isUnique))
-    let locations = $state(
+    let services = $derived(data.providers.map(p => p.service).filter(isUnique))
+    let locationsAutoCompletions = $derived(
         data.providers
             .map(p => p.addresses.map(addr => addr.location))
             .flat()
             .filter(isUnique)
     )
-    let subServices = $state(
+    let subServiceAutoCompletions = $derived(
         data.providers
-            .map(p => p.subServices.map(sub => sub.name))
+            .map(p => p.subServices)
             .flat()
-            .filter(isUnique)
+            .reduce(
+                (acc, val) => {
+                    const [service] = services.filter(service => service.id === val.serviceId)
+                    if (!acc[service.name]) {
+                        acc[service.name] = [] as string[]
+                    }
+                    if (!acc[service.name].includes(val.name)) {
+                        acc[service.name].push(val.name)
+                    }
+                    return acc
+                },
+                {} as Record<(typeof services)[number]["name"], string[]>
+            )
     )
 
     // Filters need to be bound in order to persist after opening/closing the drawer.
@@ -182,8 +194,8 @@
             provider={{}}
             onSubmit={onCreate}
             serviceAutoCompletions={services.map(s => s.name)}
-            locationAutoCompletions={locations}
-            subServiceAutoCompletions={subServices}
+            locationAutoCompletions={locationsAutoCompletions}
+            {subServiceAutoCompletions}
         />
     {/snippet}
 </Modal>
@@ -203,8 +215,8 @@
             provider={editModalData!}
             onSubmit={data => onEdit(data)}
             serviceAutoCompletions={services.map(s => s.name)}
-            locationAutoCompletions={locations}
-            subServiceAutoCompletions={subServices}
+            locationAutoCompletions={locationsAutoCompletions}
+            {subServiceAutoCompletions}
         />
     {/snippet}
 </Modal>

@@ -11,12 +11,12 @@ export function concatenateTruthyUnique(arr: Array<string | null>, join: string 
 type Address = {
     addressLine1: string | null
     addressLine2: string | null
-    isRemote: boolean
     city: string | null
     state: string | null
     zipCode: string | null
     contacts: string[]
     location: string
+    locationType: "unknown" | "remote" | "in-person" | "hybrid"
 }
 
 export type ProviderFormData = {
@@ -54,13 +54,9 @@ function formatAddresses(provider: Awaited<ReturnType<typeof getProviders>>[numb
     return provider.addresses
         ?.map(addr => {
             const contacts = addr.contacts?.join(", ")
-            if (addr.isRemote) {
-                return ["Remote", contacts].filter(Boolean).join(", ")
-            } else {
-                return [addr.addressLine1, addr.addressLine2, addr.city, addr.zipCode, addr.state, contacts]
-                    .filter(Boolean)
-                    .join(", ")
-            }
+            return [addr.addressLine1, addr.addressLine2, addr.city, addr.zipCode, addr.state, contacts]
+                .filter(Boolean)
+                .join(", ")
         })
         .join("\n\n")
 }

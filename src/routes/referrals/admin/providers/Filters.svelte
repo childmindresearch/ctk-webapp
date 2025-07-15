@@ -23,15 +23,16 @@ The component uses a cascading filter approach where filters are applied in sequ
 -->
 
 <script lang="ts">
-    import type { GetProviderResponse } from "$lib/types"
+    import type { getProviders } from "$api/referrals/crud.js"
+
     import MultiSelectFilter from "$lib/components/DataTable/MultiSelectFilter.svelte"
     import { isUnique } from "$lib/utils.js"
 
     const topLevelFilterNames = { acceptsInsurance: "Accepts Insurance", serviceType: "Service Type" } as const
 
     type Props = {
-        providers: GetProviderResponse
-        onChange: (filtered: GetProviderResponse) => void
+        providers: Awaited<ReturnType<typeof getProviders>>
+        onChange: (filtered: Awaited<ReturnType<typeof getProviders>>) => void
         topLevelFilters: Partial<Record<keyof typeof topLevelFilterNames, string>>
         locationFilters: string[]
         participantAge: number | null

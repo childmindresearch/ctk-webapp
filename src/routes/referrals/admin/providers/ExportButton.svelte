@@ -1,11 +1,11 @@
 <script lang="ts">
     import LoadingBar from "$lib/components/LoadingBar.svelte"
-    import type { GetProviderResponse } from "$lib/types"
+    import type { getProviders } from "$api/referrals/crud.js"
     import { downloadBlob, toaster } from "$lib/utils.js"
     import { exportProviders } from "./utils"
 
     type Props = {
-        providers: GetProviderResponse
+        providers: Awaited<ReturnType<typeof getProviders>>
     }
     let { providers }: Props = $props()
     let exportPromise = $state(null as Promise<void> | null)

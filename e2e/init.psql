@@ -56,12 +56,13 @@ CREATE TRIGGER trigger_set_template_priority
     FOR EACH ROW
     EXECUTE FUNCTION set_template_priority();
 
+CREATE TYPE location_type AS ENUM ('unknown', 'remote', 'in-person', 'hybrid');
 -- Updated addresses table to reference locations
 CREATE TABLE referral_addresses (
     id SERIAL PRIMARY KEY,
     provider_id INTEGER NOT NULL REFERENCES referral_providers(id) ON DELETE CASCADE,
     location VARCHAR(255) NOT NULL,
-    is_remote BOOLEAN,
+    location_type location_type NOT NULL DEFAULT 'unknown',
     address_line1 VARCHAR(255),
     address_line2 VARCHAR(255),
     city VARCHAR(100),
@@ -140,7 +141,7 @@ INSERT INTO referral_services (name) VALUES
 INSERT INTO referral_providers (name, accepts_insurance, insurance_details, min_age, max_age, service_id) VALUES
     ('CrossWorlds Guild Counseling', TRUE, 'CrossWorlds Health Alliance', 13, 120, 1),
     ('Rookie Harbor Youth Center', TRUE, 'CrossWorlds Health Alliance', 5, 18, 3),
-    ('Bergen Village Healing', FALSE, NULL, 18, 65, 1),
+    ('Bergen Village Healing', FALSE, '', 18, 65, 1),
     ('Digital Wellness Group', TRUE, 'Tech Worker Benefits', 16, 35, 4),
     ('Desert Recovery Centers', TRUE, 'CrossWorlds Health Alliance', 21, 120, 2),
     ('Telehealth Services Hub', TRUE, 'Virtual Care Network', 12, 120, 4),
@@ -148,17 +149,17 @@ INSERT INTO referral_providers (name, accepts_insurance, insurance_details, min_
     ('Tech Addiction Center', TRUE, 'Digital Health Solutions', 14, 40, 2);
 
 -- Insert addresses (1-2 per provider) - now using location_id
-INSERT INTO referral_addresses (provider_id, location, is_remote, address_line1, city, state, zip_code, contacts) VALUES
-    (1, 'Rookie Harbor', FALSE, '1 Guild Plaza', 'Rookie Harbor', 'CW', '00001', ARRAY['+1-555-GUILD', 'contact@guild.cw']),
-    (1, 'Remote', TRUE, NULL, NULL, NULL, NULL, ARRAY['telehealth@guild.cw']),
-    (2, 'Rookie Harbor', FALSE, '15 Training Way', 'Rookie Harbor', 'CW', '00015', ARRAY['+1-555-YOUTH', 'youth@rookie.cw']),
-    (3, 'Bergen Village', FALSE, '23 Tree Lane', 'Bergen Village', 'CW', '10023', ARRAY['+1-555-BERGEN', 'healing@bergen.cw']),
-    (4, 'Autumn Rise', FALSE, '99 Summit Drive', 'Autumn Rise', 'CW', '20099', ARRAY['+1-555-DIGITAL', 'wellness@digital.cw']),
-    (4, 'Remote', TRUE, NULL, NULL, NULL, NULL, ARRAY['online@digital.cw']),
-    (5, 'Ba''kii Kum', FALSE, '77 Oasis Road', 'Ba kii Kum', 'CW', '30077', ARRAY['+1-555-RECOVERY', 'help@recovery.cw']),
-    (6, 'Remote', TRUE, NULL, NULL, NULL, NULL, ARRAY['portal@telehealth.cw']),
-    (7, 'Basin Keep', FALSE, '200 Veterans Drive', 'Basin Keep', 'CW', '50200', ARRAY['+1-555-TRAUMA', 'support@trauma.cw']),
-    (8, 'Rhombus Square', FALSE, '404 Detox Lane', 'Rhombus Square', 'CW', '70404', ARRAY['+1-555-TECH', 'detox@tech.cw']);
+INSERT INTO referral_addresses (provider_id, location, location_type, address_line1, city, state, zip_code, contacts) VALUES
+    (1, 'Rookie Harbor', 'hybrid', '1 Guild Plaza', 'Rookie Harbor', 'CW', '00001', ARRAY['+1-555-GUILD', 'contact@guild.cw']),
+    (1, 'Remote', 'hybrid', NULL, NULL, NULL, NULL, ARRAY['telehealth@guild.cw']),
+    (2, 'Rookie Harbor', 'remote', '15 Training Way', 'Rookie Harbor', 'CW', '00015', ARRAY['+1-555-YOUTH', 'youth@rookie.cw']),
+    (3, 'Bergen Village', 'in-person', '23 Tree Lane', 'Bergen Village', 'CW', '10023', ARRAY['+1-555-BERGEN', 'healing@bergen.cw']),
+    (4, 'Autumn Rise', 'in-person', '99 Summit Drive', 'Autumn Rise', 'CW', '20099', ARRAY['+1-555-DIGITAL', 'wellness@digital.cw']),
+    (4, 'Remote', 'in-person', NULL, NULL, NULL, NULL, ARRAY['online@digital.cw']),
+    (5, 'Ba''kii Kum', 'in-person', '77 Oasis Road', 'Ba kii Kum', 'CW', '30077', ARRAY['+1-555-RECOVERY', 'help@recovery.cw']),
+    (6, 'Remote', 'in-person', NULL, NULL, NULL, NULL, ARRAY['portal@telehealth.cw']),
+    (7, 'Basin Keep', 'in-person', '200 Veterans Drive', 'Basin Keep', 'CW', '50200', ARRAY['+1-555-TRAUMA', 'support@trauma.cw']),
+    (8, 'Rhombus Square', 'in-person', '404 Detox Lane', 'Rhombus Square', 'CW', '70404', ARRAY['+1-555-TECH', 'detox@tech.cw']);
 
 -- Insert referral filter sets (without locations array)
 INSERT INTO referral_filter_sets (name) VALUES

@@ -1,4 +1,4 @@
-import { pgTable, serial, varchar, integer, text, boolean, unique } from "drizzle-orm/pg-core"
+import { pgTable, serial, varchar, integer, text, boolean, unique, pgEnum } from "drizzle-orm/pg-core"
 import { relations } from "drizzle-orm"
 
 export const referralServices = pgTable("referral_services", {
@@ -51,7 +51,9 @@ export const referralAddresses = pgTable("referral_addresses", {
         .notNull()
         .references(() => referralProviders.id, { onDelete: "cascade" }),
     location: varchar("location", { length: 255 }).notNull(),
-    isRemote: boolean("is_remote").notNull(),
+    locationType: varchar("location_type", { enum: ["unknown", "remote", "in-person", "hybrid"] })
+        .notNull()
+        .default("unknown"),
     addressLine1: varchar("address_line1", { length: 255 }),
     addressLine2: varchar("address_line2", { length: 255 }),
     city: varchar("city", { length: 100 }),

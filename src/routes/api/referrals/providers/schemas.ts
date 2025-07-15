@@ -2,12 +2,12 @@ import { z } from "zod"
 
 const createAddressSchema = z.object({
     location: z.string().min(1, "Location is required"),
-    isRemote: z.boolean(),
+    locationType: z.enum(["unknown", "remote", "in-person", "hybrid"]),
     addressLine1: z.string().nullable().optional(),
     addressLine2: z.string().nullable().optional(),
     city: z.string().max(100).nullable().optional(),
     state: z.string().max(50).nullable().optional(),
-    zip_code: z.string().max(20).nullable().optional(),
+    zipCode: z.string().max(20).nullable().optional(),
     contacts: z.array(z.string()).default([])
 })
 
