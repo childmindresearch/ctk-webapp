@@ -81,7 +81,7 @@
                         >Location Type <span class="text-error-500">*</span></span
                     >
                     <div class="flex flex-col space-y-2">
-                        {#each [{ value: "physical", label: "Physical Location" }, { value: "hybrid", label: "Hybrid" }, { value: "remote", label: "Remote/Virtual Location" }, { value: "unknown", label: "Unknown" }] as option}
+                        {#each [{ value: "in-person", label: "Physical Location" }, { value: "hybrid", label: "Hybrid" }, { value: "remote", label: "Remote/Virtual Location" }, { value: "unknown", label: "Unknown" }] as option}
                             <label
                                 class="flex items-center space-x-3 cursor-pointer p-3 bg-surface-100-800-token rounded-lg"
                             >
