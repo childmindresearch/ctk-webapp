@@ -20,7 +20,8 @@ export const createProviderSchema = z
         maxAge: z.number().int().min(0).max(150).default(120),
         service: z.string().min(1, "Service is required"),
         subServices: z.array(z.string()).default([]),
-        addresses: z.array(createAddressSchema).min(1, "At least one address is required")
+        addresses: z.array(createAddressSchema).min(1, "At least one address is required"),
+        notes: z.string()
     })
     .refine(
         data => {

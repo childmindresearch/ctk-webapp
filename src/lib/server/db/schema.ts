@@ -37,7 +37,8 @@ export const referralProviders = pgTable("referral_providers", {
     insuranceDetails: varchar("insurance_details", { length: 1024 }).notNull(),
     serviceId: integer("service_id")
         .references(() => referralServices.id)
-        .notNull()
+        .notNull(),
+    notes: varchar("notes", { length: 1024 }).notNull().default("")
 })
 
 export const referralAddresses = pgTable("referral_addresses", {

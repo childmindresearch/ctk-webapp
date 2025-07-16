@@ -35,7 +35,8 @@ CREATE TABLE referral_providers (
     insurance_details VARCHAR(1024) NOT NULL,
     min_age INTEGER DEFAULT 0 NOT NULL,
     max_age INTEGER DEFAULT 120 NOT NULL,
-    service_id INTEGER REFERENCES referral_services(id)
+    service_id INTEGER REFERENCES referral_services(id),
+    notes VARCHAR(1024) DEFAULT '' NOT NULL
 );
 
 -- Create function to set priority
@@ -144,15 +145,15 @@ INSERT INTO referral_services (name) VALUES
     ('Specialized Therapy');
 
 -- Insert providers (8 providers)
-INSERT INTO referral_providers (name, accepts_insurance, insurance_details, min_age, max_age, service_id) VALUES
-    ('CrossWorlds Guild Counseling', TRUE, 'CrossWorlds Health Alliance', 13, 120, 1),
-    ('Rookie Harbor Youth Center', TRUE, 'CrossWorlds Health Alliance', 5, 18, 3),
-    ('Bergen Village Healing', FALSE, '', 18, 65, 1),
-    ('Digital Wellness Group', TRUE, 'Tech Worker Benefits', 16, 35, 4),
-    ('Desert Recovery Centers', TRUE, 'CrossWorlds Health Alliance', 21, 120, 2),
-    ('Telehealth Services Hub', TRUE, 'Virtual Care Network', 12, 120, 4),
-    ('Combat Trauma Specialists', TRUE, 'Veterans Benefits', 18, 65, 1),
-    ('Tech Addiction Center', TRUE, 'Digital Health Solutions', 14, 40, 2);
+INSERT INTO referral_providers (name, accepts_insurance, insurance_details, min_age, max_age, service_id, notes) VALUES
+    ('CrossWorlds Guild Counseling', TRUE, 'CrossWorlds Health Alliance', 13, 120, 1, 'Specializes in cross-dimensional trauma recovery. Guild-certified therapists available for element-based anxiety disorders. Circuit breaker integration for tech-related stress.'),
+    ('Rookie Harbor Youth Center', TRUE, 'CrossWorlds Health Alliance', 5, 18, 3, 'Training-focused therapeutic approach. Experienced with aspiring Seekers experiencing performance anxiety. Offers specialized support for first-time dungeon exploration stress.'),
+    ('Bergen Village Healing', FALSE, '', 18, 65, 1, 'Nature-based therapy in tranquil forest setting. Treatment rooms equipped with ambient tree energy. Known for excellent results with tree-climbing phobias and botanical allergies.'),
+    ('Digital Wellness Group', TRUE, 'Tech Worker Benefits', 16, 35, 4, 'Cutting-edge VR therapy modules. Specializes in circuit overload syndrome and data stream addiction. Virtual reality detox programs with real-world grounding techniques.'),
+    ('Desert Recovery Centers', TRUE, 'CrossWorlds Health Alliance', 21, 120, 2, 'Oasis-based recovery sanctuary. 12-step program adapted for interdimensional travelers. Sand meditation therapy and mirage addiction treatment available.'),
+    ('Telehealth Services Hub', TRUE, 'Virtual Care Network', 12, 120, 4, 'Quantum-encrypted telehealth platform. Cross-dimensional connectivity for remote regions. Emergency portal access for crisis interventions across all realms.'),
+    ('Combat Trauma Specialists', TRUE, 'Veterans Benefits', 18, 65, 1, 'Former military personnel specializing in battle-related PTSD. Expertise in weapon-induced anxiety and post-mission adjustment disorders. Group therapy for retired warriors.'),
+    ('Tech Addiction Center', TRUE, 'Digital Health Solutions', 14, 40, 2, 'Specialized detox facility for technology dependencies. Circuit-free environment with analog therapy methods. Recovery programs for social media and gaming addictions.');
 
 -- Insert addresses (1-2 per provider) - now using location_id
 INSERT INTO referral_addresses (provider_id, location, location_type, address_line1, city, state, zip_code, contacts) VALUES

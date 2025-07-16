@@ -106,7 +106,8 @@ export async function PUT({ params, request }) {
                     insuranceDetails: providerRequest.insuranceDetails,
                     minAge: providerRequest.minAge,
                     maxAge: providerRequest.maxAge,
-                    serviceId: serviceId
+                    serviceId: serviceId,
+                    notes: providerRequest.notes
                 })
                 .where(eq(referralProviders.id, id))
 

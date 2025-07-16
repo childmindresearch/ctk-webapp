@@ -47,9 +47,10 @@
                             acc.Name.push(provider.name)
                             acc.Addresses.push(formatAddresses(provider))
                             acc.Insurance.push(formatInsurance(provider))
+                            acc.Notes.push(provider.notes)
                             return acc
                         },
-                        { Name: [], Addresses: [], Insurance: [] } as z.infer<typeof ReferralTable>
+                        { Name: [], Addresses: [], Insurance: [], Notes: [] } as z.infer<typeof ReferralTable>
                     )
             }
         })

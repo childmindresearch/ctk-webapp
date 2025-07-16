@@ -25,6 +25,7 @@
     let provider = $state({
         name: "",
         acceptsInsurance: false,
+        notes: "",
         insuranceDetails: "",
         minAge: 0,
         maxAge: 120,
@@ -87,6 +88,8 @@
                         </div>
                     {/if}
                 </div>
+
+                <FormInput label="Notes" bind:value={provider.notes} placeholder="Additional notes" />
             </div>
         </section>
 
