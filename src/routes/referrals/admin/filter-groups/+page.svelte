@@ -46,12 +46,23 @@
             })
     }
 
-    function onEdit(filterSet: (typeof data.filterGroups)[number]) {
+    function onEdit(filterGroup: (typeof data.filterGroups)[number]) {
         // Not implemented
     }
 
-    function onDelete(filterSet: (typeof data.filterGroups)[number]) {
-        // Not Implemented
+    async function onDelete(filterGroup: (typeof data.filterGroups)[number]) {
+        const confirmed = confirm(`Are you sure you wish to delete "${filterGroup.name}"?`)
+        if (!confirmed) return
+
+        await fetch(`/api/referrals/filter-groups/${filterGroup.id}`, {
+            method: "DELETE"
+        }).then(async response => {
+            if (!response.ok) {
+                toaster.error({ title: `Failed to delete.` })
+                return
+            }
+            filterGroups = filterGroups.filter(fgroup => fgroup.id !== filterGroup.id)
+        })
     }
 </script>
 

@@ -18,9 +18,18 @@
         }
     })
 
+    let lastWarmupTime = 0
+
     async function warmupFunction() {
         if (!browser) return
+
+        const now = Date.now()
+        const threeMinutesInMs = 3 * 60 * 1000
+
+        if (now - lastWarmupTime < threeMinutesInMs) return
+
         await fetch("/api/health")
+        lastWarmupTime = now
     }
 </script>
 

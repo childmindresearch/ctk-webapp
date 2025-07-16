@@ -1,5 +1,5 @@
 import { db } from "$lib/server/db"
-import { referralFilterGroups, referralFilterSets, referralProviders } from "$lib/server/db/schema.js"
+import { referralFilterGroups, referralProviders } from "$lib/server/db/schema.js"
 import { json } from "@sveltejs/kit"
 import { inArray } from "drizzle-orm"
 import { type PgTableWithColumns } from "drizzle-orm/pg-core"
@@ -31,7 +31,15 @@ export async function getFilterGroups(ids: number[] | undefined = undefined) {
     return await db.query.referralFilterGroups.findMany({
         where: whereCondition,
         with: {
-            filterSets: true
+            filterSets: {
+                with: {
+                    services: {
+                        with: {
+                            service: true
+                        }
+                    }
+                }
+            }
         }
     })
 }

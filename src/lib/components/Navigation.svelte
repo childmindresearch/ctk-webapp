@@ -16,7 +16,7 @@
         {
             name: "Referrals",
             subPages: [
-                { name: "Download", href: "/referrals/download" },
+                { name: "Download", href: "/referrals" },
                 { name: "Providers", href: "/referrals/admin/providers" },
                 { name: "Filter Sets", href: "/referrals/admin/filter-groups" },
                 { name: "Selection Sets", href: "/referrals/admin/selection-sets" }

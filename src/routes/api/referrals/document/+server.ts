@@ -1,19 +1,18 @@
 import { logger } from "$lib/server/logging"
 import { AZURE_FUNCTION_PYTHON_URL } from "$lib/server/environment"
 import { z } from "zod"
-
-const PostReferralSchema = z.array(z.array(z.string()))
+import { PostReferralSchema } from "./schemas"
 
 export async function POST({ fetch, request }) {
     logger.info("Creating referral table document")
 
     const referralData = await request.json()
-    let providerRequest: string[][]
+    let providerRequest: z.infer<typeof PostReferralSchema>
     try {
         providerRequest = PostReferralSchema.parse(referralData)
     } catch (error) {
         logger.error("Invalid referral data format", error)
-        return new Response(JSON.stringify({ error: "Invalid request format", details: error }), {
+        return new Response(JSON.stringify({ error: "Invalid request format." }), {
             status: 400,
             headers: { "Content-Type": "application/json" }
         })
