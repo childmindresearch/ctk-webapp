@@ -6,12 +6,16 @@
     import z from "zod"
     import type { PostFilterGroup } from "$api/referrals/filter-groups/schemas"
     import type { getFilterGroups } from "$api/referrals/crud"
+    import type { referralFilterGroups } from "$lib/server/db/schema.js"
 
     const { data } = $props()
 
     let filterGroups = $state(data.filterGroups)
 
     let isCreationModalOpen = $state(false)
+    let isEditModalOpen = $state(false)
+    let editFilterGroup: typeof referralFilterGroups.$inferInsert | undefined = $state(undefined)
+
     let serviceAutoCompletions = data.providers
         .map(provider => {
             return provider.service
@@ -46,8 +50,26 @@
             })
     }
 
-    function onEdit(filterGroup: (typeof data.filterGroups)[number]) {
-        // Not implemented
+    function onEditOpen(filterGroup: (typeof data.filterGroups)[number]) {
+        isEditModalOpen = true
+        editFilterGroup = filterGroup
+    }
+
+    async function onEditSubmit(newFilterGroup: typeof referralFilterGroups.$inferInsert) {
+        if (!editFilterGroup) {
+            toaster.error({ title: "Could not find ID of editted row." })
+            return
+        }
+        isEditModalOpen = false
+        await fetch(`/api/referrals/filter-groups/${editFilterGroup.id}`, {
+            method: "PUT",
+            body: JSON.stringify(newFilterGroup)
+        }).then(async response => {
+            if (!response.ok) {
+                toaster.error({ title: "Failed to edit." })
+                return
+            }
+        })
     }
 
     async function onDelete(filterGroup: (typeof data.filterGroups)[number]) {
@@ -71,7 +93,7 @@
     idColumn="id"
     hiddenColumns={["id"]}
     onCreate={() => (isCreationModalOpen = true)}
-    {onEdit}
+    onEdit={onEditOpen}
     {onDelete}
 />
 
@@ -86,5 +108,26 @@
 >
     {#snippet content()}
         <ModalFilterGroupForm filterGroup={{}} onSubmit={onCreate} {serviceAutoCompletions} {locationAutoCompletions} />
+    {/snippet}
+</Modal>
+
+<Modal
+    open={isEditModalOpen}
+    onOpenChange={e => {
+        isEditModalOpen = e.open
+    }}
+    triggerBase="btn"
+    contentBase="card bg-surface-100-900 p-4 space-y-4 shadow-xl w-[48rem] max-w-[90vw]"
+    backdropClasses="backdrop-blur-sm"
+>
+    {#snippet content()}
+        {#if editFilterGroup}
+            <ModalFilterGroupForm
+                filterGroup={editFilterGroup}
+                onSubmit={onEditSubmit}
+                {serviceAutoCompletions}
+                {locationAutoCompletions}
+            />
+        {/if}
     {/snippet}
 </Modal>
