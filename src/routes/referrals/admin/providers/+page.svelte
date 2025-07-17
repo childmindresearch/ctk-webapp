@@ -24,23 +24,21 @@
             .filter(isUnique)
     )
     let subServiceAutoCompletions = $derived(
-        data.providers
-            .map(p => p.subServices)
-            .flat()
-            .reduce(
-                (acc, val) => {
-                    const [service] = services.filter(service => service.id === val.serviceId)
-                    if (!acc[service.name]) {
-                        acc[service.name] = [] as string[]
-                    }
-                    if (!acc[service.name].includes(val.name)) {
-                        acc[service.name].push(val.name)
-                    }
-                    return acc
-                },
-                {} as Record<(typeof services)[number]["name"], string[]>
-            )
-    )
+        Object.fromEntries(
+            Object.entries(
+                data.providers.reduce(
+                    (acc, provider) => {
+                        if (!acc[provider.service]) {
+                            acc[provider.service] = new Set<string>()
+                        }
+                        provider.subServices?.forEach(subserv => acc[provider.service].add(subserv))
+                        return acc
+                    },
+                    {} as Record<string, Set<string>>
+                )
+            ).map(([key, set]) => [key, Array.from(set)])
+        )
+    ) as Record<string, string[]>
 
     // Filters need to be bound in order to persist after opening/closing the drawer.
     let topLevelFilters: Partial<Record<string, string>> = $state({})
@@ -193,7 +191,7 @@
         <ModalProviderForm
             provider={{}}
             onSubmit={onCreate}
-            serviceAutoCompletions={services.map(s => s.name)}
+            serviceAutoCompletions={services}
             locationAutoCompletions={locationsAutoCompletions}
             {subServiceAutoCompletions}
         />
@@ -214,7 +212,7 @@
         <ModalProviderForm
             provider={editModalData!}
             onSubmit={data => onEdit(data)}
-            serviceAutoCompletions={services.map(s => s.name)}
+            serviceAutoCompletions={services}
             locationAutoCompletions={locationsAutoCompletions}
             {subServiceAutoCompletions}
         />

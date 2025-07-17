@@ -8,12 +8,7 @@
         provider: ProviderFormData
         serviceAutoCompletions: string[]
         subServiceAutoCompletions: Record<(typeof serviceAutoCompletions)[number], string[]>
-        onChange: (data: {
-            service: { id?: number; name: string }
-            subServices: { id?: number; name: string }[]
-            minAge: number
-            maxAge: number
-        }) => void
+        onChange: (data: { service: string; subServices: string[]; minAge: number; maxAge: number }) => void
     }
     const { provider, serviceAutoCompletions, subServiceAutoCompletions, onChange = () => {} }: Props = $props()
 
@@ -22,7 +17,7 @@
     let minAge = $state(provider.minAge)
     let maxAge = $state(provider.maxAge)
     let currentSubServiceAutoCompletions = $derived(
-        (subServiceAutoCompletions[service.name] || []).map(name => {
+        (subServiceAutoCompletions[service] || []).map(name => {
             return { label: name, value: name }
         })
     )
@@ -38,7 +33,7 @@
     }
 
     function addSubService() {
-        subServices.push({ id: undefined, name: "" })
+        subServices.push("")
         emitChange()
     }
 
@@ -48,12 +43,12 @@
     }
 
     function handleServiceChange(e: { value: string[] }) {
-        service = { name: e.value[0] }
+        service = e.value[0]
         emitChange()
     }
 
     function handleSubServiceChange(index: number, e: { value: string[] }) {
-        subServices[index] = { name: e.value[0] }
+        subServices[index] = e.value[0]
         emitChange()
     }
 
@@ -75,8 +70,8 @@
             <span class="text-sm font-semibold text-surface-700-200-token">Primary Service Type</span>
             <Combobox
                 data={serviceCompletions}
-                value={[service.name || ""]}
-                defaultValue={[service.name || ""]}
+                value={[service]}
+                defaultValue={[service]}
                 onValueChange={handleServiceChange}
                 label="Select or type a service"
                 placeholder="Select..."
@@ -101,8 +96,8 @@
                         <Combobox
                             allowCustomValue
                             data={currentSubServiceAutoCompletions}
-                            value={[subServices[subservice_index].name]}
-                            defaultValue={[subServices[subservice_index].name]}
+                            value={[subServices[subservice_index]]}
+                            defaultValue={[subServices[subservice_index]]}
                             onValueChange={event => handleSubServiceChange(subservice_index, event)}
                             label="Select or type a sub-service"
                             placeholder="Select..."

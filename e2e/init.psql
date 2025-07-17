@@ -15,28 +15,23 @@ CREATE TABLE dsm_codes (
 );
 
 CREATE TABLE templates (
-    id SERIAL PRIMARY KEY ,
+    id SERIAL PRIMARY KEY,
     text VARCHAR(8000) NOT NULL,
     parent_id INTEGER,
     priority INTEGER NOT NULL
 );
 
-CREATE TABLE referral_services (
-    id SERIAL PRIMARY KEY,
-    name VARCHAR(255) NOT NULL UNIQUE
-);
-
-
 -- Referral network tables
 CREATE TABLE referral_providers (
     id SERIAL PRIMARY KEY,
-    name VARCHAR(500) NOT NULL,
+    name VARCHAR(500) NOT NULL UNIQUE,
     accepts_insurance BOOLEAN NOT NULL,
     insurance_details VARCHAR(1024) NOT NULL,
     min_age INTEGER DEFAULT 0 NOT NULL,
     max_age INTEGER DEFAULT 120 NOT NULL,
-    service_id INTEGER REFERENCES referral_services(id),
-    notes VARCHAR(1024) DEFAULT '' NOT NULL
+    notes VARCHAR(1023) DEFAULT '' NOT NULL,
+    service VARCHAR(255) NOT NULL,
+    sub_services VARCHAR(255)[]
 );
 
 -- Create function to set priority
@@ -58,7 +53,8 @@ CREATE TRIGGER trigger_set_template_priority
     EXECUTE FUNCTION set_template_priority();
 
 CREATE TYPE location_type AS ENUM ('unknown', 'remote', 'in-person', 'hybrid');
--- Updated addresses table to reference locations
+
+-- Updated addresses table to reference providers
 CREATE TABLE referral_addresses (
     id SERIAL PRIMARY KEY,
     provider_id INTEGER NOT NULL REFERENCES referral_providers(id) ON DELETE CASCADE,
@@ -72,20 +68,6 @@ CREATE TABLE referral_addresses (
     contacts VARCHAR(255)[]
 );
 
-CREATE TABLE referral_sub_services (
-    id SERIAL PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,
-    service_id INTEGER NOT NULL REFERENCES referral_services(id) ON DELETE CASCADE,
-    UNIQUE(name, service_id)
-);
-
-CREATE TABLE referral_provider_sub_services (
-    id SERIAL PRIMARY KEY,
-    provider_id INTEGER NOT NULL REFERENCES referral_providers(id) ON DELETE CASCADE,
-    sub_service_id INTEGER NOT NULL REFERENCES referral_sub_services(id) ON DELETE CASCADE,
-    UNIQUE(provider_id, sub_service_id)
-);
-
 CREATE TABLE referral_filter_groups (
     id SERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL UNIQUE
@@ -95,17 +77,9 @@ CREATE TABLE referral_filter_sets (
     id SERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
     locations VARCHAR(255)[] DEFAULT '{}'::VARCHAR[],
+    services VARCHAR(255)[] DEFAULT '{}'::VARCHAR[],
     group_id INTEGER NOT NULL REFERENCES referral_filter_groups(id) ON DELETE CASCADE
 );
-
-
-CREATE TABLE referral_filter_set_services_relations (
-    id SERIAL PRIMARY KEY,
-    filter_set_id INTEGER NOT NULL REFERENCES referral_filter_sets(id) ON DELETE CASCADE,
-    service_id INTEGER NOT NULL REFERENCES referral_services(id) ON DELETE CASCADE,
-    UNIQUE(filter_set_id, service_id)
-);
-
 
 -- Insert initial data
 INSERT INTO users (email, is_admin) VALUES
@@ -137,25 +111,18 @@ INSERT INTO templates (text, parent_id, priority) VALUES
     ('Individual Plan: Goals, objectives, and specific interventions for treatment.', 4, 9),
     ('Family Plan: Communication, boundaries, and family system interventions.', 4, 10);
 
--- Insert service types
-INSERT INTO referral_services (name) VALUES
-    ('Mental Health'),
-    ('Substance Abuse'),
-    ('Family Therapy'),
-    ('Specialized Therapy');
+-- Insert providers with service and sub_services as properties
+INSERT INTO referral_providers (name, accepts_insurance, insurance_details, min_age, max_age, notes, service, sub_services) VALUES
+    ('CrossWorlds Guild Counseling', TRUE, 'CrossWorlds Health Alliance', 13, 120, 'Specializes in cross-dimensional trauma recovery. Guild-certified therapists available for element-based anxiety disorders. Circuit breaker integration for tech-related stress.', 'Mental Health', ARRAY['Individual Therapy', 'Group Therapy', 'Psychiatric Evaluation', 'Crisis Intervention', 'Anxiety Treatment', 'Depression Treatment', 'Telehealth Services']),
+    ('Rookie Harbor Youth Center', TRUE, 'CrossWorlds Health Alliance', 5, 18, 'Training-focused therapeutic approach. Experienced with aspiring Seekers experiencing performance anxiety. Offers specialized support for first-time dungeon exploration stress.', 'Family Therapy', ARRAY['Individual Therapy', 'Group Therapy', 'Family Systems Therapy', 'Parent-Child Therapy', 'Adolescent Family Therapy']),
+    ('Bergen Village Healing', FALSE, '', 18, 65, 'Nature-based therapy in tranquil forest setting. Treatment rooms equipped with ambient tree energy. Known for excellent results with tree-climbing phobias and botanical allergies.', 'Mental Health', ARRAY['Individual Therapy', 'Anxiety Treatment', 'Depression Treatment']),
+    ('Digital Wellness Group', TRUE, 'Tech Worker Benefits', 16, 35, 'Cutting-edge VR therapy modules. Specializes in circuit overload syndrome and data stream addiction. Virtual reality detox programs with real-world grounding techniques.', 'Specialized Therapy', ARRAY['Digital Wellness Coaching', 'Technology Addiction']),
+    ('Desert Recovery Centers', TRUE, 'CrossWorlds Health Alliance', 21, 120, 'Oasis-based recovery sanctuary. 12-step program adapted for interdimensional travelers. Sand meditation therapy and mirage addiction treatment available.', 'Substance Abuse', ARRAY['Detoxification', 'Inpatient Treatment', 'Outpatient Treatment', 'Relapse Prevention', 'Dual Diagnosis']),
+    ('Telehealth Services Hub', TRUE, 'Virtual Care Network', 12, 120, 'Quantum-encrypted telehealth platform. Cross-dimensional connectivity for remote regions. Emergency portal access for crisis interventions across all realms.', 'Specialized Therapy', ARRAY['Telehealth Services', 'Individual Therapy', 'Group Therapy', 'Specialized Assessments']),
+    ('Combat Trauma Specialists', TRUE, 'Veterans Benefits', 18, 65, 'Former military personnel specializing in battle-related PTSD. Expertise in weapon-induced anxiety and post-mission adjustment disorders. Group therapy for retired warriors.', 'Mental Health', ARRAY['PTSD Treatment', 'Individual Therapy', 'Group Therapy', 'Crisis Intervention']),
+    ('Tech Addiction Center', TRUE, 'Digital Health Solutions', 14, 40, 'Specialized detox facility for technology dependencies. Circuit-free environment with analog therapy methods. Recovery programs for social media and gaming addictions.', 'Substance Abuse', ARRAY['Technology Addiction', 'Outpatient Treatment', 'Relapse Prevention', 'Dual Diagnosis']);
 
--- Insert providers (8 providers)
-INSERT INTO referral_providers (name, accepts_insurance, insurance_details, min_age, max_age, service_id, notes) VALUES
-    ('CrossWorlds Guild Counseling', TRUE, 'CrossWorlds Health Alliance', 13, 120, 1, 'Specializes in cross-dimensional trauma recovery. Guild-certified therapists available for element-based anxiety disorders. Circuit breaker integration for tech-related stress.'),
-    ('Rookie Harbor Youth Center', TRUE, 'CrossWorlds Health Alliance', 5, 18, 3, 'Training-focused therapeutic approach. Experienced with aspiring Seekers experiencing performance anxiety. Offers specialized support for first-time dungeon exploration stress.'),
-    ('Bergen Village Healing', FALSE, '', 18, 65, 1, 'Nature-based therapy in tranquil forest setting. Treatment rooms equipped with ambient tree energy. Known for excellent results with tree-climbing phobias and botanical allergies.'),
-    ('Digital Wellness Group', TRUE, 'Tech Worker Benefits', 16, 35, 4, 'Cutting-edge VR therapy modules. Specializes in circuit overload syndrome and data stream addiction. Virtual reality detox programs with real-world grounding techniques.'),
-    ('Desert Recovery Centers', TRUE, 'CrossWorlds Health Alliance', 21, 120, 2, 'Oasis-based recovery sanctuary. 12-step program adapted for interdimensional travelers. Sand meditation therapy and mirage addiction treatment available.'),
-    ('Telehealth Services Hub', TRUE, 'Virtual Care Network', 12, 120, 4, 'Quantum-encrypted telehealth platform. Cross-dimensional connectivity for remote regions. Emergency portal access for crisis interventions across all realms.'),
-    ('Combat Trauma Specialists', TRUE, 'Veterans Benefits', 18, 65, 1, 'Former military personnel specializing in battle-related PTSD. Expertise in weapon-induced anxiety and post-mission adjustment disorders. Group therapy for retired warriors.'),
-    ('Tech Addiction Center', TRUE, 'Digital Health Solutions', 14, 40, 2, 'Specialized detox facility for technology dependencies. Circuit-free environment with analog therapy methods. Recovery programs for social media and gaming addictions.');
-
--- Insert addresses (1-2 per provider) - now using location_id
+-- Insert addresses (1-2 per provider)
 INSERT INTO referral_addresses (provider_id, location, location_type, address_line1, city, state, zip_code, contacts) VALUES
     (1, 'Rookie Harbor', 'hybrid', '1 Guild Plaza', 'Rookie Harbor', 'CW', '00001', ARRAY['+1-555-GUILD', 'contact@guild.cw']),
     (1, 'Remote', 'hybrid', NULL, NULL, NULL, NULL, ARRAY['telehealth@guild.cw']),
@@ -168,78 +135,6 @@ INSERT INTO referral_addresses (provider_id, location, location_type, address_li
     (7, 'Basin Keep', 'in-person', '200 Veterans Drive', 'Basin Keep', 'CW', '50200', ARRAY['+1-555-TRAUMA', 'support@trauma.cw']),
     (8, 'Rhombus Square', 'in-person', '404 Detox Lane', 'Rhombus Square', 'CW', '70404', ARRAY['+1-555-TECH', 'detox@tech.cw']);
 
-
--- Insert sub-services for each main service
-INSERT INTO referral_sub_services (name, service_id) VALUES
-    ('Individual Therapy', 1),
-    ('Group Therapy', 1),
-    ('Psychiatric Evaluation', 1),
-    ('Crisis Intervention', 1),
-    ('Anxiety Treatment', 1),
-    ('Depression Treatment', 1),
-    ('PTSD Treatment', 1),
-    ('Detoxification', 2),
-    ('Inpatient Treatment', 2),
-    ('Outpatient Treatment', 2),
-    ('Relapse Prevention', 2),
-    ('Dual Diagnosis', 2),
-    ('Technology Addiction', 2),
-    ('Couples Counseling', 3),
-    ('Family Systems Therapy', 3),
-    ('Parent-Child Therapy', 3),
-    ('Adolescent Family Therapy', 3),
-    ('Divorce Counseling', 3),
-    ('Digital Wellness Coaching', 4),
-    ('Telehealth Services', 4),
-    ('Specialized Assessments', 4),
-    ('Occupational Therapy', 4),
-    ('Art/Music Therapy', 4);
-
--- Link providers to their specific sub-services
-INSERT INTO referral_provider_sub_services (provider_id, sub_service_id) VALUES
-    -- CrossWorlds Guild Counseling (provider_id = 1)
-    (1, 1), -- Individual Therapy
-    (1, 2), -- Group Therapy
-    (1, 3), -- Psychiatric Evaluation
-    (1, 4), -- Crisis Intervention
-    (1, 5), -- Anxiety Treatment
-    (1, 6), -- Depression Treatment
-    (1, 20), -- Telehealth Services
-    -- Rookie Harbor Youth Center (provider_id = 2)
-    (2, 1), -- Individual Therapy
-    (2, 2), -- Group Therapy
-    (2, 15), -- Family Systems Therapy
-    (2, 16), -- Parent-Child Therapy
-    (2, 17), -- Adolescent Family Therapy
-    -- Bergen Village Healing (provider_id = 3)
-    (3, 1), -- Individual Therapy
-    (3, 5), -- Anxiety Treatment
-    (3, 6), -- Depression Treatment
-    -- Digital Wellness Group (provider_id = 4)
-    (4, 19), -- Digital Wellness Coaching
-    (4, 13), -- Technology Addiction
-    -- Desert Recovery Centers (provider_id = 5)
-    (5, 8), -- Detoxification
-    (5, 9), -- Inpatient Treatment
-    (5, 10), -- Outpatient Treatment
-    (5, 11), -- Relapse Prevention
-    (5, 12), -- Dual Diagnosis
-    -- Telehealth Services Hub (provider_id = 6)
-    (6, 20), -- Telehealth Services
-    (6, 1), -- Individual Therapy
-    (6, 2), -- Group Therapy
-    (6, 21), -- Specialized Assessments
-    -- Combat Trauma Specialists (provider_id = 7)
-    (7, 7), -- PTSD Treatment
-    (7, 1), -- Individual Therapy
-    (7, 2), -- Group Therapy
-    (7, 4), -- Crisis Intervention
-    -- Tech Addiction Center (provider_id = 8)
-    (8, 13), -- Technology Addiction
-    (8, 10), -- Outpatient Treatment
-    (8, 11), -- Relapse Prevention
-    (8, 12); -- Dual Diagnosis
-
 -- Insert filter groups
 INSERT INTO referral_filter_groups (name) VALUES
     ('Age-Based Networks'),
@@ -248,48 +143,15 @@ INSERT INTO referral_filter_groups (name) VALUES
     ('Treatment Modalities'),
     ('Insurance Networks');
 
--- Insert filter sets with proper group references
-INSERT INTO referral_filter_sets (name, locations, group_id) VALUES
-    ('Youth Network', ARRAY['Rookie Harbor'], 1),
-    ('Adult Services', ARRAY['Bergen Village', 'Basin Keep', 'Autumn Rise'], 1),
-    ('Addiction Recovery', ARRAY['Ba''kii Kum', 'Rhombus Square'], 2),
-    ('Trauma Specialists', ARRAY['Basin Keep'], 2),
-    ('Digital Wellness', ARRAY['Autumn Rise', 'Remote'], 2),
-    ('Northern Region', ARRAY['Rookie Harbor', 'Bergen Village'], 3),
-    ('Southern Region', ARRAY['Ba''kii Kum', 'Basin Keep'], 3),
-    ('Remote Services', ARRAY['Remote'], 4),
-    ('In-Person Only', ARRAY['Bergen Village', 'Basin Keep', 'Rhombus Square'], 4),
-    ('CrossWorlds Alliance', ARRAY['Rookie Harbor', 'Ba''kii Kum'], 5);
-
--- Update the services relations to match the new filter sets
-INSERT INTO referral_filter_set_services_relations (filter_set_id, service_id) VALUES
-    -- Youth Network
-    (1, 1), -- Mental Health
-    (1, 3), -- Family Therapy
-    -- Adult Services
-    (2, 1), -- Mental Health
-    (2, 2), -- Substance Abuse
-    (2, 4), -- Specialized Therapy
-    -- Addiction Recovery
-    (3, 2), -- Substance Abuse
-    -- Trauma Specialists
-    (4, 1), -- Mental Health
-    -- Digital Wellness
-    (5, 2), -- Substance Abuse
-    (5, 4), -- Specialized Therapy
-    -- Northern Region
-    (6, 1), -- Mental Health
-    (6, 3), -- Family Therapy
-    -- Southern Region
-    (7, 1), -- Mental Health
-    (7, 2), -- Substance Abuse
-    -- Remote Services
-    (8, 1), -- Mental Health
-    (8, 4), -- Specialized Therapy
-    -- In-Person Only
-    (9, 1), -- Mental Health
-    (9, 2), -- Substance Abuse
-    -- CrossWorlds Alliance
-    (10, 1), -- Mental Health
-    (10, 2), -- Substance Abuse
-    (10, 3); -- Family Therapy
+-- Insert filter sets with proper group references and services
+INSERT INTO referral_filter_sets (name, locations, services, group_id) VALUES
+    ('Youth Network', ARRAY['Rookie Harbor'], ARRAY['Mental Health', 'Family Therapy'], 1),
+    ('Adult Services', ARRAY['Bergen Village', 'Basin Keep', 'Autumn Rise'], ARRAY['Mental Health', 'Substance Abuse', 'Specialized Therapy'], 1),
+    ('Addiction Recovery', ARRAY['Ba''kii Kum', 'Rhombus Square'], ARRAY['Substance Abuse'], 2),
+    ('Trauma Specialists', ARRAY['Basin Keep'], ARRAY['Mental Health'], 2),
+    ('Digital Wellness', ARRAY['Autumn Rise', 'Remote'], ARRAY['Substance Abuse', 'Specialized Therapy'], 2),
+    ('Northern Region', ARRAY['Rookie Harbor', 'Bergen Village'], ARRAY['Mental Health', 'Family Therapy'], 3),
+    ('Southern Region', ARRAY['Ba''kii Kum', 'Basin Keep'], ARRAY['Mental Health', 'Substance Abuse'], 3),
+    ('Remote Services', ARRAY['Remote'], ARRAY['Mental Health', 'Specialized Therapy'], 4),
+    ('In-Person Only', ARRAY['Bergen Village', 'Basin Keep', 'Rhombus Square'], ARRAY['Mental Health', 'Substance Abuse'], 4),
+    ('CrossWorlds Alliance', ARRAY['Rookie Harbor', 'Ba''kii Kum'], ARRAY['Mental Health', 'Substance Abuse', 'Family Therapy'], 5);

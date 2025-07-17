@@ -1,3 +1,4 @@
+hbn.psql
 postgres-data
 ./**/.env*
 .vscode

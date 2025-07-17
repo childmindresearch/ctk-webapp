@@ -7,7 +7,7 @@
     type Props = {
         filterGroup: Partial<FilterSetFormData>
         onSubmit: (filterSet: z.infer<typeof PostFilterGroup>) => void
-        serviceAutoCompletions: { id: number; name: string }[]
+        serviceAutoCompletions: string[]
         locationAutoCompletions: string[]
     }
     let {
@@ -16,6 +16,7 @@
         serviceAutoCompletions = [],
         locationAutoCompletions = []
     }: Props = $props()
+
     let filterGroup: z.infer<typeof PostFilterGroup> = $state({
         name: "",
         filterSets: [
@@ -27,6 +28,7 @@
         ],
         ...initialFilterGroup
     })
+
     function addTable() {
         filterGroup.filterSets = [
             ...filterGroup.filterSets,
@@ -43,17 +45,13 @@
         }
     }
 
-    function onServiceClick(
-        event: Event,
-        filterSet: (typeof filterGroup.filterSets)[number],
-        service: { id: number; name: string }
-    ) {
+    function onServiceClick(event: Event, filterSet: (typeof filterGroup.filterSets)[number], service: string) {
         const target = event.target as HTMLInputElement
         if (target.checked) {
             filterSet.services.push(service)
         } else {
             filterSet.services = filterSet.services.filter(serv => {
-                serv.id !== service.id
+                serv !== service
             })
         }
     }
@@ -134,10 +132,10 @@
                                 <input
                                     class="checkbox"
                                     type="checkbox"
-                                    value={service.id}
+                                    value={service}
                                     onchange={e => onServiceClick(e, section, service)}
                                 />
-                                {service.name}
+                                {service}
                             </label>
                         {/each}
                     </div>

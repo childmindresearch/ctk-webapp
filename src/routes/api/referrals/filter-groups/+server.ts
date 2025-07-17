@@ -1,7 +1,7 @@
 import { json } from "@sveltejs/kit"
 import { logger } from "$lib/server/logging.js"
 import { db } from "$lib/server/db/index.js"
-import { referralFilterGroups, referralFilterSetServiceJunction, referralFilterSets } from "$lib/server/db/schema.js"
+import { referralFilterGroups, referralFilterSets } from "$lib/server/db/schema.js"
 import { getFilterGroups } from "../crud"
 import { PostFilterGroup } from "./schemas"
 
@@ -26,18 +26,10 @@ export async function POST({ request }) {
             const [newFilterGroup] = await tx.insert(referralFilterGroups).values({ name }).returning()
             await Promise.all(
                 filterSets.map(async fset => {
-                    const [newFilterSet] = await tx
+                    await tx
                         .insert(referralFilterSets)
                         .values({ ...fset, groupId: newFilterGroup.id })
                         .returning()
-                    await Promise.all([
-                        fset.services.map(service => {
-                            tx.insert(referralFilterSetServiceJunction).values({
-                                filterSetId: newFilterSet.id,
-                                serviceId: service.id
-                            })
-                        })
-                    ])
                 })
             )
             return newFilterGroup.id

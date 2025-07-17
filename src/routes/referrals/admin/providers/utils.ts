@@ -26,8 +26,8 @@ export type ProviderFormData = {
     minAge: number
     maxAge: number
     addresses: Address[]
-    service: { id?: number; name: string }
-    subServices: { id?: number; name: string }[]
+    service: string
+    subServices: string[]
 }
 
 export function exportProviders(providers: Awaited<ReturnType<typeof getProviders>>) {

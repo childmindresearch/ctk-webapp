@@ -3,13 +3,7 @@ import { json } from "@sveltejs/kit"
 import { getProviders } from "$api/referrals/crud.js"
 import { z } from "zod"
 import { db } from "$lib/server/db/index.js"
-import {
-    referralProviders,
-    referralServices,
-    referralSubServices,
-    referralProviderSubServices,
-    referralAddresses
-} from "$lib/server/db/schema"
+import { referralProviders, referralAddresses } from "$lib/server/db/schema"
 import { createProviderSchema } from "./schemas.js"
 
 export async function GET() {
@@ -30,47 +24,14 @@ export async function POST({ request }) {
         const validatedData = createProviderSchema.parse(body)
 
         const providerId = await db.transaction(async tx => {
-            const [service] = await tx
-                .insert(referralServices)
-                .values({ name: validatedData.service } as typeof referralServices.$inferInsert)
-                .onConflictDoNothing()
-                .returning()
-
-            const subServices = await Promise.all(
-                validatedData.subServices.map(async subServiceName => {
-                    const [subService] = await tx
-                        .insert(referralSubServices)
-                        .values({
-                            name: subServiceName,
-                            serviceId: service.id
-                        } as typeof referralSubServices.$inferInsert)
-                        .onConflictDoNothing()
-                        .returning()
-                    return subService
-                })
-            )
-
             const [provider] = await tx
                 .insert(referralProviders)
                 .values({
                     ...validatedData,
-                    serviceId: service.id,
                     acceptsInsurance:
                         validatedData.insuranceDetails !== null && validatedData.insuranceDetails !== undefined
                 } as typeof referralProviders.$inferInsert)
                 .returning()
-
-            if (subServices.length > 0) {
-                await tx.insert(referralProviderSubServices).values(
-                    subServices.map(
-                        subService =>
-                            ({
-                                providerId: provider.id,
-                                subServiceId: subService.id
-                            }) as typeof referralProviderSubServices.$inferInsert
-                    )
-                )
-            }
 
             if (validatedData.addresses.length > 0) {
                 await tx.insert(referralAddresses).values(
@@ -83,7 +44,6 @@ export async function POST({ request }) {
                     )
                 )
             }
-
             return provider.id
         })
 

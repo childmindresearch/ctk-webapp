@@ -1,14 +1,8 @@
 import { db } from "$lib/server/db"
-import {
-    referralProviders,
-    referralAddresses,
-    referralSubServices,
-    referralServices,
-    referralProviderSubServices
-} from "$lib/server/db/schema"
+import { referralProviders, referralAddresses } from "$lib/server/db/schema"
 import { logger } from "$lib/server/logging"
 import { json } from "@sveltejs/kit"
-import { eq, and } from "drizzle-orm"
+import { eq } from "drizzle-orm"
 import { z } from "zod"
 import { getProviders } from "../../crud"
 import { createProviderSchema } from "../schemas"
@@ -52,77 +46,7 @@ export async function PUT({ params, request }) {
 
     try {
         await db.transaction(async tx => {
-            // Get or insert servicetype
-            const serviceId = await tx
-                .select()
-                .from(referralServices)
-                .where(eq(referralServices.name, providerRequest.service))
-                .then(service => {
-                    if (service.length > 0) {
-                        return service[0].id
-                    } else {
-                        return tx
-                            .insert(referralServices)
-                            .values({ name: providerRequest.service })
-                            .returning()
-                            .then(res => res[0].id)
-                    }
-                })
-
-            if (!serviceId) {
-                return new Response("Service type not found or could not be created.", { status: 400 })
-            }
-
-            // Get or insert subservices
-            let subServiceIds: number[] = []
-            if (providerRequest.subServices && providerRequest.subServices.length > 0) {
-                subServiceIds = await Promise.all(
-                    providerRequest.subServices.map(async name => {
-                        const subService = await tx
-                            .select()
-                            .from(referralSubServices)
-                            .where(
-                                and(eq(referralSubServices.name, name), eq(referralSubServices.serviceId, serviceId))
-                            )
-                        if (subService.length > 0) {
-                            return subService[0].id
-                        } else {
-                            const newSubService = await tx
-                                .insert(referralSubServices)
-                                .values({ name: name, serviceId: serviceId })
-                                .returning()
-                            return newSubService[0].id
-                        }
-                    })
-                )
-            }
-
-            // Replace provider details.
-            await tx
-                .update(referralProviders)
-                .set({
-                    name: providerRequest.name,
-                    acceptsInsurance: providerRequest.acceptsInsurance,
-                    insuranceDetails: providerRequest.insuranceDetails,
-                    minAge: providerRequest.minAge,
-                    maxAge: providerRequest.maxAge,
-                    serviceId: serviceId,
-                    notes: providerRequest.notes
-                })
-                .where(eq(referralProviders.id, id))
-
-            // Replace subservices.
-            await tx.delete(referralProviderSubServices).where(eq(referralProviderSubServices.providerId, id))
-            await Promise.all(
-                subServiceIds.map(subServiceId =>
-                    tx
-                        .insert(referralProviderSubServices)
-                        .values({ providerId: id, subServiceId: subServiceId })
-                        .onConflictDoNothing()
-                )
-            )
-
-            // Replace addresses.
+            await tx.update(referralProviders).set(providerRequest).where(eq(referralProviders.id, id))
             await tx.delete(referralAddresses).where(eq(referralAddresses.providerId, id))
             if (providerRequest.addresses && providerRequest.addresses.length > 0) {
                 const addresses = providerRequest.addresses.map(address => ({

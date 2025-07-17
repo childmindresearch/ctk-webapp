@@ -30,7 +30,7 @@
         minAge: 0,
         maxAge: 120,
         addresses: [],
-        service: { name: "" },
+        service: "",
         subServices: [],
         ...initialProvider
     })
@@ -43,13 +43,7 @@
 
     function localOnSubmit(event: Event) {
         event.preventDefault()
-        const data = {
-            ...provider,
-            service: provider.service.name,
-            subServices: provider.subServices.map(s => s.name)
-        }
-
-        onSubmit(data)
+        onSubmit(provider)
     }
 </script>
 
