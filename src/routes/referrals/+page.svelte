@@ -12,13 +12,17 @@
             .map(addr =>
                 [addr.addressLine1, addr.addressLine2, addr.city, addr.zipCode, addr.state, addr.contacts]
                     .flat()
+                    .filter(Boolean)
                     .join(", ")
             )
             .join("\n\n")
     }
 
     function formatInsurance(provider: (typeof data.providers)[number]) {
-        return provider.acceptsInsurance ? provider.insuranceDetails : "Does not accept insurance."
+        if (provider.acceptsInsurance) {
+            return provider.insuranceDetails ? provider.insuranceDetails : "Yes"
+        }
+        return "Does not accept insurance."
     }
 
     async function onDownload() {
@@ -29,13 +33,13 @@
                 table: data.providers
                     // Remove providers without required service.
                     .filter(provider => {
-                        return fSet.services.map(s => s.id).includes(provider.serviceId)
+                        return fSet.services?.includes(provider.service)
                     })
                     // Remove providers without required location(s).
                     .map(provider => {
                         return {
                             ...provider,
-                            addresses: provider.addresses.filter(addr => fSet.locations.includes(addr.location))
+                            addresses: provider.addresses.filter(addr => fSet.locations?.includes(addr.location))
                         }
                     })
                     .filter(provider => {

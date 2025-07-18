@@ -133,6 +133,7 @@
                                     class="checkbox"
                                     type="checkbox"
                                     value={service}
+                                    bind:group={section.services}
                                     onchange={e => onServiceClick(e, section, service)}
                                 />
                                 {service}

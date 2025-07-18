@@ -91,7 +91,7 @@
 <DataTable
     data={filterGroups}
     idColumn="id"
-    hiddenColumns={["id"]}
+    hiddenColumns={["id", "filterSets"]}
     onCreate={() => (isCreationModalOpen = true)}
     onEdit={onEditOpen}
     {onDelete}
