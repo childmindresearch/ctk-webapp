@@ -1,7 +1,7 @@
 <script lang="ts">
     import DataTable from "$lib/components/DataTable/DataTable.svelte"
     import { isUnique, toaster } from "$lib/utils"
-    import ModalFilterGroupForm from "./ModalFilterGroupForm.svelte"
+    import ModalFilterGroupForm from "./ModalFilterGroupForm/ModalFilterGroupForm.svelte"
     import { Modal } from "@skeletonlabs/skeleton-svelte"
     import z from "zod"
     import type { PostFilterGroup } from "$api/referrals/filter-groups/schemas"

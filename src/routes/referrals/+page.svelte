@@ -69,8 +69,7 @@
                 console.error(await response.text())
                 return
             }
-            const currentDate = new Date().toISOString().split("T")[0]
-            downloadBlob(await response.blob(), `${fGroup.name}_${currentDate}.docx`)
+            downloadBlob(await response.blob(), "HBN Referrals.docx")
         })
     }
 </script>
