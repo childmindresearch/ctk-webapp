@@ -65,7 +65,8 @@ export async function genericPut<T extends PgTableWithColumns<any>>(request: Req
     try {
         parsedData = model.parse(data)
     } catch (error) {
-        return new Response(JSON.stringify({ error: "Invalid request format", details: error }), {
+        logger.error("Error parsing request data:", error)
+        return new Response(JSON.stringify({ error: "Invalid request format" }), {
             status: StatusCode.BAD_REQUEST,
             headers: { "Content-Type": "application/json" }
         })
