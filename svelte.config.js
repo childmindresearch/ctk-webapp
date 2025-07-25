@@ -11,7 +11,10 @@ const config = {
             envPrefix: "",
             polyfill: true,
             fallback: "index.html"
-        })
+        }),
+        alias: {
+            $api: "src/routes/api"
+        }
     },
     compilerOptions: {
         accessors: true

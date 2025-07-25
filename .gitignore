@@ -1,9 +1,11 @@
+hbn.psql
 postgres-data
 ./**/.env*
 .vscode
 .idea
 .env*
 !.env.example
+.idea
 
 settings.json
 local

@@ -13,7 +13,6 @@ export async function GET({ fetch }) {
             }
         })
         .catch(error => {
-            console.log(error)
             logger.error(`Error warming up the server: ${error}`)
             return new Response(error, { status: 500 })
         })

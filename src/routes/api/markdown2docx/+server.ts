@@ -35,7 +35,6 @@ export async function POST({ fetch, request }) {
             }
         })
         .catch(error => {
-            console.log(error)
             logger.error("Error converting markdown to docx:", error)
             return new Response(null, { status: 500 })
         })

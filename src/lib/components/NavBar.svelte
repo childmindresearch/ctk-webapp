@@ -1,8 +1,14 @@
 <script lang="ts">
     import { Modal, AppBar } from "@skeletonlabs/skeleton-svelte"
-    import Navigation from "./Navigation.svelte"
+    import Navigation from "./Navigation/Navigation.svelte"
     import { Menu, Mail } from "@lucide/svelte"
+    import type { Props as NavigationProps } from "$lib/components/Navigation/Navigation.svelte"
 
+    type Props = {
+        pages: NavigationProps["pages"]
+    }
+
+    let { pages }: Props = $props()
     let drawerState = $state(false)
 </script>
 
@@ -24,7 +30,7 @@
                     <Menu />
                 {/snippet}
                 {#snippet content()}
-                    <Navigation bind:isOpen={drawerState} />
+                    <Navigation {pages} bind:isOpen={drawerState} />
                 {/snippet}
             </Modal>
         </div>

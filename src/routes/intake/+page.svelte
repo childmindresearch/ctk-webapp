@@ -1,19 +1,13 @@
 <script lang="ts">
     import LoadingBar from "$lib/components/LoadingBar.svelte"
     import { downloadBlob } from "$lib/utils"
-    import { onMount } from "svelte"
     import { toaster } from "$lib/utils"
+    import FormInput from "$lib/components/FormInput.svelte"
 
     let redcapSurveyId = $state("")
     let isLoading = $state(false)
-    let redcapIdentifierImage: HTMLImageElement
 
     const model = "anthropic.claude-3-5-sonnet-20241022-v2:0"
-
-    onMount(() => {
-        redcapIdentifierImage = new Image()
-        redcapIdentifierImage.src = "redcap_identifier.png"
-    })
 
     function onSubmit() {
         if (redcapSurveyId === "") {
@@ -66,17 +60,14 @@
             </div>
         {:else}
             <form class="space-y-6" onsubmit={onSubmit}>
-                <div class="form-group">
-                    <span class="label-text font-medium text-surface-700 dark:text-surface-200"> MRN </span>
-                    <input
-                        class="input w-full max-w-md mt-2"
-                        placeholder="Enter MRN"
-                        bind:value={redcapSurveyId}
-                        data-testid="intakeInput"
-                        required
-                        autocomplete="off"
-                    />
-                </div>
+                <FormInput
+                    label="MRN"
+                    required
+                    placeholder="Enter MRN"
+                    bind:value={redcapSurveyId}
+                    data-testid="intakeInput"
+                    autocomplete="off"
+                />
 
                 <div class="flex justify-start pt-4">
                     <button
