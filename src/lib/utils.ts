@@ -2,6 +2,7 @@ import { createToaster } from "@skeletonlabs/skeleton-svelte"
 
 export const toaster = createToaster()
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function deepEqual(a: any, b: any): boolean {
     if (a === b) return true
     if (a == null || b == null) return false

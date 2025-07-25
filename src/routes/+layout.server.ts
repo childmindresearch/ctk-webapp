@@ -23,7 +23,7 @@ export async function load({ request }) {
         }
     }
 
-    let pages: Props["pages"] = [
+    const pages: Props["pages"] = [
         { name: "DSM Codes", href: "/dsm" },
         { name: "Intake", href: "/intake" },
         { name: "Pyrite Reports", href: "/pyrite", badge: "Alpha" },

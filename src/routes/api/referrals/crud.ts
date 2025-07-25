@@ -24,6 +24,7 @@ export async function getFilterGroups(ids: number[] | undefined = undefined) {
     })
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function genericPost<T extends PgTableWithColumns<any>>(request: Request, model: T) {
     const acceptConflict = request.headers.get("X-Accept-Conflict") === "true"
     const data = await request.json()
@@ -54,6 +55,7 @@ export async function genericPost<T extends PgTableWithColumns<any>>(request: Re
     }
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function genericPut<T extends PgTableWithColumns<any>>(request: Request, model: T, id: number) {
     const data = await request.json()
     let parsedData: T["$inferInsert"]
