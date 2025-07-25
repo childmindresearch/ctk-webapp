@@ -17,10 +17,9 @@
     let autoName = $state(true)
     $effect(() => {
         if (autoName) {
-            if (section.locations.length === 0 && section.services.length === 0) {
-                section.name = ""
-            }
-            section.name = oxfordComma(section.locations) + "; " + oxfordComma(section.services)
+            const locationStr = section.locations.length > 0 ? oxfordComma(section.locations) : ""
+            const serviceStr = section.services.length > 0 ? oxfordComma(section.services) : ""
+            section.name = [locationStr, serviceStr].filter(Boolean).join("; ")
         }
     })
 </script>
