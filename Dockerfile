@@ -12,7 +12,7 @@ WORKDIR /app
 
 COPY --from=builder /app/build /app/build
 COPY --from=builder /app/package*.json /app/
-
+RUN npm ci --omit=dev
 EXPOSE 3000
 
 CMD ["node", "build/index.js"]
