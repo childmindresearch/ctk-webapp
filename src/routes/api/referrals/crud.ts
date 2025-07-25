@@ -1,5 +1,7 @@
 import { db } from "$lib/server/db"
 import { referralFilterGroups, referralProviders } from "$lib/server/db/schema.js"
+import { logger } from "$lib/server/logging"
+import { StatusCode } from "$lib/utils"
 import { json } from "@sveltejs/kit"
 import { eq, inArray } from "drizzle-orm"
 import { type PgTableWithColumns } from "drizzle-orm/pg-core"
@@ -32,8 +34,9 @@ export async function genericPost<T extends PgTableWithColumns<any>>(request: Re
     try {
         parsedData = model.parse(data)
     } catch (error) {
-        return new Response(JSON.stringify({ error: "Invalid request format", details: error }), {
-            status: 400,
+        logger.error(error)
+        return new Response(JSON.stringify({ error: "Invalid request format" }), {
+            status: StatusCode.BAD_REQUEST,
             headers: { "Content-Type": "application/json" }
         })
     }
@@ -45,11 +48,11 @@ export async function genericPost<T extends PgTableWithColumns<any>>(request: Re
         } else {
             newEntry = await db.insert(model).values(parsedData).returning()
         }
-        return json(newEntry, { status: 201 })
+        return json(newEntry, { status: StatusCode.CREATED })
     } catch (error) {
-        console.error(`Error creating ${model.name}:`, error)
+        logger.error(`Failed to create ${model.name}:`, error)
         return new Response(JSON.stringify({ error: `Failed to create ${model.name}` }), {
-            status: 500,
+            status: StatusCode.INTERNAL_SERVER_ERROR,
             headers: { "Content-Type": "application/json" }
         })
     }
@@ -63,18 +66,18 @@ export async function genericPut<T extends PgTableWithColumns<any>>(request: Req
         parsedData = model.parse(data)
     } catch (error) {
         return new Response(JSON.stringify({ error: "Invalid request format", details: error }), {
-            status: 400,
+            status: StatusCode.BAD_REQUEST,
             headers: { "Content-Type": "application/json" }
         })
     }
 
     try {
         const updatedEntry = await db.update(model).set(parsedData).where(eq(model.id, id)).returning()
-        return json(updatedEntry, { status: 200 })
+        return json(updatedEntry, { status: StatusCode.OK })
     } catch (error) {
-        console.error(`Error updating ${model.name}:`, error)
+        logger.error(`Error updating ${model.name}:`, error)
         return new Response(JSON.stringify({ error: `Failed to update ${model.name}` }), {
-            status: 500,
+            status: StatusCode.INTERNAL_SERVER_ERROR,
             headers: { "Content-Type": "application/json" }
         })
     }
