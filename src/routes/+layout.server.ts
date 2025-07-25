@@ -41,8 +41,6 @@ export async function load({ request }) {
                 { name: "Document Creation", href: "/referrals/admin/filter-groups" }
             ]
         })
-    } else {
-        pages.push({ name: "Referrals", href: "/referrals", badge: "Alpha" })
     }
 
     pages.sort((a, b) => {
