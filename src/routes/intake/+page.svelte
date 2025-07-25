@@ -1,20 +1,13 @@
 <script lang="ts">
     import LoadingBar from "$lib/components/LoadingBar.svelte"
     import { downloadBlob } from "$lib/utils"
-    import { onMount } from "svelte"
     import { toaster } from "$lib/utils"
     import FormInput from "$lib/components/FormInput.svelte"
 
     let redcapSurveyId = $state("")
     let isLoading = $state(false)
-    let redcapIdentifierImage: HTMLImageElement
 
     const model = "anthropic.claude-3-5-sonnet-20241022-v2:0"
-
-    onMount(() => {
-        redcapIdentifierImage = new Image()
-        redcapIdentifierImage.src = "redcap_identifier.png"
-    })
 
     function onSubmit() {
         if (redcapSurveyId === "") {

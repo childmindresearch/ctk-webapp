@@ -4,7 +4,8 @@ import { logger } from "$lib/server/logging"
 import { json } from "@sveltejs/kit"
 import { eq } from "drizzle-orm"
 import { PostFilterGroup } from "$api/referrals/filter-groups/schemas"
-import { referralFilterGroups, referralFilterSetServiceJunction, referralFilterSets } from "$lib/server/db/schema.js"
+import { referralFilterGroups, referralFilterSets } from "$lib/server/db/schema.js"
+import { StatusCode } from "$lib/utils.js"
 
 export async function GET({ params }) {
     const id = Number(params.id)
@@ -13,7 +14,7 @@ export async function GET({ params }) {
         return json(provider)
     } catch (error) {
         logger.error(`Error fetching provider ${id}:`, error)
-        return new Response("Could not fetch provider.", { status: 500 })
+        return new Response("Could not fetch provider.", { status: StatusCode.INTERNAL_SERVER_ERROR })
     }
 }
 
@@ -21,10 +22,10 @@ export async function DELETE({ params }) {
     const id = Number(params.id)
     try {
         await db.delete(referralFilterGroups).where(eq(referralFilterGroups.id, id))
-        return new Response(null, { status: 200 })
+        return new Response(null, { status: StatusCode.OK })
     } catch (error) {
         logger.error(`Error deleting provider ${id}`, error)
-        return new Response("Could not delete provider.", { status: 500 })
+        return new Response("Could not delete provider.", { status: StatusCode.INTERNAL_SERVER_ERROR })
     }
 }
 
@@ -42,26 +43,18 @@ export async function PUT({ params, request }) {
                 tx.update(referralFilterGroups).set({ name }).where(eq(referralFilterGroups.id, id)),
                 Promise.all(
                     filterSets.map(async fset => {
-                        const [newFilterSet] = await tx
+                        await tx
                             .insert(referralFilterSets)
                             .values({ ...fset, groupId: id })
                             .returning()
-                        await Promise.all([
-                            fset.services.map(service => {
-                                tx.insert(referralFilterSetServiceJunction).values({
-                                    filterSetId: newFilterSet.id,
-                                    serviceId: service.id
-                                })
-                            })
-                        ])
                     })
                 )
             ])
         })
         const [updatedFilterGroup] = await getFilterGroups([id])
-        return json(updatedFilterGroup, { status: 201 })
+        return json(updatedFilterGroup, { status: StatusCode.CREATED })
     } catch (error) {
         logger.error("Error creating filter set:", error)
-        return new Response("Could not create filter set.", { status: 500 })
+        return new Response("Could not create filter set.", { status: StatusCode.INTERNAL_SERVER_ERROR })
     }
 }

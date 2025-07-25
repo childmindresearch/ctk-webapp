@@ -5,6 +5,7 @@ import { z } from "zod"
 import { db } from "$lib/server/db/index.js"
 import { referralProviders, referralAddresses } from "$lib/server/db/schema"
 import { createProviderSchema } from "./schemas.js"
+import { StatusCode } from "$lib/utils.js"
 
 export async function GET() {
     logger.info("Getting all providers.")
@@ -50,7 +51,7 @@ export async function POST({ request }) {
         const completeProvider = await getProviders([providerId])
 
         logger.info(`Successfully created provider: ${validatedData.name}`)
-        return json(completeProvider, { status: 201 })
+        return json(completeProvider, { status: StatusCode.CREATED })
     } catch (error) {
         if (error instanceof z.ZodError) {
             logger.error("Validation error:", error.errors)
@@ -59,11 +60,11 @@ export async function POST({ request }) {
                     error: "Validation failed",
                     details: error.errors
                 },
-                { status: 400 }
+                { status: StatusCode.BAD_REQUEST }
             )
         }
 
         logger.error("Error creating provider:", error)
-        return new Response("Could not create provider.", { status: 500 })
+        return new Response("Could not create provider.", { status: StatusCode.INTERNAL_SERVER_ERROR })
     }
 }
