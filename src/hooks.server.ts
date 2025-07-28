@@ -5,6 +5,7 @@ import { pool } from "$lib/server/sql"
 import { DEVELOPMENT_USER } from "$lib/server/environment"
 import type { User } from "$lib/types"
 import type { HandleFetch, RequestEvent } from "@sveltejs/kit"
+import { StatusCode } from "$lib/utils"
 
 type Endpoint = {
     path: string
@@ -80,6 +81,16 @@ export async function handle({ event, resolve }) {
     event.locals.user = userEmail
 
     const user = await getOrInsertUser(userEmail)
+    if (!user) {
+        logger.error({
+            type: "User Request",
+            message: "Could not find user email",
+            user: userEmail,
+            requestId,
+            headers: Object.fromEntries(event.request.headers.entries())
+        })
+        return new Response("Could not find user email", { status: StatusCode.INTERNAL_SERVER_ERROR })
+    }
     if (!isUserAuthorized(event, user)) {
         const endTime = performance.now()
         const responseTime = `${(endTime - startTime).toFixed(3)}ms`
@@ -91,7 +102,7 @@ export async function handle({ event, resolve }) {
             requestId,
             responseTime
         })
-        return new Response("Unauthorized", { status: 401 })
+        return new Response("Unauthorized", { status: StatusCode.UNAUTHORIZED })
     }
 
     const response = await resolve(event)
@@ -108,7 +119,7 @@ export async function handle({ event, resolve }) {
         responseTime
     }
 
-    if (response.status >= 400) {
+    if (!response.ok) {
         logger.error(logMessage)
     } else {
         logger.info(logMessage)
@@ -120,7 +131,11 @@ export async function handle({ event, resolve }) {
 }
 
 // Exported for testing purposes.
-export async function getOrInsertUser(email: string) {
+export async function getOrInsertUser(email?: string) {
+    if (!email) {
+        return null
+    }
+
     return await pool.connect().then(async client => {
         const getUserQuery = {
             text: "SELECT * FROM users WHERE email = $1",
