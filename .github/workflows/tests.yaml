@@ -51,6 +51,7 @@ jobs:
         if: ${{ github.ref_name == 'main' }}
         needs: [testing, lint]
         runs-on: ubuntu-latest
+        permissions: {}
         steps:
             - name: Dispatch
               uses: peter-evans/repository-dispatch@v3
