@@ -38,7 +38,7 @@ export async function PUT({ params, request }) {
         providerRequest = createProviderSchema.parse(providerData)
     } catch (error) {
         logger.error("Invalid provider data format", error)
-        return new Response(JSON.stringify({ error: "Invalid request format", details: error }), {
+        return new Response(JSON.stringify({ error: "Invalid request format" }), {
             status: 400,
             headers: { "Content-Type": "application/json" }
         })
