@@ -1,14 +1,17 @@
 <script lang="ts">
-    import { FileUpload } from "@skeletonlabs/skeleton-svelte"
-    import { Upload, Paperclip, X } from "@lucide/svelte"
-
+    import { Upload, Paperclip, X } from "lucide-svelte"
     import mammoth from "mammoth"
     import { systemPrompt } from "./prompt"
-    import LoadingBar from "$lib/components/LoadingBar.svelte"
-    import { toaster } from "$lib/utils"
+    import { toast } from "svelte-sonner"
+    import { Spinner } from "$lib/components/ui/spinner"
+    import { Button } from "$lib/components/ui/button"
+    import { Label } from "$lib/components/ui/label"
+    import * as Card from "$lib/components/ui/card"
+    import * as Alert from "$lib/components/ui/alert"
 
-    let file: File[] = $state([])
+    let file: File | null = $state(null)
     let loading = $state(false)
+    let fileInputRef: HTMLInputElement | undefined = $state(undefined)
 
     async function docxToText(docx: File) {
         const buffer = await docx.arrayBuffer()
@@ -19,23 +22,19 @@
 
     async function onSubmit(event: SubmitEvent) {
         event.preventDefault()
-        if (file.length === 0) {
-            toaster.error({ title: "Please select a file to upload." })
+        if (!file) {
+            toast.error("Please select a file to upload.")
             return
         }
-        const text = await docxToText(file[0])
+        const text = await docxToText(file)
         const userPrompt = getTextBetween(text, /\n\s+clinical summary and impressions/i, /\n\s+recommendations/i)
         if (!userPrompt) {
-            toaster.error({
-                title: "Could not find the 'clinical summary and impressions' and 'recommendations' in the document."
-            })
+            toast.error("Could not find the 'clinical summary and impressions' and 'recommendations' in the document.")
             return
         }
-
         const form = new FormData()
         form.append("userPrompt", userPrompt)
         form.append("systemPrompt", systemPrompt)
-
         loading = true
         const response = await fetch("/api/llm", {
             method: "POST",
@@ -45,11 +44,11 @@
                 if (response.ok) {
                     return await response.json()
                 }
-                toaster.error({ title: "There was a problem connecting to the server." })
+                toast.error("There was a problem connecting to the server.")
                 return
             })
             .catch(error => {
-                toaster.error({ title: `The was a problem interpreting the server response: ${error}` })
+                toast.error(`The was a problem interpreting the server response: ${error}`)
                 loading = false
                 return
             })
@@ -57,11 +56,9 @@
             loading = false
             return
         }
-
         const formData = new FormData()
         formData.append("markdown", response)
         formData.append("formatting", JSON.stringify({}))
-
         return await fetch("/api/markdown2docx", {
             method: "POST",
             body: formData
@@ -78,14 +75,12 @@
                     loading = false
                     return
                 }
-                toaster.error({ title: "There was a problem connecting to the server." })
+                toast.error("There was a problem connecting to the server.")
                 loading = false
                 return
             })
             .catch(error => {
-                toaster.error({
-                    title: `There was a problem interpreting the server response: ${error}.`
-                })
+                toast.error(`There was a problem interpreting the server response: ${error}.`)
                 loading = false
                 return
             })
@@ -99,73 +94,108 @@
         if (startIndex === -1 || endIndex === -1) return null
         return text.slice(startIndex, endIndex)
     }
+
+    function handleFileChange(event: Event) {
+        const input = event.target as HTMLInputElement
+        if (input.files && input.files.length > 0) {
+            file = input.files[0]
+        }
+    }
+
+    function removeFile() {
+        file = null
+        if (fileInputRef) {
+            fileInputRef.value = ""
+        }
+    }
 </script>
 
 <div class="container mx-auto max-w-2xl p-6">
-    <!-- Header Section -->
     <div class="mb-8">
-        <h3 class="h3 mb-4">Clinical Report Summary</h3>
-        <div class="bg-surface-100 dark:bg-surface-700 p-4 rounded-lg border-l-4 border-primary-500">
-            <p class="text-surface-700 dark:text-surface-200 leading-relaxed">
-                Upload a clinical report (.docx) to generate a summary. The clinical report should contain the
-                <strong>'clinical summary and impressions'</strong> and <strong>'recommendations'</strong> sections, as we
-                only send the paragraphs in between these.
-            </p>
-        </div>
+        <h3 class="text-2xl font-semibold mb-4">Clinical Report Summary</h3>
+        <Alert.Root>
+            <Alert.Description class="leading-relaxed">
+                Upload a clinical report (.docx) to generate a summary. The clinical report should contain the 'clinical
+                summary and impressions' and 'recommendations' sections, as we only send the paragraphs in between
+                these.
+            </Alert.Description>
+        </Alert.Root>
     </div>
 
-    <!-- Content Section -->
-    <div class="card p-6 bg-surface-50 dark:bg-surface-800 shadow-lg">
-        {#if loading}
-            <div class="flex flex-col items-center space-y-4">
-                <LoadingBar label="Processing clinical report... This may take a while." />
-            </div>
-        {:else}
-            <form class="space-y-6" onsubmit={onSubmit}>
-                <div class="form-group">
-                    <span class="label-text font-medium text-surface-800 dark:text-surface-200">
-                        Clinical Report Document
-                    </span>
-
-                    <FileUpload
-                        name="Upload Clinical Report"
-                        accept="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-                        maxFiles={1}
-                        subtext="Select a .docx file to upload"
-                        onFileChange={e => (file = e.acceptedFiles)}
-                        classes="w-full border-2 border-dashed border-surface-300 dark:border-surface-600 hover:border-primary-400 transition-colors"
-                    >
-                        {#snippet iconInterface()}<Upload class="size-8 text-primary-500" />{/snippet}
-                        {#snippet iconFile()}<Paperclip class="size-4" />{/snippet}
-                        {#snippet iconFileRemove()}<X class="size-4" />{/snippet}
-                    </FileUpload>
+    <Card.Root>
+        <Card.Content class="pt-6">
+            {#if loading}
+                <div class="flex flex-col items-center space-y-4 py-8">
+                    <Spinner />
+                    <p class="text-sm text-muted-foreground">Processing your document...</p>
                 </div>
+            {:else}
+                <form class="space-y-6" onsubmit={onSubmit}>
+                    <div class="space-y-2">
+                        <Label for="file-upload">Clinical Report Document</Label>
+                        <div class="space-y-4">
+                            <div
+                                class="relative border-2 border-dashed rounded-lg transition-colors"
+                                class:border-muted-foreground={!file}
+                                class:border-primary={file}
+                                class:hover:border-primary={!file}
+                            >
+                                <input
+                                    bind:this={fileInputRef}
+                                    id="file-upload"
+                                    type="file"
+                                    accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                                    class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                                    onchange={handleFileChange}
+                                />
+                                <div class="flex flex-col items-center justify-center p-8 text-center">
+                                    <Upload class="w-12 h-12 mb-4 text-primary" />
+                                    <p class="text-sm font-medium mb-1">
+                                        {file ? "File selected" : "Click to upload or drag and drop"}
+                                    </p>
+                                    <p class="text-xs text-muted-foreground">Select a .docx file to upload</p>
+                                </div>
+                            </div>
 
-                <!-- File Requirements Info -->
-                <div class="bg-surface-200 dark:bg-surface-600 p-3 rounded-lg">
-                    <h4 class="font-medium text-surface-800 dark:text-surface-200 mb-2">File Requirements:</h4>
-                    <ul class="text-sm text-surface-800 dark:text-surface-300 space-y-1">
-                        <li>• File format: Microsoft Word (.docx)</li>
-                        <li>• Must contain "clinical summary and impressions" section</li>
-                        <li>• Must contain "recommendations" section</li>
-                        <li>• Maximum file size: 10MB</li>
-                    </ul>
-                </div>
+                            {#if file}
+                                <div class="flex items-center gap-2 p-3 bg-muted rounded-md">
+                                    <Paperclip class="w-4 h-4 text-muted-foreground" />
+                                    <span class="text-sm flex-1 truncate">{file.name}</span>
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="icon"
+                                        class="h-8 w-8"
+                                        onclick={removeFile}
+                                    >
+                                        <X class="w-4 h-4" />
+                                    </Button>
+                                </div>
+                            {/if}
+                        </div>
+                    </div>
 
-                <div class="flex justify-start pt-4">
-                    <button
-                        type="submit"
-                        class="btn preset-filled-primary-500 min-w-32"
-                        disabled={loading || !file?.length}
-                    >
-                        {#if loading}
-                            Processing...
-                        {:else}
-                            Generate Summary
-                        {/if}
-                    </button>
-                </div>
-            </form>
-        {/if}
-    </div>
+                    <div class="bg-muted p-4 rounded-lg">
+                        <h4 class="font-medium mb-2">File Requirements:</h4>
+                        <ul class="text-sm text-muted-foreground space-y-1">
+                            <li>• File format: Microsoft Word (.docx)</li>
+                            <li>• Must contain "clinical summary and impressions" section</li>
+                            <li>• Must contain "recommendations" section</li>
+                            <li>• Maximum file size: 10MB</li>
+                        </ul>
+                    </div>
+
+                    <div class="flex justify-start pt-4">
+                        <Button type="submit" class="min-w-32" disabled={loading || !file}>
+                            {#if loading}
+                                Processing...
+                            {:else}
+                                Generate Summary
+                            {/if}
+                        </Button>
+                    </div>
+                </form>
+            {/if}
+        </Card.Content>
+    </Card.Root>
 </div>

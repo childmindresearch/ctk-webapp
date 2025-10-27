@@ -1,5 +1,9 @@
 <script lang="ts">
     import Fuse from "fuse.js"
+    import { Button } from "$lib/components/ui/button"
+    import { Input } from "$lib/components/ui/input"
+    import { Card, CardContent, CardFooter, CardHeader } from "$lib/components/ui/card"
+    import { Search, X, Plus, ChevronRight, AlertTriangle } from "lucide-svelte"
     import type { DecisionTree } from "../DecisionTree.svelte"
 
     type Props = {
@@ -7,11 +11,11 @@
         onSearchClick: (node: DecisionTree) => void
         onSaveClick: (node: DecisionTree) => void
     }
+
     const { root, onSearchClick, onSaveClick }: Props = $props()
 
     let searchTerm = $state("")
     let debounceSearchTerm = $state("")
-    let elemDocSearch: HTMLElement
     let results: DecisionTree[] = $state([])
 
     const allChildNodes = root.getChildrenRecursive()
@@ -19,6 +23,7 @@
         path: node.getPath().join(" "),
         id: node.id
     }))
+
     const searcher = new Fuse(pathsTextsAndIds, {
         keys: ["path"],
         threshold: 0,
@@ -28,7 +33,8 @@
     })
 
     let debounceTimer: ReturnType<typeof setTimeout>
-    function debounceSearch(event: Event) {
+
+    function debounceSearch() {
         clearTimeout(debounceTimer)
         debounceTimer = setTimeout(() => {
             searchTemplates()
@@ -41,10 +47,8 @@
             results = []
             return
         }
-
         const searchedPaths = searcher.search(searchTerm).map(result => result.item)
         const searchedNodes = allChildNodes.filter(node => searchedPaths.some(path => path.id === node.id))
-
         const searchedIds = [
             ...searchedNodes.map(node => [...node.getAncestors(), node]).flat(),
             ...searchedNodes.map(node => node.getChildrenRecursive()).flat()
@@ -54,55 +58,45 @@
             .map(node => node.id)
         results = root.filterChildrenByIds(searchedIds)
     }
-
-    function onKeyDown(event: KeyboardEvent) {
-        if (["Enter", "ArrowDown"].includes(event.code)) {
-            const queryFirstAnchorElement = elemDocSearch.querySelector("a")
-            if (queryFirstAnchorElement) queryFirstAnchorElement.focus()
-        }
-    }
 </script>
 
-<div bind:this={elemDocSearch} class="card shadow-xl h-[36rem] flex flex-col">
+<Card class="h-[36rem] flex flex-col shadow-xl">
     <!-- Header Section -->
-    <header class="p-4 border-b border-surface-300 dark:border-surface-600 flex-shrink-0">
-        <div class="input-group input-group-divider grid-cols-[auto_1fr_auto] flex items-center">
-            <div class="flex items-center justify-center w-10">
-                <i class="fa-solid fa-magnifying-glass text-surface-500" aria-hidden="true"></i>
-            </div>
-            <input
-                class="input border-0 focus:ring-0 bg-transparent"
+    <CardHeader class="flex-shrink-0 pb-3">
+        <div class="relative flex items-center">
+            <Search class="absolute left-3 h-4 w-4 text-muted-foreground" />
+            <Input
+                class="pl-9 pr-9"
                 bind:value={searchTerm}
                 type="search"
                 placeholder="Search templates..."
                 oninput={debounceSearch}
-                onkeydown={onKeyDown}
                 autocomplete="off"
                 role="searchbox"
                 aria-label="Search templates"
             />
             {#if searchTerm}
-                <button
-                    class="btn-icon btn-icon-sm hover:bg-surface-200 dark:hover:bg-surface-700 rounded-full"
+                <Button
+                    variant="ghost"
+                    size="icon"
+                    class="absolute right-1 h-7 w-7"
                     onclick={() => {
                         searchTerm = ""
                     }}
                     aria-label="Clear search"
                 >
-                    <i class="fa-solid fa-times text-sm" aria-hidden="true"></i>
-                </button>
+                    <X class="h-4 w-4" />
+                </Button>
             {/if}
         </div>
-    </header>
+    </CardHeader>
 
     <!-- Content Section -->
-    <div class="flex-1 flex flex-col min-h-0">
+    <CardContent class="flex-1 flex flex-col min-h-0 p-0">
         {#if results.length > 0}
             <!-- Results Header -->
-            <div
-                class="px-4 py-2 bg-surface-50 dark:bg-surface-800 border-b border-surface-200 dark:border-surface-700 flex-shrink-0"
-            >
-                <p class="text-sm text-surface-600 dark:text-surface-400">
+            <div class="px-4 py-2 bg-muted border-b flex-shrink-0">
+                <p class="text-sm text-muted-foreground">
                     {results.length} result{results.length === 1 ? "" : "s"} found
                 </p>
             </div>
@@ -110,50 +104,48 @@
             <!-- Results List -->
             <div class="flex-1 overflow-y-auto">
                 <nav aria-label="Search results">
-                    <ul class="divide-y divide-surface-200 dark:divide-surface-700" role="listbox">
-                        {#each results as node, index}
-                            <li class="group hover:bg-surface-100 dark:hover:bg-surface-800 transition-colors">
+                    <ul class="divide-y" role="listbox">
+                        {#each results as node (node.id)}
+                            <li class="group hover:bg-accent transition-colors">
                                 <div class="flex items-center p-3 gap-3">
                                     <!-- Add Button -->
-                                    <button
-                                        class="btn-icon btn-icon-sm variant-soft-primary opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
+                                    <Button
+                                        variant="outline"
+                                        size="icon"
+                                        class="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
                                         onclick={() => onSaveClick(node)}
                                         aria-label="Add {node.getPath().slice(-1)[0]} to cart"
                                         title="Add to cart"
                                     >
-                                        <i class="fa-solid fa-plus text-sm" aria-hidden="true"></i>
-                                    </button>
+                                        <Plus class="h-4 w-4" />
+                                    </Button>
 
                                     <!-- Template Path Button -->
-                                    <button
+                                    <Button
+                                        variant="ghost"
+                                        class="flex-1 justify-start h-auto p-2"
                                         onclick={() => onSearchClick(node)}
-                                        class="flex-1 text-left p-2 rounded hover:bg-surface-200 dark:hover:bg-surface-700 transition-colors"
                                         aria-label="Select template: {node.getPath().slice(1).join(' | ')}"
                                     >
-                                        <div class="space-y-1">
+                                        <div class="space-y-1 text-left">
                                             <!-- Template Name -->
-                                            <div class="font-medium text-surface-900 dark:text-surface-100">
+                                            <div class="font-medium">
                                                 {node.getPath().slice(-1)[0]}
                                             </div>
 
                                             <!-- Template Path -->
                                             {#if node.getPath().length > 1}
-                                                <div
-                                                    class="text-sm text-surface-600 dark:text-surface-400 flex items-center gap-1"
-                                                >
-                                                    {#each node.getPath().slice(0, -1) as pathPart, i}
+                                                <div class="text-sm text-muted-foreground flex items-center gap-1">
+                                                    {#each node.getPath().slice(0, -1) as pathPart, i (pathPart)}
                                                         {#if i > 0}
-                                                            <i
-                                                                class="fa-solid fa-chevron-right text-xs"
-                                                                aria-hidden="true"
-                                                            ></i>
+                                                            <ChevronRight class="h-3 w-3" />
                                                         {/if}
                                                         <span>{pathPart}</span>
                                                     {/each}
                                                 </div>
                                             {/if}
                                         </div>
-                                    </button>
+                                    </Button>
                                 </div>
                             </li>
                         {/each}
@@ -163,48 +155,43 @@
         {:else if !debounceSearchTerm}
             <!-- Empty State -->
             <div class="flex-1 flex flex-col items-center justify-center p-8 text-center">
-                <div
-                    class="w-16 h-16 rounded-full bg-surface-200 dark:bg-surface-700 flex items-center justify-center mb-4"
-                >
-                    <i class="fa-solid fa-search text-2xl text-surface-500" aria-hidden="true"></i>
+                <div class="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
+                    <Search class="h-8 w-8 text-muted-foreground" />
                 </div>
                 <h3 class="text-lg font-semibold mb-2">Search Templates</h3>
-                <p class="text-surface-600 dark:text-surface-400 max-w-sm">
+                <p class="text-muted-foreground max-w-sm">
                     Start typing to search through available templates and find what you need.
                 </p>
             </div>
         {:else}
             <!-- No Results State -->
             <div class="flex-1 flex flex-col items-center justify-center p-8 text-center">
-                <div
-                    class="w-16 h-16 rounded-full bg-surface-200 dark:bg-surface-700 flex items-center justify-center mb-4"
-                >
-                    <i class="fa-solid fa-exclamation-triangle text-2xl text-amber-500" aria-hidden="true"></i>
+                <div class="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
+                    <AlertTriangle class="h-8 w-8 text-amber-500" />
                 </div>
                 <h3 class="text-lg font-semibold mb-2">No Results Found</h3>
-                <p class="text-surface-600 dark:text-surface-400 mb-4">
+                <p class="text-muted-foreground mb-4">
                     No templates found matching
-                    <code class="code px-2 py-1 rounded bg-surface-200 dark:bg-surface-700">{debounceSearchTerm}</code>
+                    <code class="relative rounded bg-muted px-2 py-1 font-mono text-sm">{debounceSearchTerm}</code>
                 </p>
-                <button
-                    class="btn variant-ghost-surface btn-sm"
+                <Button
+                    variant="ghost"
+                    size="sm"
                     onclick={() => {
                         searchTerm = ""
                     }}
                 >
                     Clear Search
-                </button>
+                </Button>
             </div>
         {/if}
-    </div>
+    </CardContent>
 
-    <!-- Optional Footer -->
-    <footer
-        class="p-3 border-t border-surface-200 dark:border-surface-700 bg-surface-50 dark:bg-surface-900 flex-shrink-0"
-    >
-        <div class="flex items-center justify-between text-xs text-surface-500 dark:text-surface-400">
+    <!-- Footer -->
+    <CardFooter class="flex-shrink-0 bg-muted/50 border-t py-2">
+        <div class="flex items-center justify-between text-xs text-muted-foreground w-full">
             <span>Use ↑↓ to navigate, Enter to select</span>
             <span>ESC to close</span>
         </div>
-    </footer>
-</div>
+    </CardFooter>
+</Card>

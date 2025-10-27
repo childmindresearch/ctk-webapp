@@ -1,15 +1,16 @@
 <script lang="ts">
     import { browser } from "$app/environment"
     import { page } from "$app/stores"
-    import NavBar from "$lib/components/NavBar.svelte"
     import Navigation from "$lib/components/Navigation/Navigation.svelte"
-    import { toaster } from "$lib/utils"
-    import { Toaster } from "@skeletonlabs/skeleton-svelte"
+    import { Toaster } from "$lib/components/ui/sonner"
     import "../app.css"
+    import { toast } from "svelte-sonner"
 
     let { data, children } = $props()
 
     $effect(() => {
+        // Expression triggers the effect.
+        // eslint-disable-next-line @typescript-eslint/no-unused-expressions
         $page.url.pathname
         try {
             warmupFunction()
@@ -19,7 +20,7 @@
     })
 
     if (!data.navbarPages) {
-        toaster.error({title: "Could not load layout."})
+        toast.error("Could not load layout.")
     }
     let lastWarmupTime = 0
 
@@ -36,7 +37,7 @@
     }
 </script>
 
-<Toaster {toaster}></Toaster>
+<Toaster />
 
 <svelte:head>
     <title>Clinician Toolkit</title>
@@ -44,12 +45,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="icon" type="image/ico" href="/favicon.ico" />
 </svelte:head>
-
-<header>
-{#if data.navbarPages}
-    <NavBar pages={data.navbarPages} />
-{/if}
-</header>
 
 <div class="flex h-screen">
     <!-- Left sidebar navigation for medium+ screens -->

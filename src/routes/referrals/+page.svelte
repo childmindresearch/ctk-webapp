@@ -1,7 +1,8 @@
 <script lang="ts">
-    import { downloadBlob, toaster } from "$lib/utils.js"
+    import { downloadBlob } from "$lib/utils.js"
     import z from "zod"
     import type { PostReferralSchema, ReferralTable } from "$api/referrals/document/schemas"
+    import { toast } from "svelte-sonner"
 
     const { data } = $props()
 
@@ -65,7 +66,7 @@
             body: JSON.stringify(body)
         }).then(async response => {
             if (!response.ok) {
-                toaster.error({ title: "Could not download document." })
+                toast.error("Could not download document.")
                 console.error(await response.text())
                 return
             }
@@ -79,7 +80,7 @@
         <label class="block text-sm font-medium text-gray-700 mb-2">
             Select Referral Document
             <select class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg" bind:value={selectedId}>
-                {#each data.filterGroups as fGroup}
+                {#each data.filterGroups as fGroup (fGroup)}
                     <option value={fGroup.id}>
                         {fGroup.name}
                     </option>

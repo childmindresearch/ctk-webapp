@@ -50,7 +50,7 @@
         {#if activeFilters.length > 0}
             <div class="flex flex-wrap gap-1 mb-2">
                 <span class="text-xs font-medium text-surface-700">Active filters:</span>
-                {#each activeFilters as filterValue}
+                {#each activeFilters as filterValue (filterValue)}
                     <span
                         class="inline-flex items-center gap-1 px-2 py-1 bg-primary-100 text-primary-800 rounded-full text-xs"
                     >
@@ -70,7 +70,7 @@
         <!-- Quick filter suggestions -->
         <div class="flex flex-wrap gap-1">
             <span class="text-xs font-medium text-surface-600">Quick add:</span>
-            {#each options as value}
+            {#each options as value (value)}
                 {#if activeFilters.find(f => f === value) === undefined}
                     <button
                         class="px-2 py-1 bg-surface-100 hover:bg-surface-200 text-surface-700 rounded text-xs transition-colors"

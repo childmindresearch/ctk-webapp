@@ -1,14 +1,14 @@
 <script lang="ts">
-    import LoadingBar from "$lib/components/LoadingBar.svelte"
-    import MarkdownEditor from "$lib/components/MarkdownEditor.svelte"
-    import { toaster } from "$lib/utils"
-    import { Tabs } from "@skeletonlabs/skeleton-svelte"
+    import * as Tabs from "$lib/components/ui/tabs"
+    import { Badge } from "$lib/components/ui/badge"
     import { onMount } from "svelte"
     import type { LayoutProps } from "../$types"
     import Checkout from "./Checkout/Checkout.svelte"
     import { DecisionTree } from "./DecisionTree.svelte"
     import SelectedNodes from "./SelectedNodes.svelte"
     import TemplatesDirectory from "./TemplatesDirectory/TemplatesDirectory.svelte"
+    import { toast } from "svelte-sonner"
+    import { Spinner } from "$lib/components/ui/spinner"
 
     let { data }: LayoutProps = $props()
 
@@ -20,16 +20,11 @@
     function onAddToCart(node: DecisionTree) {
         if (!node) return
         if (selectedNodes.find(savedNode => savedNode.id === node.id)) {
-            toaster.warning({
-                title: "This template is already selected."
-            })
+            toast.warning("This template is already selected.")
             return
         }
-
         selectedNodes = [...selectedNodes, node]
-        toaster.success({
-            title: "Template added to selection."
-        })
+        toast.success("Template added to selection.")
     }
 
     onMount(async () => {
@@ -44,40 +39,41 @@
     })
 </script>
 
-{#if data.user?.is_admin || false}
-    <div class="hidden">
-        <!-- Preload to reduce loading time on the Markdown modals.-->
-        <MarkdownEditor />
-    </div>
-{/if}
-
 {#if fetchFailed}
-    <p>Failed to fetch data. If this error persists, please contact an administrator.</p>
+    <div class="flex items-center justify-center p-8">
+        <p class="text-destructive">Failed to fetch data. If this error persists, please contact an administrator.</p>
+    </div>
 {:else if nodes === undefined}
-    <LoadingBar />
+    <div class="flex items-center justify-center p-8">
+        <Spinner />
+    </div>
 {:else}
-    <Tabs value={tabSet} onValueChange={e => (tabSet = e.value)}>
-        {#snippet list()}
-            <Tabs.Control value="templates">Templates List</Tabs.Control>
-            <Tabs.Control value="selection">{selectedNodes.length} Selections</Tabs.Control>
-            <Tabs.Control value="report">Report Generation</Tabs.Control>
-        {/snippet}
-        {#snippet content()}
-            <Tabs.Panel value="templates">
-                <TemplatesDirectory
-                    nodes={nodes as DecisionTree}
-                    {onAddToCart}
-                    isAdmin={data.user?.is_admin || false}
-                />
-            </Tabs.Panel>
-            <Tabs.Panel value="selection">
-                <SelectedNodes bind:nodes={selectedNodes} />
-            </Tabs.Panel>
-            <Tabs.Panel value="report">
-                {#key selectedNodes}
-                    <Checkout nodes={selectedNodes} />
-                {/key}
-            </Tabs.Panel>
-        {/snippet}
-    </Tabs>
+    <Tabs.Root value={tabSet} onValueChange={value => (tabSet = value ?? "templates")}>
+        <Tabs.List class="grid w-full grid-cols-3">
+            <Tabs.Trigger value="templates">Templates List</Tabs.Trigger>
+            <Tabs.Trigger value="selection" class="flex items-center gap-2">
+                Selections
+                {#if selectedNodes.length > 0}
+                    <Badge variant="secondary" class="ml-1">
+                        {selectedNodes.length}
+                    </Badge>
+                {/if}
+            </Tabs.Trigger>
+            <Tabs.Trigger value="report">Report Generation</Tabs.Trigger>
+        </Tabs.List>
+
+        <Tabs.Content value="templates" class="mt-6">
+            <TemplatesDirectory nodes={nodes as DecisionTree} {onAddToCart} isAdmin={data.user?.is_admin || false} />
+        </Tabs.Content>
+
+        <Tabs.Content value="selection" class="mt-6">
+            <SelectedNodes bind:nodes={selectedNodes} />
+        </Tabs.Content>
+
+        <Tabs.Content value="report" class="mt-6">
+            {#key selectedNodes}
+                <Checkout nodes={selectedNodes} />
+            {/key}
+        </Tabs.Content>
+    </Tabs.Root>
 {/if}

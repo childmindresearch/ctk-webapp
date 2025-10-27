@@ -60,7 +60,7 @@
 
         <!-- Tables Section -->
         <div class="space-y-6">
-            {#each filterGroup.filterSets as _, index}
+            {#each filterGroup.filterSets as fGroup, index (fGroup)}
                 <div class="flex items-center gap-3">
                     <div class="w-2 h-8 bg-primary-500 rounded-full"></div>
                     <h2 class="text-xl font-semibold">Table {index + 1}</h2>

@@ -1,18 +1,17 @@
 <script lang="ts">
-    import LoadingBar from "$lib/components/LoadingBar.svelte"
-    import { toaster } from "$lib/utils"
     import { DecisionTree } from "./DecisionTree.svelte"
-
     import { downloadBlob } from "$lib/utils"
     import { nodesToMarkdown } from "./TemplatesDirectory/templateExport"
+    import { Spinner } from "$lib/components/ui/spinner"
+    import { toast } from "svelte-sonner"
+    import { Button } from "$lib/components/ui/button"
 
-    export let nodes: DecisionTree
-
-    let isLoading = false
+    const { nodes }: { nodes: DecisionTree } = $props()
+    let isLoading = $state(false)
 
     function exportTemplates() {
         if (!nodes) {
-            toaster.error({ title: "Templates have not finished loading." })
+            toast.error("Templates have not finished loading.")
             return
         }
         isLoading = true
@@ -36,20 +35,20 @@
                 isLoading = false
             })
             .catch(error => {
-                toaster.error({ title: error.message })
+                toast.error(error.message)
                 isLoading = false
             })
     }
 </script>
 
 {#if isLoading}
-    <LoadingBar label="Preparing template document." />
+    <Spinner />
 {:else}
-    <button
+    <Button
         disabled={isLoading}
         class="btn preset-filled-primary-500 hover:preset-soft-primary-500"
-        on:click={exportTemplates}
+        onclick={exportTemplates}
     >
         Export Templates
-    </button>
+    </Button>
 {/if}

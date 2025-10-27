@@ -1,11 +1,12 @@
 <script lang="ts">
     import ModalDsmForm from "./ModalDsmForm.svelte"
-    import { Modal } from "@skeletonlabs/skeleton-svelte"
+    import * as Dialog from "$lib/components/ui/dialog"
+    import { Button } from "$lib/components/ui/button"
 
     type Props = { onCreate: (code: string, label: string) => void }
     let { onCreate }: Props = $props()
-    let isModalOpen = $state(false)
 
+    let isModalOpen = $state(false)
     const instructions = "Create a new DSM code."
 
     function localOnCreate(code: string, label: string) {
@@ -14,17 +15,11 @@
     }
 </script>
 
-<Modal
-    open={isModalOpen}
-    onOpenChange={e => (isModalOpen = e.open)}
-    triggerBase="btn"
-    contentBase="card bg-surface-100-900 p-4 space-y-4 shadow-xl w-[48rem] max-w-[90vw]"
-    backdropClasses="backdrop-blur-sm"
->
-    {#snippet trigger()}
-        <span class="btn preset-filled-primary-500">Create DSM Code</span>
-    {/snippet}
-    {#snippet content()}
+<Dialog.Root bind:open={isModalOpen}>
+    <Dialog.Trigger>
+        <Button>Create DSM Code</Button>
+    </Dialog.Trigger>
+    <Dialog.Content class="max-w-[48rem]">
         <ModalDsmForm code="" label="" onSubmit={localOnCreate} {instructions} />
-    {/snippet}
-</Modal>
+    </Dialog.Content>
+</Dialog.Root>

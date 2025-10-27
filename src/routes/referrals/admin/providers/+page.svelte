@@ -1,14 +1,18 @@
 <script lang="ts">
     import { createProviderSchema } from "$api/referrals/providers/schemas.js"
     import DataTable from "$lib/components/DataTable/DataTable.svelte"
-    import { isUnique, toaster } from "$lib/utils.js"
-    import { Modal } from "@skeletonlabs/skeleton-svelte"
+    import { isUnique } from "$lib/utils.js"
+    import * as Dialog from "$lib/components/ui/dialog"
+    import * as Sheet from "$lib/components/ui/sheet"
+    import { Button } from "$lib/components/ui/button"
     import { z } from "zod"
     import ExportButton from "./ExportButton.svelte"
     import Filters from "./Filters.svelte"
     import ModalProviderForm from "./ModalProviderForm/ModalProviderForm.svelte"
+    import { toast } from "svelte-sonner"
 
     let { data } = $props()
+
     let providers = $state(data.providers)
     let isCreationModalOpen = $state(false)
     let isEditModalOpen = $state(false)
@@ -65,15 +69,10 @@
                 if (!response.ok) throw await response.text()
                 const newProvider = await response.json()
                 providers.push(newProvider)
-                toaster.success({
-                    title: `Created provider.`
-                })
+                toast.success("Created provider.")
             })
-            .catch(reason => {
-                toaster.error({
-                    title: `Could not create provider.`,
-                    description: reason
-                })
+            .catch(() => {
+                toast.error("Could not create provider.")
             })
             .finally(() => (isCreationModalOpen = false))
     }
@@ -81,17 +80,12 @@
     async function onDelete(row: (typeof providers)[number]) {
         const confirmed = confirm(`Are you sure you wish to delete "${row.name}"?`)
         if (!confirmed) return
-
         await fetch(`/api/referrals/providers/${row.id}`, { method: "DELETE" }).then(response => {
             if (response.ok) {
                 providers = providers.filter(prov => prov.id !== row.id)
-                toaster.success({
-                    title: `Deleted provider.`
-                })
+                toast.success("Deleted provider.")
             } else {
-                toaster.error({
-                    title: "Could not delete provider"
-                })
+                toast.error("Could not delete provider")
             }
         })
     }
@@ -108,13 +102,10 @@
                 if (oldProvider !== -1) {
                     providers[oldProvider] = newProvider
                 }
-                toaster.success({
-                    title: `Updated provider.`
-                })
+                toast.success("Updated provider.")
             })
             .catch(reason => {
-                toaster.error({
-                    title: `Could not edit provider.`,
+                toast.error("Could not edit provider.", {
                     description: reason
                 })
             })
@@ -123,33 +114,28 @@
 </script>
 
 <div class="z-0">
-    <Modal
-        open={filterDrawerState}
-        onOpenChange={e => (filterDrawerState = e.open)}
-        triggerBase="btn preset-filled-secondary-500"
-        contentBase="bg-surface-50 p-4 space-y-4 shadow-xl w-[40rem] h-screen"
-        positionerJustify="justify-end"
-        positionerAlign=""
-        backdropBackground="bg-surface-50/50"
-        positionerPadding=""
-        transitionsPositionerIn={{ x: -480, duration: 200 }}
-        transitionsPositionerOut={{ x: -480, duration: 200 }}
-    >
-        {#snippet trigger()}Open filters{/snippet}
-        {#snippet content()}
-            <Filters
-                providers={data.providers}
-                onChange={p => (providers = p)}
-                bind:topLevelFilters
-                bind:locationFilters
-                bind:participantAge
-            />
-        {/snippet}
-    </Modal>
+    <Sheet.Root bind:open={filterDrawerState}>
+        <Sheet.Trigger>
+            <Button variant="secondary">Open filters</Button>
+        </Sheet.Trigger>
+        <Sheet.Content side="right" class="w-[40rem] overflow-y-auto">
+            <Sheet.Header>
+                <Sheet.Title>Filters</Sheet.Title>
+            </Sheet.Header>
+            <div class="py-4">
+                <Filters
+                    providers={data.providers}
+                    onChange={p => (providers = p)}
+                    bind:topLevelFilters
+                    bind:locationFilters
+                    bind:participantAge
+                />
+            </div>
+        </Sheet.Content>
+    </Sheet.Root>
 
     {#if providers.length > 0}
         <ExportButton {providers} />
-
         <DataTable
             data={providers}
             onCreate={() => {
@@ -165,29 +151,17 @@
             {hiddenColumns}
         />
     {:else}
-        <p>No providers found.</p>
-        <button
-            onclick={() => {
-                isCreationModalOpen = true
-            }}
-            class="btn preset-filled-primary-500"
-        >
-            <span>Create</span>
-        </button>
+        <p class="text-muted-foreground mb-4">No providers found.</p>
+        <Button onclick={() => (isCreationModalOpen = true)}>Create</Button>
     {/if}
 </div>
 
 <!-- Creation Modal -->
-<Modal
-    open={isCreationModalOpen}
-    onOpenChange={e => {
-        isCreationModalOpen = e.open
-    }}
-    triggerBase="btn"
-    contentBase="card bg-surface-100-900 p-4 space-y-4 shadow-xl w-[48rem] max-w-[90vw]"
-    backdropClasses="backdrop-blur-sm"
->
-    {#snippet content()}
+<Dialog.Root bind:open={isCreationModalOpen}>
+    <Dialog.Content class="max-w-[48rem]">
+        <Dialog.Header>
+            <Dialog.Title>Create Provider</Dialog.Title>
+        </Dialog.Header>
         <ModalProviderForm
             provider={{}}
             onSubmit={onCreate}
@@ -195,20 +169,15 @@
             locationAutoCompletions={locationsAutoCompletions}
             {subServiceAutoCompletions}
         />
-    {/snippet}
-</Modal>
+    </Dialog.Content>
+</Dialog.Root>
 
 <!-- Edit Modal -->
-<Modal
-    open={isEditModalOpen}
-    onOpenChange={e => {
-        isEditModalOpen = e.open
-    }}
-    triggerBase="btn"
-    contentBase="card bg-surface-100-900 p-4 space-y-4 shadow-xl w-[48rem] max-w-[90vw]"
-    backdropClasses="backdrop-blur-sm"
->
-    {#snippet content()}
+<Dialog.Root bind:open={isEditModalOpen}>
+    <Dialog.Content class="max-w-[48rem]">
+        <Dialog.Header>
+            <Dialog.Title>Edit Provider</Dialog.Title>
+        </Dialog.Header>
         <ModalProviderForm
             provider={editModalData!}
             onSubmit={data => onEdit(data)}
@@ -216,5 +185,5 @@
             locationAutoCompletions={locationsAutoCompletions}
             {subServiceAutoCompletions}
         />
-    {/snippet}
-</Modal>
+    </Dialog.Content>
+</Dialog.Root>
