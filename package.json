@@ -9,8 +9,8 @@
     "test": "npm run test:unit",
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
     "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
-    "lint": "prettier --plugin-search-dir . --check 'src/**/*.{js,ts,svelte}' && eslint 'src/**/*.{js,ts,svelte}'",
-    "prettier-fix": "prettier --plugin-search-dir . --check --write 'src/**/*.{js,ts,svelte}'",
+    "lint": "prettier --check 'src/**/*.{js,ts,svelte}' && eslint 'src/**/*.{js,ts,svelte}'",
+    "prettier-fix": "prettier --check --write 'src/**/*.{js,ts,svelte}'",
     "test:integration": "playwright test",
     "test:unit": "vitest"
   },

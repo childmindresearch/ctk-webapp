@@ -87,7 +87,7 @@ export function mergeObjects<Sources extends readonly MaybeThunk<any>[]>(
   ...sources: Sources
 ): Intersection<{ [K in keyof Sources]: Sources[K] }> {
   const resolve = <T extends object>(src: MaybeThunk<T>): T | undefined =>
-    typeof src === "function" ? src() ?? undefined : src
+    typeof src === "function" ? (src() ?? undefined) : src
 
   const findSourceWithKey = (key: PropertyKey) => {
     for (let i = sources.length - 1; i >= 0; i--) {
