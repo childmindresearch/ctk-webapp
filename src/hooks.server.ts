@@ -6,166 +6,168 @@ import { DEVELOPMENT_USER } from "$lib/server/environment"
 import type { User } from "$lib/types"
 import type { HandleFetch, RequestEvent } from "@sveltejs/kit"
 import { StatusCode } from "$lib/utils"
+import type { RouteId } from "$app/types"
 
 type Endpoint = {
-  path: string
-  method: "GET" | "PATCH" | "POST" | "PUT" | "DELETE"
+    path: string
+    method: "GET" | "PATCH" | "POST" | "PUT" | "DELETE"
 }
 
 const ADMIN_ENDPOINT_PATHS = ["/api/templates/.*?", "/api/dsm/.*?", ".*?/admin/.*?"]
 const ADMIN_SPECIFIC_ENDPOINTS: Endpoint[] = [
-  { path: "/api/dsm", method: "POST" },
-  { path: "/api/dsm", method: "PUT" }
+    { path: "/api/dsm", method: "POST" },
+    { path: "/api/dsm", method: "PUT" }
 ]
 
 /* Logs outgoing fetches and their responses. */
 export const handleFetch: HandleFetch = async ({ event, request, fetch }) => {
-  logger.debug({
-    type: `Server Request`,
-    method: request.method,
-    url: request.url,
-    user: event.locals.user,
-    requestId: event.locals.requestId
-  })
+    logger.debug({
+        type: `Server Request`,
+        method: request.method,
+        url: request.url,
+        user: event.locals.user,
+        requestId: event.locals.requestId
+    })
 
-  const logResponseData: {
-    type: string
-    url: string
-    user: string
-    requestId: string
-    status?: number
-    error?: string
-  } = {
-    type: "Server Response",
-    url: request.url,
-    user: event.locals.user,
-    requestId: event.locals.requestId
-  }
-
-  request.headers.set("X-Request-Id", event.locals.requestId)
-  request.headers.set("X-User", event.locals.user)
-  let response: Response
-  try {
-    response = await fetch(request)
-  } catch (e) {
-    logger.error({ ...logResponseData, status: 500, error: "Failed to contact server." })
-    throw e
-  }
-
-  logResponseData.status = response.status
-  if (logResponseData.status >= 400) {
-    try {
-      logResponseData.error = await response.clone().text()
-    } catch (e) {
-      logResponseData.error = "Could not parse error response."
+    const logResponseData: {
+        type: string
+        url: string
+        user: string
+        requestId: string
+        status?: number
+        error?: string
+    } = {
+        type: "Server Response",
+        url: request.url,
+        user: event.locals.user,
+        requestId: event.locals.requestId
     }
-  }
 
-  return response
+    request.headers.set("X-Request-Id", event.locals.requestId)
+    request.headers.set("X-User", event.locals.user)
+    let response: Response
+    try {
+        response = await fetch(request)
+    } catch (e) {
+        logger.error({ ...logResponseData, status: 500, error: "Failed to contact server." })
+        throw e
+    }
+
+    logResponseData.status = response.status
+    if (logResponseData.status >= 400) {
+        try {
+            logResponseData.error = await response.clone().text()
+        } catch (e) {
+            logger.error(e)
+            logResponseData.error = "Could not parse error response."
+        }
+    }
+
+    return response
 }
 
 /* Logs requests coming in and their response time. */
 export async function handle({ event, resolve }) {
-  const requestId = randomUUID()
-  const startTime = performance.now()
+    const requestId = randomUUID()
+    const startTime = performance.now()
 
-  const userEmail = event.request.headers.get("X-MS-CLIENT-PRINCIPAL-NAME") || DEVELOPMENT_USER
-  logger.info({
-    type: `User Request`,
-    method: event.request.method,
-    url: event.request.url,
-    user: userEmail,
-    requestId
-  })
-  event.locals.requestId = requestId
-  event.locals.user = userEmail
-
-  const user = await getOrInsertUser(userEmail)
-  if (!user) {
-    logger.error({
-      type: "User Request",
-      message: "Could not find user email",
-      user: userEmail,
-      requestId,
-      headers: Object.fromEntries(event.request.headers.entries())
+    const userEmail = event.request.headers.get("X-MS-CLIENT-PRINCIPAL-NAME") || DEVELOPMENT_USER
+    logger.info({
+        type: `User Request`,
+        method: event.request.method,
+        url: event.request.url,
+        user: userEmail,
+        requestId
     })
-    return new Response("Could not find user email", { status: StatusCode.INTERNAL_SERVER_ERROR })
-  }
-  if (!isUserAuthorized(event, user)) {
+    event.locals.requestId = requestId
+    event.locals.user = userEmail
+
+    const user = await getOrInsertUser(userEmail)
+    if (!user) {
+        logger.error({
+            type: "User Request",
+            message: "Could not find user email",
+            user: userEmail,
+            requestId,
+            headers: Object.fromEntries(event.request.headers.entries())
+        })
+        return new Response("Could not find user email", { status: StatusCode.INTERNAL_SERVER_ERROR })
+    }
+    if (!isUserAuthorized(event, user)) {
+        const endTime = performance.now()
+        const responseTime = `${(endTime - startTime).toFixed(3)}ms`
+        logger.error({
+            type: "Unauthorized",
+            method: event.request.method,
+            url: event.request.url,
+            user: userEmail,
+            requestId,
+            responseTime
+        })
+        return new Response("Unauthorized", { status: StatusCode.UNAUTHORIZED })
+    }
+
+    const response = await resolve(event)
+
     const endTime = performance.now()
     const responseTime = `${(endTime - startTime).toFixed(3)}ms`
-    logger.error({
-      type: "Unauthorized",
-      method: event.request.method,
-      url: event.request.url,
-      user: userEmail,
-      requestId,
-      responseTime
-    })
-    return new Response("Unauthorized", { status: StatusCode.UNAUTHORIZED })
-  }
+    const logMessage = {
+        type: "User Response",
+        statusCode: response.status,
+        method: event.request.method,
+        url: event.request.url,
+        user: userEmail,
+        requestId,
+        responseTime
+    }
 
-  const response = await resolve(event)
+    if (!response.ok) {
+        logger.error(logMessage)
+    } else {
+        logger.info(logMessage)
+    }
 
-  const endTime = performance.now()
-  const responseTime = `${(endTime - startTime).toFixed(3)}ms`
-  const logMessage = {
-    type: "User Response",
-    statusCode: response.status,
-    method: event.request.method,
-    url: event.request.url,
-    user: userEmail,
-    requestId,
-    responseTime
-  }
+    response.headers.append("X-Request-ID", requestId)
 
-  if (!response.ok) {
-    logger.error(logMessage)
-  } else {
-    logger.info(logMessage)
-  }
-
-  response.headers.append("X-Request-ID", requestId)
-
-  return response
+    return response
 }
 
 // Exported for testing purposes.
 export async function getOrInsertUser(email?: string) {
-  if (!email) {
-    return null
-  }
-
-  return await pool.connect().then(async client => {
-    const getUserQuery = {
-      text: "SELECT * FROM users WHERE email = $1",
-      values: [email]
-    }
-    const getResult = await client.query(getUserQuery)
-    if (getResult.rows.length > 0) {
-      client.release()
-      return getResult.rows[0] as User
+    if (!email) {
+        return null
     }
 
-    const insertUserQuery = {
-      text: "INSERT INTO users (email) VALUES ($1) RETURNING *",
-      values: [email]
-    }
-    const insertResult = await client.query(insertUserQuery)
-    client.release()
-    return insertResult.rows[0] as User
-  })
+    return await pool.connect().then(async client => {
+        const getUserQuery = {
+            text: "SELECT * FROM users WHERE email = $1",
+            values: [email]
+        }
+        const getResult = await client.query(getUserQuery)
+        if (getResult.rows.length > 0) {
+            client.release()
+            return getResult.rows[0] as User
+        }
+
+        const insertUserQuery = {
+            text: "INSERT INTO users (email) VALUES ($1) RETURNING *",
+            values: [email]
+        }
+        const insertResult = await client.query(insertUserQuery)
+        client.release()
+        return insertResult.rows[0] as User
+    })
 }
 
-function isUserAuthorized(event: RequestEvent<Partial<Record<string, string>>, string | null>, user: User) {
-  if (!user.is_admin && ADMIN_ENDPOINT_PATHS.some(path => event.request.url.match(path))) {
-    return false
-  }
-
-  for (const endpoint of ADMIN_SPECIFIC_ENDPOINTS) {
-    if (!user.is_admin && event.request.url.match(endpoint.path) && event.request.method === endpoint.method) {
-      return false
+function isUserAuthorized(event: RequestEvent<Partial<Record<string, string>>, RouteId | null>, user: User): boolean {
+    if (!user.is_admin && ADMIN_ENDPOINT_PATHS.some(path => event.request.url.match(path))) {
+        return false
     }
-  }
-  return true
+
+    for (const endpoint of ADMIN_SPECIFIC_ENDPOINTS) {
+        if (!user.is_admin && event.request.url.match(endpoint.path) && event.request.method === endpoint.method) {
+            return false
+        }
+    }
+    return true
 }

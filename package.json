@@ -43,8 +43,6 @@
     "mammoth": "^1.8.0",
     "mode-watcher": "^1.1.0",
     "pg": "^8.16.2",
-    "postcss": "^8.4.39",
-    "postcss-load-config": "^5.1.0",
     "prettier": "^3.3.2",
     "prettier-plugin-svelte": "^3.4.0",
     "sortablejs": "^1.15.2",
@@ -70,7 +68,7 @@
     "semi": false,
     "trailingComma": "none",
     "arrowParens": "avoid",
-    "tabWidth": 2,
+    "tabWidth": 4,
     "printWidth": 120,
     "plugins": [
       "prettier-plugin-svelte"

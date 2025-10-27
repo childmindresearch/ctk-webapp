@@ -1,20 +1,19 @@
 import { logger } from "$lib/server/logging"
 import { AZURE_FUNCTION_PYTHON_URL } from "$lib/server/environment"
 
-export async function GET({ request, params, fetch }) {
-  const id = params.id
-  logger.info(`Getting intake with id ${id} and model ${model}`)
-  const headers = new Headers({ "X-Model": model })
-  return await fetch(`${AZURE_FUNCTION_PYTHON_URL}/intake-report/${id}`, { headers: headers })
-    .then(async response => {
-      if (response.ok && response.body) {
-        return new Response(response.body)
-      } else {
-        throw new Error(await response.text())
-      }
-    })
-    .catch(error => {
-      logger.error(`Error getting intake with id ${id}: ${error}`)
-      return new Response(error, { status: 500 })
-    })
+export async function GET({ params, fetch }) {
+    const id = params.id
+    logger.info(`Getting intake with id ${id}.`)
+    return await fetch(`${AZURE_FUNCTION_PYTHON_URL}/intake-report/${id}`)
+        .then(async response => {
+            if (response.ok && response.body) {
+                return new Response(response.body)
+            } else {
+                throw new Error(await response.text())
+            }
+        })
+        .catch(error => {
+            logger.error(`Error getting intake with id ${id}: ${error}`)
+            return new Response(error, { status: 500 })
+        })
 }

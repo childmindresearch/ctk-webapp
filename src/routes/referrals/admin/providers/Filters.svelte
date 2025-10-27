@@ -23,107 +23,109 @@ The component uses a cascading filter approach where filters are applied in sequ
 -->
 
 <script lang="ts">
-  import type { getProviders } from "$api/referrals/crud.js"
+    import type { getProviders } from "$api/referrals/crud.js"
 
-  import MultiSelectFilter from "$lib/components/DataTable/MultiSelectFilter.svelte"
-  import { isUnique } from "$lib/utils.js"
+    import MultiSelectFilter from "$lib/components/DataTable/MultiSelectFilter.svelte"
+    import { isUnique } from "$lib/utils.js"
 
-  const topLevelFilterNames = { acceptsInsurance: "Accepts Insurance", serviceType: "Service Type" } as const
+    const topLevelFilterNames = { acceptsInsurance: "Accepts Insurance", serviceType: "Service Type" } as const
 
-  type Props = {
-    providers: Awaited<ReturnType<typeof getProviders>>
-    onChange: (filtered: Awaited<ReturnType<typeof getProviders>>) => void
-    topLevelFilters: Partial<Record<keyof typeof topLevelFilterNames, string>>
-    locationFilters: string[]
-    participantAge: number | null
-  }
+    type Props = {
+        providers: Awaited<ReturnType<typeof getProviders>>
+        onChange: (filtered: Awaited<ReturnType<typeof getProviders>>) => void
+        topLevelFilters: Partial<Record<keyof typeof topLevelFilterNames, string>>
+        locationFilters: string[]
+        participantAge: number | null
+    }
 
-  let {
-    providers,
-    onChange,
-    topLevelFilters = $bindable(),
-    locationFilters = $bindable(),
-    participantAge = $bindable()
-  }: Props = $props()
+    let {
+        providers,
+        onChange,
+        topLevelFilters = $bindable(),
+        locationFilters = $bindable(),
+        participantAge = $bindable()
+    }: Props = $props()
 
-  const locations = providers
-    .map(p => p.addresses.map(addr => addr.location))
-    .flat()
-    .filter(isUnique)
+    const locations = providers
+        .map(p => p.addresses.map(addr => addr.location))
+        .flat()
+        .filter(isUnique)
 
-  let filteredProviders = $derived(
-    providers
-      // Age filter
-      .filter(provider => {
-        if (participantAge === null) return true
-        return provider.minAge <= participantAge && provider.maxAge >= participantAge
-      })
-      // Location filter
-      .map(provider => {
-        const providerCopy = { ...provider }
-        if (locationFilters.length === 0) return providerCopy
-        providerCopy.addresses = providerCopy.addresses.filter(addr => {
-          return locationFilters.some(location => addr.location.toLowerCase().includes(location.toLowerCase()))
-        })
-        if (providerCopy.addresses.length === 0) {
-          return null
-        }
-        return providerCopy
-      })
-      .filter(val => val !== null)
-      // Top level filters
-      .filter(provider => {
-        return Object.entries(topLevelFilters).every(([key, value]) => {
-          if (!value) return true
-          const providerValue = String(provider[key as keyof typeof provider]).toLowerCase()
-          const filterValues = value.split(",").map(val => val.trim().toLowerCase())
-          return filterValues.some(filterVal => providerValue.includes(filterVal))
-        })
-      })
-  )
+    let filteredProviders = $derived(
+        providers
+            // Age filter
+            .filter(provider => {
+                if (participantAge === null) return true
+                return provider.minAge <= participantAge && provider.maxAge >= participantAge
+            })
+            // Location filter
+            .map(provider => {
+                const providerCopy = { ...provider }
+                if (locationFilters.length === 0) return providerCopy
+                providerCopy.addresses = providerCopy.addresses.filter(addr => {
+                    return locationFilters.some(location =>
+                        addr.location.toLowerCase().includes(location.toLowerCase())
+                    )
+                })
+                if (providerCopy.addresses.length === 0) {
+                    return null
+                }
+                return providerCopy
+            })
+            .filter(val => val !== null)
+            // Top level filters
+            .filter(provider => {
+                return Object.entries(topLevelFilters).every(([key, value]) => {
+                    if (!value) return true
+                    const providerValue = String(provider[key as keyof typeof provider]).toLowerCase()
+                    const filterValues = value.split(",").map(val => val.trim().toLowerCase())
+                    return filterValues.some(filterVal => providerValue.includes(filterVal))
+                })
+            })
+    )
 
-  $effect(() => {
-    onChange(filteredProviders)
-  })
+    $effect(() => {
+        onChange(filteredProviders)
+    })
 </script>
 
 <div class="flex flex-col gap-3 p-3">
-  <!-- Top Level Filters -->
-  {#each Object.entries(topLevelFilterNames) as [key, name]}
+    <!-- Top Level Filters -->
+    {#each Object.entries(topLevelFilterNames) as [key, name] (name)}
+        <div class="w-full">
+            <MultiSelectFilter
+                options={providers.map(p => String(p[key as keyof typeof p])).filter(isUnique)}
+                {name}
+                onChange={s => (topLevelFilters[key as keyof typeof topLevelFilters] = s.join(", "))}
+                value={(topLevelFilters[key as keyof typeof topLevelFilters]
+                    ? topLevelFilters[key as keyof typeof topLevelFilters]?.split(", ") || []
+                    : []
+                ).join(", ")}
+            />
+        </div>
+    {/each}
+
+    <!-- Location Filter -->
     <div class="w-full">
-      <MultiSelectFilter
-        options={providers.map(p => String(p[key as keyof typeof p])).filter(isUnique)}
-        {name}
-        onChange={s => (topLevelFilters[key as keyof typeof topLevelFilters] = s.join(", "))}
-        value={(topLevelFilters[key as keyof typeof topLevelFilters]
-          ? topLevelFilters[key as keyof typeof topLevelFilters]?.split(", ") || []
-          : []
-        ).join(", ")}
-      />
+        <MultiSelectFilter
+            options={locations}
+            name="Location"
+            onChange={s => (locationFilters = s)}
+            value={locationFilters.join(", ")}
+        />
     </div>
-  {/each}
 
-  <!-- Location Filter -->
-  <div class="w-full">
-    <MultiSelectFilter
-      options={locations}
-      name="Location"
-      onChange={s => (locationFilters = s)}
-      value={locationFilters.join(", ")}
-    />
-  </div>
-
-  <!-- Age Filter -->
-  <div class="border rounded-lg bg-surface-50 p-3">
-    <label class="block text-sm font-medium mb-2" for="participant-age"> Filter by Age: </label>
-    <input
-      id="participant-age"
-      class="input w-full"
-      type="number"
-      min="0"
-      max="120"
-      bind:value={participantAge}
-      placeholder="Enter age"
-    />
-  </div>
+    <!-- Age Filter -->
+    <div class="border rounded-lg bg-surface-50 p-3">
+        <label class="block text-sm font-medium mb-2" for="participant-age"> Filter by Age: </label>
+        <input
+            id="participant-age"
+            class="input w-full"
+            type="number"
+            min="0"
+            max="120"
+            bind:value={participantAge}
+            placeholder="Enter age"
+        />
+    </div>
 </div>

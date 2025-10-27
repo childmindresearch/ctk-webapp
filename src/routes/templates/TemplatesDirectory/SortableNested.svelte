@@ -1,100 +1,100 @@
 <script lang="ts">
-  import { shortenText } from "$lib/utils"
-  import type { DecisionTree } from "../DecisionTree.svelte"
-  import SortableNestedNode from "./SortableNestedNode.svelte"
-  import Sortable, { type SortableEvent } from "sortablejs"
-  import * as AlertDialog from "$lib/components/ui/alert-dialog"
-  import { Button } from "$lib/components/ui/button"
+    import { shortenText } from "$lib/utils"
+    import type { DecisionTree } from "../DecisionTree.svelte"
+    import SortableNestedNode from "./SortableNestedNode.svelte"
+    import Sortable, { type SortableEvent } from "sortablejs"
+    import * as AlertDialog from "$lib/components/ui/alert-dialog"
+    import { Button } from "$lib/components/ui/button"
 
-  type Props = {
-    node: DecisionTree
-    onAddToCart: (node: DecisionTree) => void
-    editable?: boolean
-  }
+    type Props = {
+        node: DecisionTree
+        onAddToCart: (node: DecisionTree) => void
+        editable?: boolean
+    }
 
-  let { node, onAddToCart, editable = true }: Props = $props()
+    let { node, onAddToCart, editable = true }: Props = $props()
 
-  let isModalOpen = $state(false)
-  let movedNode = $state(node)
-  let targetParentNode: DecisionTree | null = $state(node)
-  let lastEvent: Sortable.SortableEvent | undefined = undefined
+    let isModalOpen = $state(false)
+    let movedNode = $state(node)
+    let targetParentNode: DecisionTree | null = $state(node)
+    let lastEvent: Sortable.SortableEvent | undefined = undefined
 
-  function modalClose() {
-    isModalOpen = false
-  }
+    function modalClose() {
+        isModalOpen = false
+    }
 
-  async function onDrag(event: Sortable.SortableEvent) {
-    if (event.oldIndex === undefined) return
-    if (event.newIndex === undefined) return
+    async function onDrag(event: Sortable.SortableEvent) {
+        if (event.oldIndex === undefined) return
+        if (event.newIndex === undefined) return
 
-    const targetId = parseInt(event.to.id.split("-")[1])
-    const sourceId = parseInt(event.from.id.split("-")[1])
+        const targetId = parseInt(event.to.id.split("-")[1])
+        const sourceId = parseInt(event.from.id.split("-")[1])
 
-    if (targetId === sourceId && event.oldIndex === event.newIndex) return
+        if (targetId === sourceId && event.oldIndex === event.newIndex) return
 
-    const sourceParentNode = node.getNodeById(sourceId)
-    targetParentNode = node.getNodeById(targetId)
+        const sourceParentNode = node.getNodeById(sourceId)
+        targetParentNode = node.getNodeById(targetId)
 
-    if (!sourceParentNode || !targetParentNode) return
+        if (!sourceParentNode || !targetParentNode) return
 
-    movedNode = sourceParentNode.children[event.oldIndex]
-    lastEvent = event
-    isModalOpen = true
-  }
+        movedNode = sourceParentNode.children[event.oldIndex]
+        lastEvent = event
+        isModalOpen = true
+    }
 
-  async function onMove() {
-    if (!lastEvent) return
+    async function onMove() {
+        if (!lastEvent) return
 
-    const targetId = parseInt(lastEvent.to.id.split("-")[1])
-    const sourceId = parseInt(lastEvent.from.id.split("-")[1])
-    const sourceParentNode = node.getNodeById(sourceId) as DecisionTree
+        const targetId = parseInt(lastEvent.to.id.split("-")[1])
+        const sourceId = parseInt(lastEvent.from.id.split("-")[1])
+        const sourceParentNode = node.getNodeById(sourceId) as DecisionTree
 
-    await fetch(`/api/templates/${movedNode.id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        text: movedNode.text,
-        parentId: (targetParentNode as DecisionTree).id,
-        priority: lastEvent.newIndex
-      })
-    }).then(response => {
-      if (!response.ok) return
+        await fetch(`/api/templates/${movedNode.id}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                text: movedNode.text,
+                parentId: (targetParentNode as DecisionTree).id,
+                priority: lastEvent.newIndex
+            })
+        }).then(response => {
+            if (!response.ok) return
 
-      if (sourceId === targetId) {
-        // @ts-expect-error Typescript doesn't detect that newIndex cannot be undefined.
-        targetParentNode.moveChild(movedNode.id, lastEvent.newIndex)
-      } else {
-        sourceParentNode.deleteChild(movedNode.id)
-        ;(targetParentNode as DecisionTree).addChild(movedNode, (lastEvent as SortableEvent).newIndex)
-      }
-    })
+            if (sourceId === targetId) {
+                // @ts-expect-error Typescript doesn't detect that newIndex cannot be undefined.
+                targetParentNode.moveChild(movedNode.id, lastEvent.newIndex)
+            } else {
+                sourceParentNode.deleteChild(movedNode.id)
+                ;(targetParentNode as DecisionTree).addChild(movedNode, (lastEvent as SortableEvent).newIndex)
+            }
+        })
 
-    modalClose()
-  }
+        modalClose()
+    }
 </script>
 
 {#if targetParentNode !== null}
-  <AlertDialog.Root bind:open={isModalOpen}>
-    <AlertDialog.Content>
-      <AlertDialog.Header>
-        <AlertDialog.Title>Move template</AlertDialog.Title>
-        <AlertDialog.Description>
-          Are you sure you want to move
-          <span class="font-semibold">{shortenText(movedNode.text)}</span>
-          to
-          <span class="font-semibold">{shortenText((targetParentNode as DecisionTree).text)}</span>?
-        </AlertDialog.Description>
-      </AlertDialog.Header>
-      <AlertDialog.Footer>
-        <AlertDialog.Cancel>
-          <Button variant="outline">Cancel</Button>
-        </AlertDialog.Cancel>
-        <AlertDialog.Action>
-          <Button onclick={onMove}>Move</Button>
-        </AlertDialog.Action>
-      </AlertDialog.Footer>
-    </AlertDialog.Content>
-  </AlertDialog.Root>
+    <AlertDialog.Root bind:open={isModalOpen}>
+        <AlertDialog.Content>
+            <AlertDialog.Header>
+                <AlertDialog.Title>Move template</AlertDialog.Title>
+                <AlertDialog.Description>
+                    Are you sure you want to move
+                    <span class="font-semibold">{shortenText(movedNode.text)}</span>
+                    to
+                    <span class="font-semibold">{shortenText((targetParentNode as DecisionTree).text)}</span>?
+                </AlertDialog.Description>
+            </AlertDialog.Header>
+            <AlertDialog.Footer>
+                <AlertDialog.Cancel>
+                    <Button variant="outline">Cancel</Button>
+                </AlertDialog.Cancel>
+                <AlertDialog.Action>
+                    <Button onclick={onMove}>Move</Button>
+                </AlertDialog.Action>
+            </AlertDialog.Footer>
+        </AlertDialog.Content>
+    </AlertDialog.Root>
 {/if}
 
 <SortableNestedNode {node} {editable} _isRoot={true} {onAddToCart} {onDrag} />
