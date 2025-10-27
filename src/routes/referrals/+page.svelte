@@ -1,7 +1,8 @@
 <script lang="ts">
-    import { downloadBlob, toaster } from "$lib/utils.js"
+    import { downloadBlob } from "$lib/utils.js"
     import z from "zod"
     import type { PostReferralSchema, ReferralTable } from "$api/referrals/document/schemas"
+    import { toast } from "svelte-sonner"
 
     const { data } = $props()
 
@@ -65,7 +66,7 @@
             body: JSON.stringify(body)
         }).then(async response => {
             if (!response.ok) {
-                toaster.error({ title: "Could not download document." })
+                toast.error("Could not download document.")
                 console.error(await response.text())
                 return
             }

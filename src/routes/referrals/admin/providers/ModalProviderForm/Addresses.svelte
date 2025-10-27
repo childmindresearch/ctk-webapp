@@ -1,9 +1,16 @@
 <script lang="ts">
-    import { Combobox } from "@skeletonlabs/skeleton-svelte"
-    import FormInput from "$lib/components/FormInput.svelte"
-    import { toaster } from "$lib/utils"
+    import { Button } from "$lib/components/ui/button"
+    import { Input } from "$lib/components/ui/input"
+    import { Label } from "$lib/components/ui/label"
+    import { Card, CardContent, CardHeader } from "$lib/components/ui/card"
+    import { RadioGroup, RadioGroupItem } from "$lib/components/ui/radio-group"
+    import * as Command from "$lib/components/ui/command"
+    import * as Popover from "$lib/components/ui/popover"
+    import { cn } from "$lib/utils"
     import { slide } from "svelte/transition"
-    import type { getProviders } from "$api/referrals/crud.js"
+    import { Check, ChevronsUpDown, Plus, Trash2 } from "lucide-svelte"
+    import type { getProviders } from "$api/referrals/crud"
+    import { toast } from "svelte-sonner"
 
     type Props = {
         addresses: Omit<Awaited<ReturnType<typeof getProviders>>[number]["addresses"][number], "id" | "providerId">[]
@@ -12,7 +19,10 @@
             addrs: Omit<Awaited<ReturnType<typeof getProviders>>[number]["addresses"][number], "id" | "providerId">[]
         ) => void
     }
+
     let { addresses, locationAutoCompletions = [], onChange = () => {} }: Props = $props()
+
+    let openCombobox: { [key: number]: boolean } = $state({})
 
     function addAddress() {
         addresses.push({
@@ -31,7 +41,7 @@
 
     function removeAddress(index: number) {
         if (addresses.length < 2) {
-            toaster.error({ title: "Cannot remove the last address." })
+            toast.error("Cannot remove the last address.")
             return
         }
         addresses = addresses.filter((_, i) => i !== index)
@@ -43,150 +53,218 @@
 
     function removeContact(address: (typeof addresses)[number], index: number) {
         if (address.contacts.length < 2) {
-            toaster.error({ title: "Cannot remove the last contact." })
+            toast.error("Cannot remove the last contact.")
             return
         }
         address.contacts = address.contacts.filter((_: string, i: number) => i !== index)
     }
+
+    function selectLocation(address_index: number, value: string) {
+        addresses[address_index].location = value
+        openCombobox[address_index] = false
+    }
 </script>
 
-<section class="card p-6 space-y-6 variant-glass-surface">
-    <div class="flex items-center justify-between border-b border-surface-300-600-token pb-3">
-        <div class="flex items-center gap-3">
-            <div class="w-2 h-8 bg-tertiary-500 rounded-full"></div>
-            <h3 class="h3 text-tertiary-700-200-token">Service Locations</h3>
-        </div>
-        <button type="button" class="btn btn-sm preset-filled-primary-500" onclick={addAddress}>
-            <span>+</span>
-            <span>Add Location</span>
-        </button>
-    </div>
-
-    <div class="space-y-6">
-        {#each addresses as address, address_index}
-            <div class="card p-5 space-y-5 variant-soft-surface border-l-4 preset-border-tertiary-500">
-                <div class="flex justify-between items-center">
-                    <h4 class="h4 text-surface-700-200-token">Location {address_index + 1}</h4>
-                    <button
-                        type="button"
-                        class="btn btn-sm preset-filled-error-500"
-                        onclick={() => removeAddress(address_index)}
-                    >
-                        Remove Location
-                    </button>
-                </div>
-
-                <div class="space-y-3">
-                    <span class="text-sm font-semibold text-surface-700-200-token"
-                        >Location Type <span class="text-error-500">*</span></span
-                    >
-                    <div class="flex flex-col space-y-2">
-                        {#each [{ value: "in-person", label: "Physical Location" }, { value: "hybrid", label: "Hybrid" }, { value: "remote", label: "Remote/Virtual Location" }, { value: "unknown", label: "Unknown" }] as option}
-                            <label
-                                class="flex items-center space-x-3 cursor-pointer p-3 bg-surface-100-800-token rounded-lg"
-                            >
-                                <input
-                                    class="radio"
-                                    type="radio"
-                                    bind:group={address.locationType}
-                                    value={option.value}
-                                />
-                                <span class="text-sm">{option.label}</span>
-                            </label>
-                        {/each}
-                    </div>
-                </div>
-
-                <div transition:slide={{ duration: 200 }} class="grid gap-4">
-                    <label class="label">
-                        <span class="text-sm font-semibold text-surface-700-200-token"
-                            >Location Name <span class="text-error-500">*</span></span
-                        >
-                        <Combobox
-                            data={locationAutoCompletions.map(loc => ({ label: loc, value: loc }))}
-                            value={[address.location || ""]}
-                            defaultValue={[address.location || ""]}
-                            onValueChange={e => (address.location = e.value[0])}
-                            label="Select or type a location"
-                            placeholder="e.g., Brooklyn, Manhattan"
-                            allowCustomValue
-                            required
-                        />
-                    </label>
-
-                    <FormInput
-                        label="Address Line 1"
-                        required={address.locationType !== "remote"}
-                        placeholder="Enter street address"
-                        bind:value={address.addressLine1}
-                    />
-
-                    <FormInput
-                        label="Address Line 2"
-                        placeholder="Apt, suite, unit, etc..."
-                        bind:value={address.addressLine2}
-                    />
-
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <FormInput
-                            label="City"
-                            placeholder="City"
-                            required={address.locationType !== "remote"}
-                            bind:value={address.city}
-                        />
-                        <FormInput
-                            label="State"
-                            placeholder="State"
-                            required={address.locationType !== "remote"}
-                            bind:value={address.state}
-                        />
-                        <FormInput
-                            label="Zip Code"
-                            placeholder="Zip Code"
-                            required={address.locationType !== "remote"}
-                            bind:value={address.zipCode}
-                        />
-                    </div>
-                </div>
-
-                <!-- Contacts Section -->
-                <div class="space-y-4 mt-6">
-                    <div class="flex items-center justify-between">
-                        <h4 class="h5 text-surface-700-200-token">Contact Information</h4>
-                        <button
-                            type="button"
-                            class="btn btn-sm preset-filled-primary-500"
-                            onclick={() => addContact(address)}
-                        >
-                            <span>+</span>
-                            <span>Add Contact</span>
-                        </button>
-                    </div>
-
-                    <div class="space-y-3">
-                        {#if address.contacts}
-                            {#each address.contacts as _, contact_index}
-                                <div class="flex gap-3 items-center p-4 bg-surface-50-900-token rounded-lg">
-                                    <FormInput
-                                        label={`Contact ${contact_index + 1}`}
-                                        placeholder="Phone, email, website, etc..."
-                                        required
-                                        bind:value={address.contacts[contact_index]}
-                                    />
-
-                                    <button
-                                        type="button"
-                                        class="btn btn-sm preset-filled-error-500"
-                                        onclick={() => removeContact(address, contact_index)}
-                                    >
-                                        Remove
-                                    </button>
-                                </div>
-                            {/each}
-                        {/if}
-                    </div>
-                </div>
+<section class="space-y-6">
+    <Card class="border-l-4 border-l-primary">
+        <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-4">
+            <div class="flex items-center gap-3">
+                <div class="w-2 h-8 bg-primary rounded-full"></div>
+                <h3 class="text-2xl font-bold tracking-tight">Service Locations</h3>
             </div>
-        {/each}
-    </div>
+            <Button onclick={addAddress} size="sm">
+                <Plus class="w-4 h-4 mr-2" />
+                Add Location
+            </Button>
+        </CardHeader>
+
+        <CardContent class="space-y-6">
+            {#each addresses as address, address_index}
+                <Card class="border-l-4 border-l-primary/50">
+                    <CardHeader class="flex flex-row items-center justify-between space-y-0">
+                        <h4 class="text-lg font-semibold">Location {address_index + 1}</h4>
+                        <Button variant="destructive" size="sm" onclick={() => removeAddress(address_index)}>
+                            <Trash2 class="w-4 h-4 mr-2" />
+                            Remove Location
+                        </Button>
+                    </CardHeader>
+
+                    <CardContent class="space-y-6">
+                        <!-- Location Type Radio Group -->
+                        <div class="space-y-3">
+                            <Label class="text-sm font-semibold">
+                                Location Type <span class="text-destructive">*</span>
+                            </Label>
+                            <RadioGroup bind:value={address.locationType} class="space-y-2">
+                                {#each [{ value: "in-person", label: "Physical Location" }, { value: "hybrid", label: "Hybrid" }, { value: "remote", label: "Remote/Virtual Location" }, { value: "unknown", label: "Unknown" }] as option}
+                                    <div class="flex items-center space-x-3 rounded-lg border p-3 hover:bg-accent">
+                                        <RadioGroupItem value={option.value} id={`${address_index}-${option.value}`} />
+                                        <Label
+                                            for={`${address_index}-${option.value}`}
+                                            class="flex-1 cursor-pointer font-normal"
+                                        >
+                                            {option.label}
+                                        </Label>
+                                    </div>
+                                {/each}
+                            </RadioGroup>
+                        </div>
+
+                        <!-- Location Name Combobox -->
+                        <div transition:slide={{ duration: 200 }} class="space-y-4">
+                            <div class="space-y-2">
+                                <Label class="text-sm font-semibold">
+                                    Location Name <span class="text-destructive">*</span>
+                                </Label>
+                                <Popover.Root bind:open={openCombobox[address_index]}>
+                                    <Popover.Trigger>
+                                        <Button variant="outline" role="combobox" class="w-full justify-between">
+                                            {address.location || "Select or type a location"}
+                                            <ChevronsUpDown class="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                        </Button>
+                                    </Popover.Trigger>
+                                    <Popover.Content class="w-full p-0">
+                                        <Command.Root>
+                                            <Command.Input
+                                                placeholder="e.g., Brooklyn, Manhattan"
+                                                bind:value={address.location}
+                                            />
+                                            <Command.Empty>No location found.</Command.Empty>
+                                            <Command.Group>
+                                                {#each locationAutoCompletions as location}
+                                                    <Command.Item
+                                                        value={location}
+                                                        onSelect={() => selectLocation(address_index, location)}
+                                                    >
+                                                        <Check
+                                                            class={cn(
+                                                                "mr-2 h-4 w-4",
+                                                                address.location !== location && "text-transparent"
+                                                            )}
+                                                        />
+                                                        {location}
+                                                    </Command.Item>
+                                                {/each}
+                                            </Command.Group>
+                                        </Command.Root>
+                                    </Popover.Content>
+                                </Popover.Root>
+                            </div>
+
+                            <!-- Address Fields -->
+                            <div class="space-y-2">
+                                <Label for={`address1-${address_index}`}>
+                                    Address Line 1
+                                    {#if address.locationType !== "remote"}
+                                        <span class="text-destructive">*</span>
+                                    {/if}
+                                </Label>
+                                <Input
+                                    id={`address1-${address_index}`}
+                                    placeholder="Enter street address"
+                                    required={address.locationType !== "remote"}
+                                    bind:value={address.addressLine1}
+                                />
+                            </div>
+
+                            <div class="space-y-2">
+                                <Label for={`address2-${address_index}`}>Address Line 2</Label>
+                                <Input
+                                    id={`address2-${address_index}`}
+                                    placeholder="Apt, suite, unit, etc..."
+                                    bind:value={address.addressLine2}
+                                />
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div class="space-y-2">
+                                    <Label for={`city-${address_index}`}>
+                                        City
+                                        {#if address.locationType !== "remote"}
+                                            <span class="text-destructive">*</span>
+                                        {/if}
+                                    </Label>
+                                    <Input
+                                        id={`city-${address_index}`}
+                                        placeholder="City"
+                                        required={address.locationType !== "remote"}
+                                        bind:value={address.city}
+                                    />
+                                </div>
+
+                                <div class="space-y-2">
+                                    <Label for={`state-${address_index}`}>
+                                        State
+                                        {#if address.locationType !== "remote"}
+                                            <span class="text-destructive">*</span>
+                                        {/if}
+                                    </Label>
+                                    <Input
+                                        id={`state-${address_index}`}
+                                        placeholder="State"
+                                        required={address.locationType !== "remote"}
+                                        bind:value={address.state}
+                                    />
+                                </div>
+
+                                <div class="space-y-2">
+                                    <Label for={`zip-${address_index}`}>
+                                        Zip Code
+                                        {#if address.locationType !== "remote"}
+                                            <span class="text-destructive">*</span>
+                                        {/if}
+                                    </Label>
+                                    <Input
+                                        id={`zip-${address_index}`}
+                                        placeholder="Zip Code"
+                                        required={address.locationType !== "remote"}
+                                        bind:value={address.zipCode}
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Contacts Section -->
+                        <div class="space-y-4 pt-6 border-t">
+                            <div class="flex items-center justify-between">
+                                <h4 class="text-lg font-semibold">Contact Information</h4>
+                                <Button variant="outline" size="sm" onclick={() => addContact(address)}>
+                                    <Plus class="w-4 h-4 mr-2" />
+                                    Add Contact
+                                </Button>
+                            </div>
+
+                            <div class="space-y-3">
+                                {#if address.contacts}
+                                    {#each address.contacts as _, contact_index}
+                                        <div class="flex gap-3 items-end p-4 rounded-lg border bg-muted/50">
+                                            <div class="flex-1 space-y-2">
+                                                <Label for={`contact-${address_index}-${contact_index}`}>
+                                                    Contact {contact_index + 1}
+                                                    <span class="text-destructive">*</span>
+                                                </Label>
+                                                <Input
+                                                    id={`contact-${address_index}-${contact_index}`}
+                                                    placeholder="Phone, email, website, etc..."
+                                                    required
+                                                    bind:value={address.contacts[contact_index]}
+                                                />
+                                            </div>
+                                            <Button
+                                                variant="destructive"
+                                                size="sm"
+                                                onclick={() => removeContact(address, contact_index)}
+                                            >
+                                                <Trash2 class="w-4 h-4" />
+                                            </Button>
+                                        </div>
+                                    {/each}
+                                {/if}
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+            {/each}
+        </CardContent>
+    </Card>
 </section>

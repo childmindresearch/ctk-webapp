@@ -1,8 +1,9 @@
 <script lang="ts">
-    import LoadingBar from "$lib/components/LoadingBar.svelte"
     import type { getProviders } from "$api/referrals/crud.js"
-    import { downloadBlob, toaster } from "$lib/utils.js"
+    import { downloadBlob } from "$lib/utils.js"
+    import { toast } from "svelte-sonner"
     import { exportProviders } from "./utils"
+    import { Spinner } from "$lib/components/ui/spinner"
 
     type Props = {
         providers: Awaited<ReturnType<typeof getProviders>>
@@ -25,9 +26,7 @@
                 downloadBlob(blob, filename)
             })
             .catch(error => {
-                toaster.error({
-                    title: error.message
-                })
+                toast.error(error.message)
             })
         await exportPromise
         exportPromise = null
@@ -35,7 +34,7 @@
 </script>
 
 {#await exportPromise}
-    <LoadingBar />
+    <Spinner />
 {:then}
     <button class="btn preset-filled-primary-500" onclick={onExport} disabled={exportPromise !== null}> Export </button>
 {:catch}

@@ -1,53 +1,36 @@
-<!--@component
-    A reusable data table component with sorting, filtering, and pagination capabilities.
-
-    ## Props
-    - data: The data to display in the table.
-    - idColumn: The column name of the unique identifier.
-    - hiddenColumns: Columns to hide in the table.
-    - onCreate: Function to execute on clicking the Create button.
-    - onEdit: Function to execute on clicking the Edit button.
-    - onDelete: Function to execute on clicking the Delete button.
-
-    ## Example
-    ```svelte
-    <DataTable
-        data={myData}
-        hiddenColumns={['id']}
-        onCreate={() => handleCreate()}
-        onEdit={(row) => handleEdit(row)}
-        onDelete={(row) => handleDelete(row)}
-    />
-    ```
--->
 <script lang="ts">
+    import { Pencil, Trash } from "lucide-svelte"
+    import { Button } from "$lib/components/ui/button"
+
     type Props = {
         onEdit?: () => void
         onDelete?: () => void
     }
 
-    import { Pencil, Trash } from "@lucide/svelte"
-
     let { onEdit, onDelete }: Props = $props()
 </script>
 
-<div class="text-center space-x-2">
+<div class="flex items-center justify-center gap-2">
     {#if onEdit}
-        <button
-            aria-label="edit"
-            class="text-warning-600 hover:text-warning-300 transition-colors duration-150"
+        <Button
+            variant="ghost"
+            size="icon"
+            aria-label="Edit"
             onclick={onEdit}
+            class="h-8 w-8 text-yellow-600 hover:text-yellow-800 hover:bg-yellow-200"
         >
-            <Pencil />
-        </button>
+            <Pencil class="h-4 w-4" />
+        </Button>
     {/if}
     {#if onDelete}
-        <button
-            aria-label="delete"
-            class="text-error-600 hover:text-error-300 transition-colors duration-150"
+        <Button
+            variant="ghost"
+            size="icon"
+            aria-label="Delete"
             onclick={onDelete}
+            class="h-8 w-8 text-red-600 hover:text-red-800 hover:bg-red-200"
         >
-            <Trash />
-        </button>
+            <Trash class="h-4 w-4" />
+        </Button>
     {/if}
 </div>

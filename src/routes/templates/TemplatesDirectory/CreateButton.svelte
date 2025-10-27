@@ -1,9 +1,6 @@
 <script lang="ts">
-    import ModalMarkdown from "$lib/components/ModalMarkdown.svelte"
-    import { File } from "@lucide/svelte"
-    import { toaster } from "$lib/utils"
-    import { Modal } from "@skeletonlabs/skeleton-svelte"
     import { DecisionTree } from "../DecisionTree.svelte"
+    import { toast } from "svelte-sonner"
 
     type Props = {
         node: DecisionTree
@@ -27,9 +24,7 @@
         })
             .then(res => {
                 if (!res.ok) {
-                    toaster.error({
-                        title: `Failed to create the template: ${res.statusText}`
-                    })
+                    toast.error(`Failed to create the template: ${res.statusText}`)
                 } else {
                     return res.json()
                 }
@@ -41,18 +36,3 @@
         isModalOpen = false
     }
 </script>
-
-<Modal
-    open={isModalOpen}
-    onOpenChange={e => (isModalOpen = e.open)}
-    triggerBase=""
-    contentBase="card p-4 space-y-4"
-    backdropClasses="backdrop-blur-sm"
->
-    {#snippet trigger()}
-        <File class="text-success-600 hover:text-success-400 bg-surface-50" size="1.3rem" />
-    {/snippet}
-    {#snippet content()}
-        <ModalMarkdown text="" {onSubmit} {instructions} />
-    {/snippet}
-</Modal>

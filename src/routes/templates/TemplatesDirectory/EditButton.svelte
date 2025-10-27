@@ -1,8 +1,6 @@
 <script lang="ts">
+    import { toast } from "svelte-sonner"
     import { DecisionTree } from "../DecisionTree.svelte"
-    import { toaster } from "$lib/utils"
-    import { Modal } from "@skeletonlabs/skeleton-svelte"
-    import ModalMarkdown from "$lib/components/ModalMarkdown.svelte"
     import { Pencil } from "@lucide/svelte"
 
     type Props = {
@@ -28,9 +26,7 @@
             body: JSON.stringify({ text, parentId, priority: node.priority })
         }).then(result => {
             if (!result.ok) {
-                toaster.error({
-                    title: `Failed to edit the template: ${result.statusText}`
-                })
+                toast.error(`Failed to edit the template: ${result.statusText}`)
                 return
             }
             node.text = text
@@ -38,18 +34,3 @@
         isModalOpen = false
     }
 </script>
-
-<Modal
-    open={isModalOpen}
-    onOpenChange={e => (isModalOpen = e.open)}
-    triggerBase=""
-    contentBase="card bg-surface-100-900 p-4 space-y-4 shadow-xl"
-    backdropClasses="backdrop-blur-sm"
->
-    {#snippet trigger()}
-        <Pencil class="text-warning-600 hover:text-warning-400" size="1.3rem" />
-    {/snippet}
-    {#snippet content()}
-        <ModalMarkdown text={node.text} {onSubmit} {instructions} />
-    {/snippet}
-</Modal>

@@ -30,6 +30,7 @@
         onEdit?: (row: (typeof data)[number]) => void
         onDelete?: (row: (typeof data)[number]) => void
     }
+
     import {
         ArrowDown,
         ArrowDownUp,
@@ -40,8 +41,12 @@
         ChevronsRight,
         Search,
         X
-    } from "@lucide/svelte"
-    import { flip } from "svelte/animate"
+    } from "lucide-svelte"
+    import { Button } from "$lib/components/ui/button"
+    import { Input } from "$lib/components/ui/input"
+    import * as Table from "$lib/components/ui/table"
+    import * as Select from "$lib/components/ui/select"
+    import * as Card from "$lib/components/ui/card"
     import Controls from "./Controls.svelte"
 
     let { data, idColumn, hiddenColumns, searchableColumns, onCreate, onEdit, onDelete }: Props<T> = $props()
@@ -52,9 +57,9 @@
     let sortKey: keyof T | null = $state(null)
     let sortDirection: -1 | 0 | 1 = $state(0)
     let searchQuery = $state("")
+    let selectedRowsPerPage = $state("10")
 
     const showControls = onEdit || onDelete
-
     const columns = (Object.keys(data[0]) as (keyof T)[]).filter(name => !hiddenColumns?.includes(name))
     const columnsToSearch = searchableColumns || columns
 
@@ -76,9 +81,13 @@
         }
     })
 
+    $effect(() => {
+        nRowsPerPage = parseInt(selectedRowsPerPage) as (typeof paginationOptions)[number]
+        currentPage = 0
+    })
+
     function applySearch(data: { [K in keyof T]: any }[], query: string) {
         if (!query.trim()) return data
-
         const lowerQuery = query.toLowerCase().trim()
         return data.filter(row => {
             return columnsToSearch.some(column => {
@@ -162,29 +171,40 @@
 
         return Array.from({ length: end - start + 1 }, (_, i) => start + i)
     }
+
+    const rowsPerPageOptions = paginationOptions.map(opt => ({
+        value: String(opt),
+        label: String(opt)
+    }))
+
+    let triggerContent = $derived(
+        rowsPerPageOptions.find(opt => opt.value === selectedRowsPerPage)?.label ?? "Select rows"
+    )
 </script>
 
 <!-- Search Bar -->
 <div class="mb-4 flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
     <div class="relative flex-1 max-w-md">
         <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <Search size="18" class="text-gray-400" />
+            <Search size={18} class="text-muted-foreground" />
         </div>
-        <input type="text" bind:value={searchQuery} placeholder="Search..." class="input pl-10 pr-10 w-full" />
+        <Input type="text" bind:value={searchQuery} placeholder="Search..." class="pl-10 pr-10" />
         {#if searchQuery}
-            <button
+            <Button
+                variant="ghost"
+                size="icon"
+                class="absolute inset-y-0 right-0 h-full w-10"
                 onclick={clearSearch}
-                class="absolute inset-y-0 right-0 pr-3 flex items-center hover:text-gray-600"
                 title="Clear search"
             >
-                <X size="16" />
-            </button>
+                <X size={16} />
+            </Button>
         {/if}
     </div>
 
     <!-- Search Results Info -->
     {#if searchQuery}
-        <div class="text-sm text-gray-600">
+        <div class="text-sm text-muted-foreground">
             {#if sorted.length === 0}
                 No results found for "{searchQuery}"
             {:else if sorted.length === 1}
@@ -196,97 +216,109 @@
     {/if}
 </div>
 
-<div class="table-container min-w-[16rem] overflow-x-auto">
-    <div class="hidden lg:block w-full overflow-x-auto">
-        <table class="table caption-bottom min-w-full">
-            <thead class="font-semibold">
-                <tr>
+<!-- Desktop Table -->
+<div class="rounded-md border overflow-hidden">
+    <div class="hidden lg:block overflow-x-auto">
+        <Table.Root>
+            <Table.Header>
+                <Table.Row>
                     {#if showControls}
-                        <td>Controls</td>
+                        <Table.Head class="w-[100px]">Controls</Table.Head>
                     {/if}
                     {#each columns as name}
-                        <td class="whitespace-nowrap px-2">
-                            {titleCase((name as string).replace("_", " "))}
-                            <button
+                        <Table.Head class="whitespace-nowrap">
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                class="h-8 px-2 -ml-2"
                                 onclick={() => {
                                     sortKey = name
                                     sortDirection -= 1
                                     if (sortDirection === -2) sortDirection = 1
                                 }}
                             >
+                                {titleCase((name as string).replace("_", " "))}
                                 {#if sortKey !== name || sortDirection === 0}
-                                    <ArrowDownUp size="13" />
+                                    <ArrowDownUp size={13} class="ml-2" />
                                 {:else if sortDirection === -1}
-                                    <ArrowDown size="13" />
+                                    <ArrowDown size={13} class="ml-2" />
                                 {:else}
-                                    <ArrowUp size="13" />
+                                    <ArrowUp size={13} class="ml-2" />
                                 {/if}
-                            </button>
-                        </td>
+                            </Button>
+                        </Table.Head>
                     {/each}
-                </tr>
-            </thead>
-            <tbody class="[&>tr]:hover:preset-tonal-primary">
+                </Table.Row>
+            </Table.Header>
+            <Table.Body>
                 {#each paginated as row (row[idColumn])}
-                    <tr animate:flip={{ duration: 350 }}>
+                    <Table.Row class="hover:bg-muted/50">
                         {#if showControls}
-                            <td class="px-2 min-w-[5rem]">
+                            <Table.Cell>
                                 <Controls
                                     onEdit={createRowCallback(onEdit, row.id)}
                                     onDelete={createRowCallback(onDelete, row.id)}
                                 />
-                            </td>
+                            </Table.Cell>
                         {/if}
                         {#each columns as column}
-                            <td class="px-2 py-1 min-w-24 max-w-32 truncate">
+                            <Table.Cell class="min-w-24 max-w-32 truncate">
                                 {row[column]}
-                            </td>
+                            </Table.Cell>
                         {/each}
-                    </tr>
+                    </Table.Row>
                 {:else}
-                    <tr>
-                        <td colspan={columns.length + (showControls ? 1 : 0)} class="text-center py-8 text-gray-500">
+                    <Table.Row>
+                        <Table.Cell
+                            colspan={columns.length + (showControls ? 1 : 0)}
+                            class="text-center py-8 text-muted-foreground"
+                        >
                             {#if searchQuery}
                                 No results found for "{searchQuery}"
                             {:else}
                                 No data available
                             {/if}
-                        </td>
-                    </tr>
+                        </Table.Cell>
+                    </Table.Row>
                 {/each}
-            </tbody>
-        </table>
+            </Table.Body>
+        </Table.Root>
     </div>
-    <div class="lg:hidden space-y-4">
+
+    <!-- Mobile View -->
+    <div class="lg:hidden p-4">
         {#if searchQuery}
-            <div class="text-sm text-gray-600 mb-2">
+            <div class="text-sm text-muted-foreground mb-2">
                 {sorted.length} results for "{searchQuery}"
             </div>
         {/if}
-        <div>Page too narrow to display table.</div>
+
+        <div class="text-sm text-muted-foreground mb-4">Page too narrow to display table.</div>
 
         <!-- Mobile card view for search results -->
         {#if sorted.length > 0}
             <div class="space-y-2">
                 {#each paginated as row (row[idColumn])}
-                    <div class="card p-4 border" animate:flip={{ duration: 350 }}>
-                        {#each columns.slice(0, 3) as column}
-                            <div class="flex justify-between items-center">
-                                <span class="font-medium text-sm">
-                                    {titleCase((column as string).replace("_", " "))}:
-                                </span>
-                                <span class="text-sm truncate ml-2">{row[column]}</span>
-                            </div>
-                        {/each}
-                        {#if showControls}
-                            <div class="mt-2 pt-2 border-t">
-                                <Controls
-                                    onEdit={createRowCallback(onEdit, row.id)}
-                                    onDelete={createRowCallback(onDelete, row.id)}
-                                />
-                            </div>
-                        {/if}
-                    </div>
+                    <Card.Root>
+                        <Card.Content class="p-4">
+                            {#each columns.slice(0, 3) as column}
+                                <div class="flex justify-between items-center py-1">
+                                    <span class="font-medium text-sm">
+                                        {titleCase((column as string).replace("_", " "))}:
+                                    </span>
+                                    <span class="text-sm truncate ml-2">{row[column]}</span>
+                                </div>
+                            {/each}
+                            {#if showControls}
+                                <div class="mt-3 pt-3 border-t">
+                                    <Controls
+                                        onEdit={createRowCallback(onEdit, row.id)}
+                                        onDelete={createRowCallback(onDelete, row.id)}
+                                    />
+                                </div>
+                            {/if}
+                        </Card.Content>
+                    </Card.Root>
                 {/each}
             </div>
         {/if}
@@ -298,7 +330,7 @@
     <!-- Create Button -->
     <div class="flex-shrink-0">
         {#if onCreate}
-            <button class="btn preset-filled-primary-500" onclick={onCreate}> Create </button>
+            <Button onclick={onCreate}>Create</Button>
         {/if}
     </div>
 
@@ -307,15 +339,24 @@
         <!-- Rows per page selector -->
         <div class="flex items-center gap-2 text-sm">
             <span>Rows:</span>
-            <select bind:value={nRowsPerPage} class="select select-sm border" onchange={() => (currentPage = 0)}>
-                {#each paginationOptions as option}
-                    <option value={option}>{option}</option>
-                {/each}
-            </select>
+            <Select.Root type="single" bind:value={selectedRowsPerPage}>
+                <Select.Trigger class="w-[70px] h-9">
+                    {triggerContent}
+                </Select.Trigger>
+                <Select.Content>
+                    <Select.Group>
+                        {#each rowsPerPageOptions as option (option.value)}
+                            <Select.Item value={option.value} label={option.label}>
+                                {option.label}
+                            </Select.Item>
+                        {/each}
+                    </Select.Group>
+                </Select.Content>
+            </Select.Root>
         </div>
 
         <!-- Pagination info -->
-        <div class="text-sm text-gray-600">
+        <div class="text-sm text-muted-foreground">
             {#if sorted.length === 0}
                 No data
             {:else}
@@ -330,70 +371,85 @@
         {#if maxPages > 1}
             <div class="flex items-center gap-1">
                 <!-- First page -->
-                <button
-                    class="btn btn-sm preset-ghost"
+                <Button
+                    variant="outline"
+                    size="icon"
+                    class="h-9 w-9"
                     onclick={goToFirstPage}
                     disabled={currentPage === 0}
                     title="First page"
                 >
-                    <ChevronsLeft size="16" />
-                </button>
+                    <ChevronsLeft size={16} />
+                </Button>
 
                 <!-- Previous page -->
-                <button
-                    class="btn btn-sm preset-ghost"
+                <Button
+                    variant="outline"
+                    size="icon"
+                    class="h-9 w-9"
                     onclick={goToPreviousPage}
                     disabled={currentPage === 0}
                     title="Previous page"
                 >
-                    <ChevronLeft size="16" />
-                </button>
+                    <ChevronLeft size={16} />
+                </Button>
 
                 <!-- Page numbers -->
                 <div class="flex items-center gap-1">
                     {#each getVisiblePages() as pageNum}
                         {#if pageNum === 0 && getVisiblePages()[0] > 1}
-                            <button class="btn btn-sm preset-ghost" onclick={() => (currentPage = 0)}> 1 </button>
-                            <span class="px-1">...</span>
+                            <Button variant="outline" size="sm" class="h-9 w-9" onclick={() => (currentPage = 0)}>
+                                1
+                            </Button>
+                            <span class="px-1 text-muted-foreground">...</span>
                         {/if}
 
-                        <button
-                            class="btn btn-sm"
-                            class:preset-filled-secondary-500={currentPage === pageNum}
-                            class:preset-ghost={currentPage !== pageNum}
+                        <Button
+                            variant={currentPage === pageNum ? "default" : "outline"}
+                            size="sm"
+                            class="h-9 w-9"
                             onclick={() => (currentPage = pageNum)}
                         >
                             {pageNum + 1}
-                        </button>
+                        </Button>
 
                         {#if pageNum === getVisiblePages().slice(-1)[0] && getVisiblePages().slice(-1)[0] < maxPages - 2}
-                            <span class="px-1">...</span>
-                            <button class="btn btn-sm preset-ghost" onclick={() => (currentPage = maxPages - 1)}>
+                            <span class="px-1 text-muted-foreground">...</span>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                class="h-9 w-9"
+                                onclick={() => (currentPage = maxPages - 1)}
+                            >
                                 {maxPages}
-                            </button>
+                            </Button>
                         {/if}
                     {/each}
                 </div>
 
                 <!-- Next page -->
-                <button
-                    class="btn btn-sm preset-ghost"
+                <Button
+                    variant="outline"
+                    size="icon"
+                    class="h-9 w-9"
                     onclick={goToNextPage}
                     disabled={currentPage === maxPages - 1}
                     title="Next page"
                 >
-                    <ChevronRight size="16" />
-                </button>
+                    <ChevronRight size={16} />
+                </Button>
 
                 <!-- Last page -->
-                <button
-                    class="btn btn-sm preset-ghost"
+                <Button
+                    variant="outline"
+                    size="icon"
+                    class="h-9 w-9"
                     onclick={goToLastPage}
                     disabled={currentPage === maxPages - 1}
                     title="Last page"
                 >
-                    <ChevronsRight size="16" />
-                </button>
+                    <ChevronsRight size={16} />
+                </Button>
             </div>
         {/if}
     </div>
