@@ -1,116 +1,116 @@
 import type { SqlTemplateSchema } from "$lib/server/sql"
 
 export class DecisionTree {
-    id: number
-    text: string = $state("")
-    parent?: DecisionTree = $state(undefined)
-    children: DecisionTree[] = $state([])
+  id: number
+  text: string = $state("")
+  parent?: DecisionTree = $state(undefined)
+  children: DecisionTree[] = $state([])
 
-    constructor(table: SqlTemplateSchema[], rootId?: number, parent?: DecisionTree) {
-        let root: SqlTemplateSchema | undefined
-        if (rootId === undefined) {
-            root = table.find(node => node.parent_id === null)
-        } else {
-            root = table.find(node => node.id === rootId)
-        }
-
-        if (root === undefined) {
-            throw new Error("No root node found")
-        }
-        this.id = root.id
-        this.text = root.text
-        this.parent = parent
-        this.children = table
-            .filter(node => node.parent_id === this.id)
-            .sort((a, b) => a.priority - b.priority)
-            .map(child => new DecisionTree(table, child.id, this))
-        this.recursiveSortChildren()
+  constructor(table: SqlTemplateSchema[], rootId?: number, parent?: DecisionTree) {
+    let root: SqlTemplateSchema | undefined
+    if (rootId === undefined) {
+      root = table.find(node => node.parent_id === null)
+    } else {
+      root = table.find(node => node.id === rootId)
     }
 
-    get priority(): number {
-        return this.parent?.children.findIndex(child => child.id === this.id) ?? 0
+    if (root === undefined) {
+      throw new Error("No root node found")
     }
+    this.id = root.id
+    this.text = root.text
+    this.parent = parent
+    this.children = table
+      .filter(node => node.parent_id === this.id)
+      .sort((a, b) => a.priority - b.priority)
+      .map(child => new DecisionTree(table, child.id, this))
+    this.recursiveSortChildren()
+  }
 
-    getAncestors(): DecisionTree[] {
-        const parents: DecisionTree[] = []
-        let current: DecisionTree | undefined = this.parent
-        while (current) {
-            parents.unshift(current)
-            current = current.parent
-        }
-        return parents
+  get priority(): number {
+    return this.parent?.children.findIndex(child => child.id === this.id) ?? 0
+  }
+
+  getAncestors(): DecisionTree[] {
+    const parents: DecisionTree[] = []
+    let current: DecisionTree | undefined = this.parent
+    while (current) {
+      parents.unshift(current)
+      current = current.parent
     }
+    return parents
+  }
 
-    getChildrenRecursive(): DecisionTree[] {
-        const children: DecisionTree[] = []
-        for (const child of this.children) {
-            children.push(child)
-            children.push(...child.getChildrenRecursive())
-        }
-        return children
+  getChildrenRecursive(): DecisionTree[] {
+    const children: DecisionTree[] = []
+    for (const child of this.children) {
+      children.push(child)
+      children.push(...child.getChildrenRecursive())
     }
+    return children
+  }
 
-    filterChildrenByIds(ids: number[]): DecisionTree[] {
-        return this.getChildrenRecursive().filter(child => ids.includes(child.id))
+  filterChildrenByIds(ids: number[]): DecisionTree[] {
+    return this.getChildrenRecursive().filter(child => ids.includes(child.id))
+  }
+
+  getPath(): string[] {
+    const path: string[] = []
+    let current: DecisionTree | undefined = this.parent
+    while (current) {
+      path.unshift(current.text)
+      current = current.parent
     }
+    return path
+  }
 
-    getPath(): string[] {
-        const path: string[] = []
-        let current: DecisionTree | undefined = this.parent
-        while (current) {
-            path.unshift(current.text)
-            current = current.parent
-        }
-        return path
+  getNodeById(id: number | string): DecisionTree | null {
+    if (this.id === id) {
+      return this
     }
-
-    getNodeById(id: number | string): DecisionTree | null {
-        if (this.id === id) {
-            return this
-        }
-        for (const child of this.children) {
-            const node = child.getNodeById(id)
-            if (node) {
-                return node
-            }
-        }
-        return null
+    for (const child of this.children) {
+      const node = child.getNodeById(id)
+      if (node) {
+        return node
+      }
     }
+    return null
+  }
 
-    addChild(child: DecisionTree, index: number | undefined = undefined) {
-        if (index === undefined) {
-            index = this.children.length
-        }
-        child.parent = this
-        this.children.splice(index, 0, child)
-        return this
+  addChild(child: DecisionTree, index: number | undefined = undefined) {
+    if (index === undefined) {
+      index = this.children.length
     }
+    child.parent = this
+    this.children.splice(index, 0, child)
+    return this
+  }
 
-    deleteChild(id: number) {
-        const childIndex = this.children.findIndex(child => child.id === id)
-        if (childIndex === -1) {
-            return this
-        }
-        this.children.splice(childIndex, 1)
-        return this
+  deleteChild(id: number) {
+    const childIndex = this.children.findIndex(child => child.id === id)
+    if (childIndex === -1) {
+      return this
     }
+    this.children.splice(childIndex, 1)
+    return this
+  }
 
-    moveChild(id: number, newIndex: number) {
-        if (newIndex >= this.children.length) return this
+  moveChild(id: number, newIndex: number) {
+    if (newIndex >= this.children.length) return this
 
-        const currentIndex = this.children.findIndex(child => child.id === id)
-        if (currentIndex === -1 || currentIndex === newIndex) return this
+    const currentIndex = this.children.findIndex(child => child.id === id)
+    if (currentIndex === -1 || currentIndex === newIndex) return this
 
-        const child = this.children[currentIndex]
+    const child = this.children[currentIndex]
 
-        this.deleteChild(id)
-        this.addChild(child, newIndex)
+    this.deleteChild(id)
+    this.addChild(child, newIndex)
 
-        return this
-    }
+    return this
+  }
 
-    recursiveSortChildren() {
-        this.children = this.children?.sort((a, b) => a.priority - b.priority)
-        this.children?.forEach(child => child.recursiveSortChildren())
-    }
+  recursiveSortChildren() {
+    this.children = this.children?.sort((a, b) => a.priority - b.priority)
+    this.children?.forEach(child => child.recursiveSortChildren())
+  }
 }

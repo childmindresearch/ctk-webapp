@@ -37,58 +37,58 @@
     ```
 -->
 <script lang="ts">
-    import { Input } from "./ui/input"
+  import { Input } from "./ui/input"
 
-    interface Props {
-        label: string
-        required?: boolean
-        placeholder?: string
-        value?: string | null
-        type?: string
-        labelClass?: string
-        spanClass?: string
-        inputClass?: string
-        disabled?: boolean
-        maxlength?: number
-        minlength?: number
-        pattern?: string
-        [key: string]: any
-    }
+  interface Props {
+    label: string
+    required?: boolean
+    placeholder?: string
+    value?: string | null
+    type?: string
+    labelClass?: string
+    spanClass?: string
+    inputClass?: string
+    disabled?: boolean
+    maxlength?: number
+    minlength?: number
+    pattern?: string
+    [key: string]: any
+  }
 
-    let {
-        label,
-        required = false,
-        placeholder = "",
-        value = $bindable(""),
-        type = "text",
-        labelClass = "",
-        spanClass = "",
-        inputClass = "",
-        disabled = false,
-        maxlength,
-        minlength,
-        pattern,
-        ...restProps
-    }: Props = $props()
+  let {
+    label,
+    required = false,
+    placeholder = "",
+    value = $bindable(""),
+    type = "text",
+    labelClass = "",
+    spanClass = "",
+    inputClass = "",
+    disabled = false,
+    maxlength,
+    minlength,
+    pattern,
+    ...restProps
+  }: Props = $props()
 </script>
 
 <label class="label {labelClass}">
-    <span class="text-sm font-semibold text-muted-foreground {spanClass}">
-        {label}
-        {#if required}
-            <span class="text-destructive">*</span>
-        {/if}
-    </span>
-    <Input
-        class="input mt-2 {inputClass}"
-        {required}
-        {disabled}
-        {maxlength}
-        {minlength}
-        {pattern}
-        bind:value
-        {placeholder}
-        {type}
-        {...restProps}
-    />
+  <span class="text-sm font-semibold text-muted-foreground {spanClass}">
+    {label}
+    {#if required}
+      <span class="text-destructive">*</span>
+    {/if}
+  </span>
+  <Input
+    class="input mt-2 {inputClass}"
+    {required}
+    {disabled}
+    {maxlength}
+    {minlength}
+    {pattern}
+    bind:value
+    {placeholder}
+    {type}
+    {...restProps}
+  />
 </label>
