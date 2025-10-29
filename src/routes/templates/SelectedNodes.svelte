@@ -2,13 +2,13 @@
     import { flip } from "svelte/animate"
     import { quintOut } from "svelte/easing"
     import type { DecisionTree } from "./DecisionTree.svelte"
-    import { ArrowUp, ArrowDown, Trash, ChevronRight } from "lucide-svelte"
+    import { ArrowUp, ArrowDown, FileQuestionMark, Trash, ChevronRight } from "lucide-svelte"
     import { toast } from "svelte-sonner"
     import { Button } from "$lib/components/ui/button"
     import { Card } from "$lib/components/ui/card"
     import * as Table from "$lib/components/ui/table"
     import { Badge } from "$lib/components/ui/badge"
-
+    import sanitizeHtml from "sanitize-html"
     export let nodes: DecisionTree[]
 
     function removeNode(node: DecisionTree): void {
@@ -37,7 +37,7 @@
     <Card class="p-8">
         <div class="flex flex-col items-center justify-center text-center">
             <div class="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
-                <Trash class="h-8 w-8 text-muted-foreground" />
+                <FileQuestionMark class="h-8 w-8 text-muted-foreground" />
             </div>
             <h3 class="text-lg font-semibold mb-2">No Templates Selected</h3>
             <p class="text-muted-foreground">Add templates from the Templates List to see them here.</p>
@@ -103,7 +103,7 @@
                                             variant={index === getNodePath(node).length - 1 ? "default" : "secondary"}
                                             class="font-normal"
                                         >
-                                            {path}
+                                            {sanitizeHtml(path, { allowedTags: [] })}
                                         </Badge>
                                     {/each}
                                 </nav>

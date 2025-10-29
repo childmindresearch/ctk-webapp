@@ -58,12 +58,8 @@
         </AlertDialog.Header>
 
         <AlertDialog.Footer>
-            <AlertDialog.Cancel>
-                <Button variant="outline">Cancel</Button>
-            </AlertDialog.Cancel>
-            <AlertDialog.Action>
-                <Button onclick={onDelete} variant="destructive">Delete</Button>
-            </AlertDialog.Action>
+            <AlertDialog.Cancel>Cancel</AlertDialog.Cancel>
+            <AlertDialog.Action onclick={onDelete}>Delete</AlertDialog.Action>
         </AlertDialog.Footer>
     </AlertDialog.Content>
 </AlertDialog.Root>
