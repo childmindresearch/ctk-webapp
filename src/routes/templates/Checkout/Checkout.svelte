@@ -10,6 +10,7 @@
     import Label from "$lib/components/ui/label/label.svelte"
     import { Packer } from "docx"
     import { downloadBlob } from "$lib/utils"
+    import { toast } from "svelte-sonner"
 
     type Props = {
         nodes: DecisionTree[]
@@ -23,7 +24,7 @@
     )
     let templateValues: string[] = $state([])
 
-    const pronounsArray = [
+    const pronounOptions = [
         { value: "0", pronouns: ["he", "him", "his", "his", "himself"] },
         { value: "1", pronouns: ["she", "her", "her", "hers", "herself"] },
         {
@@ -33,9 +34,26 @@
         { value: "3", pronouns: ["ze", "zir", "zir", "zirs", "zirself"] }
     ]
 
-    let selectedPronounValue = $state("0")
+    let pronounValue = $state("")
+    let pronounTriggerContent = $derived.by(() => {
+        const pronounSet = pronounOptions.find(p => p.value === pronounValue)
+        return pronounSet === undefined ? "Select pronouns" : pronounSet.pronouns.join(", ")
+    })
 
-    async function downloadText() {
+    function validate(): boolean {
+        if (hasPronounTemplate && pronounOptions.find(p => p.value === pronounValue) === undefined) {
+            toast.info("Please select pronouns.")
+            return false
+        }
+        if (templateValues.length !== nonPronounTemplates.length || templateValues.some(s => s === "")) {
+            toast.info("Please fill out all fields.")
+            return false
+        }
+        return true
+    }
+
+    async function downloadText(): Promise<void> {
+        if (!validate()) return
         let replacements = nonPronounTemplates
             .map(t => t.name)
             .reduce(
@@ -46,7 +64,7 @@
                 {} as Record<TemplateName, string>
             )
         if (hasPronounTemplate) {
-            pronounsArray[parseInt(selectedPronounValue)].pronouns.forEach((pnoun, index) => {
+            pronounOptions[parseInt(pronounValue)].pronouns.forEach((pnoun, index) => {
                 replacements[`pronoun-${index}` as TemplateName] = pnoun
             })
         }
@@ -84,6 +102,7 @@
                         type="text"
                         placeholder={template.tooltip}
                         bind:value={templateValues[index]}
+                        autocomplete="off"
                     />
                 </div>
             {/each}
@@ -92,13 +111,15 @@
         {#if hasPronounTemplate}
             <div class="space-y-2">
                 <p class="text-sm font-medium">Please select the patient's pronouns.</p>
-                <Select.Root type="single" bind:value={selectedPronounValue}>
-                    <Select.Trigger class="max-w-80">Select Pronouns</Select.Trigger>
+                <Select.Root type="single" bind:value={pronounValue}>
+                    <Select.Trigger>{pronounTriggerContent}</Select.Trigger>
                     <Select.Content>
                         <Select.Group>
                             <Select.Label>Pronouns</Select.Label>
-                            {#each pronounsArray as pronoun (pronoun.value)}
-                                <Select.Item value={pronoun.value} label={pronoun.pronouns.join(", ")} />
+                            {#each pronounOptions as pronoun (pronoun.value)}
+                                <Select.Item value={pronoun.value} label={pronoun.pronouns.join(", ")}>
+                                    {pronoun.pronouns.join(", ")}
+                                </Select.Item>
                             {/each}
                         </Select.Group>
                     </Select.Content>
