@@ -144,8 +144,7 @@ export const TemplateExtension = Node.create<TemplateOptions>({
                     "data-template": "",
                     "data-extension-type": "template",
                     "data-name": this.name,
-                    "data-options": this.options,
-                    style: TEMPLATE_CSS
+                    "data-options": this.options
                 },
                 HTMLAttributes
             ),

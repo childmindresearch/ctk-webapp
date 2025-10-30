@@ -11,6 +11,7 @@
     import { Packer } from "docx"
     import { downloadBlob } from "$lib/utils"
     import { toast } from "svelte-sonner"
+    import { Spinner } from "$lib/components/ui/spinner"
 
     type Props = {
         nodes: DecisionTree[]
@@ -23,6 +24,7 @@
         commands.templates.filter(t => !t.name.startsWith("pronoun")).filter(t => templates.includes(t.name))
     )
     let templateValues: string[] = $state([])
+    let isLoading = $state(false)
 
     const pronounOptions = [
         { value: "0", pronouns: ["he", "him", "his", "his", "himself"] },
@@ -54,6 +56,7 @@
 
     async function downloadText(): Promise<void> {
         if (!validate()) return
+        isLoading = true
         let replacements = nonPronounTemplates
             .map(t => t.name)
             .reduce(
@@ -76,6 +79,8 @@
             })
         } catch (e) {
             console.log(e)
+        } finally {
+            isLoading = false
         }
     }
 </script>
@@ -126,6 +131,10 @@
                 </Select.Root>
             </div>
         {/if}
-        <Button onclick={downloadText}>Download</Button>
+        {#if isLoading}
+            <Spinner />
+        {:else}
+            <Button onclick={downloadText}>Download</Button>
+        {/if}
     </div>
 {/if}
