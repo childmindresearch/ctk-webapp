@@ -2,7 +2,6 @@
     import { FilePlus2, FolderClosed, FolderOpen } from "lucide-svelte"
     import Sortable, { type SortableEvent } from "sortablejs"
     import { onMount } from "svelte"
-    import SvelteMarkdown from "svelte-markdown"
     import { Button } from "$lib/components/ui/button"
     import { cn } from "$lib/utils"
     import type { DecisionTree } from "../DecisionTree.svelte"
@@ -11,6 +10,7 @@
     import EditButton from "./EditButton.svelte"
     import SortableNestedNode from "./SortableNestedNode.svelte"
     import { openNodeIds } from "./store"
+    import sanitizeHtml from "sanitize-html"
 
     type Props = {
         node: DecisionTree
@@ -25,6 +25,15 @@
     let sorter: Sortable | undefined = undefined
     let hasDragged = $state(false)
 
+    function sanitize(html: string): string {
+        return sanitizeHtml(html, {
+            allowedTags: ["a", "span", "p", "h1", "h2", "h3", "table", "tbody", "td", "tfoot", "th", "thead", "tr"],
+
+            allowedAttributes: {
+                span: ["style"]
+            }
+        })
+    }
     async function onDragChildren(event: Sortable.SortableEvent) {
         await onDrag(event)
         hasDragged = !hasDragged
@@ -95,7 +104,8 @@
         </Button>
 
         <div class="flex-1 overflow-y-auto max-h-[200px] prose prose-sm dark:prose-invert">
-            <SvelteMarkdown source={node.text} />
+            <!-- eslint-disable-next-line svelte/no-at-html-tags -->
+            {@html sanitize(node.text)}
         </div>
 
         {#if editable}

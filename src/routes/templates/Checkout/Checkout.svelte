@@ -1,118 +1,140 @@
 <script lang="ts">
-    import { TriangleAlert } from "lucide-svelte"
+    import { FileQuestionMark } from "lucide-svelte"
     import type { DecisionTree } from "../DecisionTree.svelte"
-    import { allUpperCaseDashToCapitalizedSpace, getTemplateValues, submitMarkdownToDocx } from "./checkoutUtilities"
-    import { toast } from "svelte-sonner"
-    import { Spinner } from "$lib/components/ui/spinner"
     import { Button } from "$lib/components/ui/button"
     import { Input } from "$lib/components/ui/input"
     import * as Select from "$lib/components/ui/select"
-    import * as Alert from "$lib/components/ui/alert"
+    import { Card } from "$lib/components/ui/card"
+    import { getNodeTemplates, nodes2Docx } from "./CheckoutUtils"
+    import commands, { type TemplateName } from "$lib/components/edra/commands/toolbar-commands"
+    import Label from "$lib/components/ui/label/label.svelte"
+    import { Packer } from "docx"
+    import { downloadBlob } from "$lib/utils"
+    import { toast } from "svelte-sonner"
+    import { Spinner } from "$lib/components/ui/spinner"
 
     type Props = {
         nodes: DecisionTree[]
     }
 
     let { nodes }: Props = $props()
+    let templates = $derived([...new Set(nodes.flatMap(getNodeTemplates))])
+    let hasPronounTemplate = $derived(templates.find(t => t.startsWith("pronoun")) !== undefined)
+    let nonPronounTemplates = $derived(
+        commands.templates.filter(t => !t.name.startsWith("pronoun")).filter(t => templates.includes(t.name))
+    )
+    let templateValues: string[] = $state([])
     let isLoading = $state(false)
-    let values: string[] = $state([])
 
-    // A custom LUA filter in the backend converts ++{}++ to underlined. Commonmark does not support underlining.
-    const texts = nodes.map(node => `*++${node.parent?.text}++*\n\n${node.text}`)
-    const templates = texts.map(text => getTemplateValues(text)).flat()
-    const uniqueTemplates = templates.filter((value, _, self) => self.find(elem => elem.text === value.text) === value)
-    const inputTemplates = uniqueTemplates.filter(value => value.type === "input")
-    const containsPronouns = uniqueTemplates.some(value => value.type === "pronoun")
-    const containsWarnings = uniqueTemplates.some(value => value.type === "warning")
-
-    const pronounsArray = [
-        { value: "0", label: "he, him, his, his, himself", pronouns: ["he", "him", "his", "his", "himself"] },
-        { value: "1", label: "she, her, her, hers, herself", pronouns: ["she", "her", "her", "hers", "herself"] },
+    const pronounOptions = [
+        { value: "0", pronouns: ["he", "him", "his", "his", "himself"] },
+        { value: "1", pronouns: ["she", "her", "her", "hers", "herself"] },
         {
             value: "2",
-            label: "they, them, their, theirs, themselves",
             pronouns: ["they", "them", "their", "theirs", "themselves"]
         },
-        { value: "3", label: "ze, zir, zir, zirs, zirself", pronouns: ["ze", "zir", "zir", "zirs", "zirself"] }
+        { value: "3", pronouns: ["ze", "zir", "zir", "zirs", "zirself"] }
     ]
 
-    let selectedPronounValue = $state("0")
-    let pronouns = $derived(
-        pronounsArray.find(p => p.value === selectedPronounValue)?.pronouns ?? pronounsArray[0].pronouns
-    )
-    let triggerContent = $derived(pronounsArray.find(p => p.value === selectedPronounValue)?.label ?? "Select pronouns")
+    let pronounValue = $state("")
+    let pronounTriggerContent = $derived.by(() => {
+        const pronounSet = pronounOptions.find(p => p.value === pronounValue)
+        return pronounSet === undefined ? "Select pronouns" : pronounSet.pronouns.join(", ")
+    })
 
-    async function onSubmit(event: Event) {
-        event.preventDefault()
-        if (values.some(value => value === "")) {
-            toast.error("Please fill all the fields.")
-            return
+    function validate(): boolean {
+        if (hasPronounTemplate && pronounOptions.find(p => p.value === pronounValue) === undefined) {
+            toast.info("Please select pronouns.")
+            return false
         }
-        isLoading = true
-        let markdown = texts.join("  \n&nbsp;  \n\n") // Adds an "empty" line between each template
-        const rules = ["BASE_FORM", "PERS_PRONOUN_AGREEMENT", "NON3PRS_VERB", "UPPERCASE_SENTENCE_START"]
+        if (templateValues.length !== nonPronounTemplates.length || templateValues.some(s => s === "")) {
+            toast.info("Please fill out all fields.")
+            return false
+        }
+        return true
+    }
 
-        inputTemplates.forEach((template, index) => {
-            markdown = markdown.replace(new RegExp(`\\{\\{${template.text}\\}\\}`, "g"), values[index])
-        })
-        pronouns.forEach((pronoun, index) => {
-            markdown = markdown.replace(new RegExp(`\\{\\{PRONOUN-${index}\\}\\}`, "g"), pronoun)
-        })
+    async function downloadText(): Promise<void> {
+        if (!validate()) return
+        isLoading = true
+        let replacements = nonPronounTemplates
+            .map(t => t.name)
+            .reduce(
+                (acc, curr, index) => {
+                    acc[curr as TemplateName] = templateValues[index]
+                    return acc
+                },
+                {} as Record<TemplateName, string>
+            )
+        if (hasPronounTemplate) {
+            pronounOptions[parseInt(pronounValue)].pronouns.forEach((pnoun, index) => {
+                replacements[`pronoun-${index}` as TemplateName] = pnoun
+            })
+        }
 
         try {
-            await submitMarkdownToDocx(markdown, rules)
+            const docx = await nodes2Docx(nodes, replacements)
+            Packer.toBlob(docx).then(blob => {
+                downloadBlob(blob, "ctk_templates.docx")
+            })
+        } catch (e) {
+            console.log(e)
         } finally {
             isLoading = false
         }
     }
 </script>
 
-{#if containsWarnings}
-    <Alert.Root variant="destructive" class="mb-4">
-        <TriangleAlert class="h-4 w-4" />
-        <Alert.Title>Not all template values covered.</Alert.Title>
-        <Alert.Description
-            >Some of the template values will have to be filled in in the Word document.</Alert.Description
-        >
-    </Alert.Root>
-{/if}
-
-<div class="space-y-4">
-    <div class="flex flex-wrap gap-2">
-        {#each inputTemplates as template, index (template.text)}
-            <Input
-                class="max-w-60"
-                type="text"
-                placeholder={allUpperCaseDashToCapitalizedSpace(template.text)}
-                bind:value={values[index]}
-            />
-        {/each}
-    </div>
-
-    {#if containsPronouns}
-        <div class="space-y-2">
-            <p class="text-sm font-medium">Please select the patient's pronouns.</p>
-            <Select.Root type="single" bind:value={selectedPronounValue}>
-                <Select.Trigger class="max-w-80">
-                    {triggerContent}
-                </Select.Trigger>
-                <Select.Content>
-                    <Select.Group>
-                        <Select.Label>Pronouns</Select.Label>
-                        {#each pronounsArray as pronoun (pronoun.value)}
-                            <Select.Item value={pronoun.value} label={pronoun.label}>
-                                {pronoun.label}
-                            </Select.Item>
-                        {/each}
-                    </Select.Group>
-                </Select.Content>
-            </Select.Root>
+{#if nodes.length === 0}
+    <Card class="p-8">
+        <div class="flex flex-col items-center justify-center text-center">
+            <div class="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
+                <FileQuestionMark class="h-8 w-8 text-muted-foreground" />
+            </div>
+            <h3 class="text-lg font-semibold mb-2">No Templates Selected</h3>
+            <p class="text-muted-foreground">Add templates from the Templates List to export.</p>
         </div>
-    {/if}
+    </Card>
+{:else}
+    <div class="space-y-4">
+        <div class="flex flex-wrap gap-2">
+            {#each nonPronounTemplates as template, index (template)}
+                <div class="space-y-2">
+                    <Label for={template.name}>{template.tooltip}</Label>
+                    <Input
+                        id={template.name}
+                        class="max-w-60"
+                        type="text"
+                        placeholder={template.tooltip}
+                        bind:value={templateValues[index]}
+                        autocomplete="off"
+                    />
+                </div>
+            {/each}
+        </div>
 
-    {#if isLoading}
-        <Spinner />
-    {:else}
-        <Button onclick={onSubmit}>Download</Button>
-    {/if}
-</div>
+        {#if hasPronounTemplate}
+            <div class="space-y-2">
+                <p class="text-sm font-medium">Please select the patient's pronouns.</p>
+                <Select.Root type="single" bind:value={pronounValue}>
+                    <Select.Trigger>{pronounTriggerContent}</Select.Trigger>
+                    <Select.Content>
+                        <Select.Group>
+                            <Select.Label>Pronouns</Select.Label>
+                            {#each pronounOptions as pronoun (pronoun.value)}
+                                <Select.Item value={pronoun.value} label={pronoun.pronouns.join(", ")}>
+                                    {pronoun.pronouns.join(", ")}
+                                </Select.Item>
+                            {/each}
+                        </Select.Group>
+                    </Select.Content>
+                </Select.Root>
+            </div>
+        {/if}
+        {#if isLoading}
+            <Spinner />
+        {:else}
+            <Button onclick={downloadText}>Download</Button>
+        {/if}
+    </div>
+{/if}

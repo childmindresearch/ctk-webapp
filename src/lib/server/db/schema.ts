@@ -16,11 +16,11 @@ export const dsmCodes = pgTable("dsm_codes", {
 })
 
 // Templates table
-export const templates = pgTable("templates", {
+export const templates = pgTable("html_templates", {
     id: serial("id").primaryKey(),
     text: varchar("text", { length: 8000 }).notNull(),
     parentId: integer("parent_id"),
-    priority: integer("priority").notNull()
+    priority: integer("priority").notNull().default(0)
 })
 
 // Location type enum

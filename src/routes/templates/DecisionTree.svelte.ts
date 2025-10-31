@@ -1,4 +1,4 @@
-import type { SqlTemplateSchema } from "$lib/server/sql"
+import type { templates } from "$lib/server/db/schema"
 
 export class DecisionTree {
     id: number
@@ -6,10 +6,10 @@ export class DecisionTree {
     parent?: DecisionTree = $state(undefined)
     children: DecisionTree[] = $state([])
 
-    constructor(table: SqlTemplateSchema[], rootId?: number, parent?: DecisionTree) {
-        let root: SqlTemplateSchema | undefined
+    constructor(table: (typeof templates.$inferSelect)[], rootId?: number, parent?: DecisionTree) {
+        let root: typeof templates.$inferSelect | undefined
         if (rootId === undefined) {
-            root = table.find(node => node.parent_id === null)
+            root = table.find(node => node.parentId === null)
         } else {
             root = table.find(node => node.id === rootId)
         }
@@ -21,7 +21,7 @@ export class DecisionTree {
         this.text = root.text
         this.parent = parent
         this.children = table
-            .filter(node => node.parent_id === this.id)
+            .filter(node => node.parentId === this.id)
             .sort((a, b) => a.priority - b.priority)
             .map(child => new DecisionTree(table, child.id, this))
         this.recursiveSortChildren()
@@ -29,6 +29,15 @@ export class DecisionTree {
 
     get priority(): number {
         return this.parent?.children.findIndex(child => child.id === this.id) ?? 0
+    }
+
+    copy(): DecisionTree {
+        const copy = Object.create(DecisionTree)
+        copy.id = this.id
+        copy.text = this.text
+        copy.parent = this.parent
+        copy.children = this.children
+        return copy
     }
 
     getAncestors(): DecisionTree[] {

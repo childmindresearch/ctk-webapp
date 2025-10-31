@@ -1,25 +1,43 @@
 import { logger } from "$lib/server/logging"
-import { AZURE_FUNCTION_PYTHON_URL } from "$lib/server/environment"
+import { LANGUAGETOOL_URL } from "$lib/server/environment"
+import { error, json } from "@sveltejs/kit"
 
 export async function POST({ fetch, request }) {
     logger.info("Running LanguageTool")
-    const body = await request.text()
-    return await fetch(`${AZURE_FUNCTION_PYTHON_URL}/language-tool`, {
-        method: "POST",
-        body: body,
-        headers: {
-            "Content-Type": "application/json"
+
+    try {
+        const body = await request.json()
+        const { text, language = "en-US" } = body
+
+        if (typeof text !== "string") {
+            throw error(400, "Text is required")
         }
-    })
-        .then(async response => {
-            if (response.ok && response.body) {
-                return new Response(response.body)
-            } else {
-                throw new Error(await response.text())
+        if (text === "") {
+            return json({ matches: [] })
+        }
+
+        const params = new URLSearchParams({
+            text: text,
+            language: language,
+            enabledOnly: "false"
+        })
+
+        const response = await fetch(`${LANGUAGETOOL_URL}/v2/check`, {
+            method: "POST",
+            body: params,
+            headers: {
+                "Content-Type": "application/x-www-form-urlencoded"
             }
         })
-        .catch(error => {
-            logger.error("Error converting markdown to docx:", error)
-            return new Response(null, { status: 500 })
-        })
+
+        if (response.ok) {
+            return json(await response.json())
+        }
+        const errorText = await response.text()
+        logger.error("LanguageTool API error:", errorText)
+        throw error(response.status, `LanguageTool API error: ${errorText}`)
+    } catch (err) {
+        logger.error("Error processing LanguageTool request:", err)
+        throw error(500, "Internal server error processing text")
+    }
 }
