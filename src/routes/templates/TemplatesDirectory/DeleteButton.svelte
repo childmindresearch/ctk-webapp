@@ -6,6 +6,7 @@
     import * as AlertDialog from "$lib/components/ui/alert-dialog"
     import { Button } from "$lib/components/ui/button"
     import { toast } from "svelte-sonner"
+    import sanitizeHtml from "sanitize-html"
 
     type Props = {
         node: DecisionTree
@@ -14,7 +15,7 @@
     let { node }: Props = $props()
 
     let isModalOpen = $state(false)
-
+    const deleteText = shortenText(sanitizeHtml(node.text, { allowedTags: [] }))
     function modalClose() {
         isModalOpen = false
     }
@@ -53,7 +54,7 @@
             <AlertDialog.Title>Delete Template</AlertDialog.Title>
             <AlertDialog.Description>
                 Are you sure you want to delete
-                <span class="font-semibold">{shortenText(node.text)}</span>? This action cannot be undone.
+                <span class="font-semibold">{deleteText}</span>? This action cannot be undone.
             </AlertDialog.Description>
         </AlertDialog.Header>
 
