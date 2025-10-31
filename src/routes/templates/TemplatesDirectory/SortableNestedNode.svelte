@@ -2,7 +2,6 @@
     import { FilePlus2, FolderClosed, FolderOpen } from "lucide-svelte"
     import Sortable, { type SortableEvent } from "sortablejs"
     import { onMount } from "svelte"
-    import SvelteMarkdown from "svelte-markdown"
     import { Button } from "$lib/components/ui/button"
     import { cn } from "$lib/utils"
     import type { DecisionTree } from "../DecisionTree.svelte"
