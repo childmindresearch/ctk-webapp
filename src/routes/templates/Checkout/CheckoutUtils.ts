@@ -28,7 +28,7 @@ export async function nodes2Docx(
 ): Promise<DocxDocument> {
     const nodesWithHeader = nodes.map(n => n.copy())
     nodesWithHeader.forEach(
-        node => (node.text = `<p><u><i>${node.parent !== undefined ? node.parent.text : ""}</i></u>${node.text}</p>`)
+        node => (node.text = `<p><i><u>${node.parent !== undefined ? node.parent.text : ""}</u></i>${node.text}</p>`)
     )
     const docs = nodesWithHeader.map(node => replaceTemplates(node, replacements))
     const builder = new DocxBuilder()

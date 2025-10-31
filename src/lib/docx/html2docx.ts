@@ -1,9 +1,20 @@
-import { type HeadingLevel, UnderlineType, type Table, type ISectionOptions, type Paragraph, type TextRun } from "docx"
+import {
+    type HeadingLevel,
+    UnderlineType,
+    type Table,
+    type ISectionOptions,
+    type Paragraph,
+    type TextRun,
+    type IRunStylePropertiesOptions
+} from "docx"
 import { DocxBuilder, NullComponent } from "./builder"
 
+type Mutable<T> = {
+    -readonly [P in keyof T]: T[P]
+}
 type Match = {
     offset: number
-    replacements: { value: string }[]
+    replacements?: { value: string }[]
     length: number
 }
 type Html2DocxOptions = {
@@ -34,7 +45,6 @@ export class Html2DocxSection {
 
     private processChildNode(docNode: ChildNode): Promise<NullComponent | Paragraph | Table>[] {
         const nodeName = docNode.nodeName.toLowerCase()
-        console.log(docNode, nodeName)
         switch (nodeName) {
             case "p":
             case "h1":
@@ -83,50 +93,50 @@ export class Html2DocxSection {
         })
     }
 
-    private collectInlineSegments(docNodes: NodeListOf<ChildNode>, collector: LanguageCorrectionCollector): void {
+    private collectInlineSegments(
+        docNodes: NodeListOf<ChildNode>,
+        collector: LanguageCorrectionCollector,
+        parentStyling: Mutable<IRunStylePropertiesOptions> = {}
+    ): void {
         ;[...docNodes].forEach(node => {
+            let thisStyle = structuredClone(parentStyling)
             const nodeName = node.nodeName.toLowerCase()
 
             switch (nodeName) {
                 case "#text":
                     if (node.textContent) {
-                        collector.push(node.textContent, {})
+                        collector.push(node.textContent, thisStyle)
                     }
                     break
 
                 case "strong":
                 case "b":
-                    collector.push(node.textContent || "", { bold: true })
+                    thisStyle.bold = true
                     break
 
                 case "em":
                 case "i":
-                    collector.push(node.textContent || "", { italics: true })
+                    thisStyle.italics = true
                     break
 
                 case "u":
-                    collector.push(node.textContent || "", { underline: { type: UnderlineType.SINGLE } })
+                    thisStyle.underline = { type: UnderlineType.SINGLE }
                     break
 
                 case "span": {
                     const span = node as HTMLSpanElement
                     const style = span.getAttribute("data-template") !== null ? undefined : span.style
-
-                    const formatting: TextRunFormatting = {
+                    thisStyle = {
+                        ...thisStyle,
                         bold: style === undefined ? undefined : style.fontWeight === "bold",
                         italics: style === undefined ? undefined : style.fontStyle === "italic",
                         color: style === undefined ? undefined : this.extractColor(style.color)
                     }
-
-                    collector.push(node.textContent || "", formatting)
                     break
                 }
-
-                default:
-                    if (node.childNodes.length > 0) {
-                        this.collectInlineSegments(node.childNodes, collector)
-                    }
-                    break
+            }
+            if (node.childNodes.length > 0) {
+                this.collectInlineSegments(node.childNodes, collector, thisStyle)
             }
         })
     }
@@ -149,7 +159,10 @@ export class Html2DocxSection {
         return undefined
     }
 
-    private processInlineNodes(docNodes: NodeListOf<ChildNode>): Promise<TextRun | NullComponent>[] {
+    private processInlineNodes(
+        docNodes: NodeListOf<ChildNode>,
+        parentStyling: Mutable<IRunStylePropertiesOptions> = {}
+    ): Promise<TextRun | NullComponent>[] {
         const textRuns: Promise<TextRun | NullComponent>[] = []
         const builder = new DocxBuilder()
         ;[...docNodes].forEach(node => {
@@ -158,37 +171,22 @@ export class Html2DocxSection {
             switch (nodeName) {
                 case "#text":
                     if (node.textContent) {
-                        textRuns.push(builder.TextRun(node.textContent))
+                        textRuns.push(builder.TextRun({ text: node.textContent, ...parentStyling }))
                     }
                     break
 
                 case "strong":
                 case "b":
-                    textRuns.push(
-                        builder.TextRun({
-                            text: node.textContent || "",
-                            bold: true
-                        })
-                    )
+                    parentStyling["bold"] = true
                     break
 
                 case "em":
                 case "i":
-                    textRuns.push(
-                        builder.TextRun({
-                            text: node.textContent || "",
-                            italics: true
-                        })
-                    )
+                    parentStyling["italics"] = true
                     break
 
                 case "u":
-                    textRuns.push(
-                        builder.TextRun({
-                            text: node.textContent || "",
-                            underline: {}
-                        })
-                    )
+                    parentStyling.underline = { type: UnderlineType.SINGLE }
                     break
 
                 case "span": {
@@ -213,26 +211,18 @@ export class Html2DocxSection {
                         color = this.rgbToHex(r, g, b)
                     }
 
-                    textRuns.push(
-                        builder.TextRun({
-                            text: node.textContent || "",
-                            bold: style.fontWeight === "bold",
-                            italics: style.fontStyle === "italic",
-                            color
-                        })
-                    )
+                    parentStyling.bold = style.fontWeight === "bold"
+                    parentStyling.italics = style.fontStyle === "italic"
+                    parentStyling.color = color
                     break
                 }
 
                 case "br":
                     textRuns.push(builder.TextRun({ break: 1 }))
                     break
-
-                default:
-                    if (node.childNodes.length > 0) {
-                        textRuns.push(...this.processInlineNodes(node.childNodes))
-                    }
-                    break
+            }
+            if (node.childNodes.length > 0) {
+                textRuns.push(...this.processInlineNodes(node.childNodes, parentStyling))
             }
         })
         return textRuns
@@ -306,6 +296,7 @@ class LanguageCorrectionCollector {
             }, [] as number[])
 
         sortedCorrections.forEach(corr => {
+            if (corr.replacements === undefined || corr.replacements.length === 0) return
             const startRunIndex = offsets.findLastIndex(offset => offset <= corr.offset)
             let endRunIndex = offsets.findLastIndex(offset => offset < corr.offset + corr.length)
             if (endRunIndex === -1) endRunIndex = offsets.length - 1
