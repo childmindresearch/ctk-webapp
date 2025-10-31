@@ -33,7 +33,6 @@ export class Html2DocxSection {
     }
 
     private processChildNode(docNode: ChildNode): Promise<NullComponent | Paragraph | Table>[] {
-        console.log(docNode)
         const nodeName = docNode.nodeName.toLowerCase()
         switch (nodeName) {
             case "p":
@@ -121,6 +120,7 @@ export class Html2DocxSection {
                     collector.push(node.textContent || "", formatting)
                     break
                 }
+
                 default:
                     if (node.childNodes.length > 0) {
                         this.collectInlineSegments(node.childNodes, collector)
@@ -289,7 +289,6 @@ class LanguageCorrectionCollector {
 
         const text = this.segments.map(c => c.content).join("")
         const corrections = await this.languageTool(text)
-        console.log(text, corrections)
         return this.applyCorrections(corrections)
     }
 
@@ -307,7 +306,6 @@ class LanguageCorrectionCollector {
         sortedCorrections.forEach(corr => {
             const startRunIndex = offsets.findLastIndex(offset => offset <= corr.offset)
             let endRunIndex = offsets.findLastIndex(offset => offset < corr.offset + corr.length)
-            console.log(offsets, startRunIndex, endRunIndex)
             if (endRunIndex === -1) endRunIndex = offsets.length - 1
 
             segments[startRunIndex].content =
@@ -337,8 +335,7 @@ class LanguageCorrectionCollector {
             })
 
             if (!resp.ok) {
-                console.log(resp)
-                throw new Error(`HTTP error! status: ${resp.status}`)
+                throw new Error(`HTTP error: status: ${resp.status}`)
             }
 
             return (await resp.json())["matches"]

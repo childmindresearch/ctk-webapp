@@ -39,7 +39,8 @@
                     return res.json()
                 }
             })
-            .then(newNode => {
+            .then(newNodes => {
+                const newNode = newNodes[0]
                 const newChild = new DecisionTree([newNode], newNode.id, node)
                 node = node.addChild(newChild)
                 dialogOpen = false
