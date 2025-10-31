@@ -34,6 +34,7 @@ export class Html2DocxSection {
 
     private processChildNode(docNode: ChildNode): Promise<NullComponent | Paragraph | Table>[] {
         const nodeName = docNode.nodeName.toLowerCase()
+        console.log(docNode, nodeName)
         switch (nodeName) {
             case "p":
             case "h1":
@@ -289,6 +290,7 @@ class LanguageCorrectionCollector {
 
         const text = this.segments.map(c => c.content).join("")
         const corrections = await this.languageTool(text)
+        console.log(corrections)
         return this.applyCorrections(corrections)
     }
 

@@ -9,8 +9,11 @@ export async function POST({ fetch, request }) {
         const body = await request.json()
         const { text, language = "en-US" } = body
 
-        if (!text || typeof text !== "string") {
+        if (typeof text !== "string") {
             throw error(400, "Text is required")
+        }
+        if (text === "") {
+            return json({ matches: [] })
         }
 
         const params = new URLSearchParams({
@@ -27,13 +30,12 @@ export async function POST({ fetch, request }) {
             }
         })
 
-        if (!response.ok) {
-            const errorText = await response.text()
-            logger.error("LanguageTool API error:", errorText)
-            throw error(response.status, `LanguageTool API error: ${errorText}`)
+        if (response.ok) {
+            return json(await response.json())
         }
-
-        return json(await response.json())
+        const errorText = await response.text()
+        logger.error("LanguageTool API error:", errorText)
+        throw error(response.status, `LanguageTool API error: ${errorText}`)
     } catch (err) {
         logger.error("Error processing LanguageTool request:", err)
         throw error(500, "Internal server error processing text")

@@ -31,6 +31,15 @@ export class DecisionTree {
         return this.parent?.children.findIndex(child => child.id === this.id) ?? 0
     }
 
+    copy(): DecisionTree {
+        const copy = Object.create(DecisionTree)
+        copy.id = this.id
+        copy.text = this.text
+        copy.parent = this.parent
+        copy.children = this.children
+        return copy
+    }
+
     getAncestors(): DecisionTree[] {
         const parents: DecisionTree[] = []
         let current: DecisionTree | undefined = this.parent

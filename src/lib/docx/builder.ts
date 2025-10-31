@@ -3,7 +3,6 @@ import {
     Document,
     Footer,
     Header,
-    type ICommentOptions,
     type IHeaderOptions,
     type IImageOptions,
     ImageRun,
@@ -22,17 +21,16 @@ import {
     TableRow,
     TextRun
 } from "docx"
-
 type Awaitable<T> =
     // leave `undefined` alone
     [T] extends [undefined]
         ? T
         : // mutable arrays
           T extends (infer U)[]
-          ? Promise<U | NullComponent>[]
+          ? Awaitable<U | NullComponent>[] | Promise<Awaitable<U | NullComponent>[]>
           : // readonly arrays
             T extends ReadonlyArray<infer U>
-            ? ReadonlyArray<Promise<U | NullComponent>>
+            ? ReadonlyArray<Awaitable<U | NullComponent>> | Promise<ReadonlyArray<Awaitable<U | NullComponent>>>
             : // plain objects
               T extends Record<string, unknown>
               ? { [K in keyof T]: Awaitable<T[K]> } | Promise<{ [K in keyof T]: Awaitable<T[K]> }>
@@ -79,7 +77,7 @@ async function resolveProps<T extends Record<string, unknown>>(
     obj: AwaitableProps<T>
 ): Promise<{ [K in keyof T]: Awaited<T[K]> }> {
     const entries = await Promise.all(
-        Object.entries(obj).map(async ([k, v]) => {
+        Object.entries(await obj).map(async ([k, v]) => {
             const resolvedValue = await v
             if (resolvedValue === undefined) {
                 return [k, undefined]
@@ -139,45 +137,7 @@ function createStringBuilder<TOptions extends Record<string, unknown>, TComponen
     }
 }
 
-class CommentRegistry {
-    private _registry: ICommentOptions[]
-    private _idCounter: number
-
-    constructor() {
-        this._registry = []
-        this._idCounter = 0
-    }
-
-    get registry() {
-        return this._registry
-    }
-
-    get idCounter() {
-        return this._idCounter
-    }
-
-    public push(children: ICommentOptions["children"], author: string): ICommentOptions {
-        const comment = {
-            id: this._idCounter,
-            author: author,
-            date: new Date(),
-            children: children
-        }
-        this._registry.push(comment)
-        this._idCounter++
-        return comment
-    }
-
-    public flush(): ICommentOptions[] {
-        const registry = [...this._registry]
-        this._registry = []
-        return registry
-    }
-}
-
 export class DocxBuilder {
-    readonly commentRegistry: CommentRegistry
-
     Paragraph = createStringBuilder<IParagraphOptions, Paragraph>(Paragraph)
     TextRun = createStringBuilder<IRunOptions, TextRun>(TextRun)
 
@@ -189,10 +149,6 @@ export class DocxBuilder {
 
     Header = createBaseBuilder<IHeaderOptions, Header>(Header)
     Footer = createBaseBuilder<IHeaderOptions, Footer>(Footer)
-
-    constructor() {
-        this.commentRegistry = new CommentRegistry()
-    }
 
     /*
      * Section does not have a constructor in js docx, so we need to build our own.
@@ -210,8 +166,7 @@ export class DocxBuilder {
     async document(options: AwaitableProps<Omit<IPropertiesOptions, "comments">>): Promise<Document> {
         const resolved = await resolveProps(options)
         return new Document({
-            ...resolved,
-            comments: { children: this.commentRegistry.flush() }
+            ...resolved
         })
     }
 
