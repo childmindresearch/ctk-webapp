@@ -1,7 +1,7 @@
-import type { Content, Editor } from '@tiptap/core'
-import type { EditorState } from '@tiptap/pm/state'
-import type { EditorView } from '@tiptap/pm/view'
-import type { Snippet } from 'svelte'
+import type { Content, Editor } from "@tiptap/core"
+import type { EditorState } from "@tiptap/pm/state"
+import type { EditorView } from "@tiptap/pm/view"
+import type { Snippet } from "svelte"
 
 export interface EdraEditorProps {
     content?: Content

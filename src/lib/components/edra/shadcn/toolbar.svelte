@@ -1,37 +1,30 @@
 <script lang="ts">
-    import { cn } from '$lib/utils.js'
-    import commands from '../commands/toolbar-commands.js'
-    import type { EdraToolbarProps } from '../types.js'
-    import Alignment from './components/toolbar/Alignment.svelte'
-    import FontSize from './components/toolbar/FontSize.svelte'
-    import Headings from './components/toolbar/Headings.svelte'
-    import QuickColors from './components/toolbar/QuickColors.svelte'
-    import SearchAndReplace from './components/toolbar/SearchAndReplace.svelte'
-    import Templates from './components/toolbar/Templates.svelte'
-    import ToolBarIcon from './components/ToolBarIcon.svelte'
+    import { cn } from "$lib/utils.js"
+    import commands from "../commands/toolbar-commands.js"
+    import type { EdraToolbarProps } from "../types.js"
+    import Alignment from "./components/toolbar/Alignment.svelte"
+    import FontSize from "./components/toolbar/FontSize.svelte"
+    import Headings from "./components/toolbar/Headings.svelte"
+    import QuickColors from "./components/toolbar/QuickColors.svelte"
+    import SearchAndReplace from "./components/toolbar/SearchAndReplace.svelte"
+    import Templates from "./components/toolbar/Templates.svelte"
+    import ToolBarIcon from "./components/ToolBarIcon.svelte"
 
-    const {
-        editor,
-        class: className,
-        excludedCommands,
-        children,
-    }: EdraToolbarProps = $props()
+    const { editor, class: className, excludedCommands, children }: EdraToolbarProps = $props()
 
-    const toolbarCommands = Object.keys(commands).filter(
-        (key) => !excludedCommands?.includes(key)
-    )
+    const toolbarCommands = Object.keys(commands).filter(key => !excludedCommands?.includes(key))
 </script>
 
-<div class={cn('edra-toolbar', className)}>
+<div class={cn("edra-toolbar", className)}>
     {#if children}
         {@render children()}
     {:else}
         {#each toolbarCommands as cmd (cmd)}
-            {#if cmd === 'headings'}
+            {#if cmd === "headings"}
                 <Headings {editor} />
-            {:else if cmd === 'alignment'}
+            {:else if cmd === "alignment"}
                 <Alignment {editor} />
-            {:else if cmd === 'templates'}
+            {:else if cmd === "templates"}
                 <Templates {editor} />
             {:else}
                 {@const commandGroup = commands[cmd]}
