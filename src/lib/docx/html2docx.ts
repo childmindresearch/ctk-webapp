@@ -31,19 +31,19 @@ type TextRunFormatting = {
     color?: string
 }
 
-export class Html2DocxSection {
+export class Html2Docx {
     private useLanguageTool: boolean
 
     constructor(options: Html2DocxOptions) {
         this.useLanguageTool = options.useLanguageTool
     }
 
-    public run(doc: Document): Promise<ISectionOptions | NullComponent> {
+    public toSection(doc: Document): Promise<ISectionOptions> {
         const builder = new DocxBuilder()
-        return builder.section({ children: [...doc.childNodes].flatMap(child => this.processChildNode(child)) })
+        return builder.section({ children: [...doc.childNodes].flatMap(child => this.toElement(child)) })
     }
 
-    private processChildNode(docNode: ChildNode): Promise<NullComponent | Paragraph | Table>[] {
+    public toElement(docNode: ChildNode): Promise<NullComponent | Paragraph | Table>[] {
         const nodeName = docNode.nodeName.toLowerCase()
         switch (nodeName) {
             case "p":
@@ -60,7 +60,7 @@ export class Html2DocxSection {
             case "ol":
                 return this.processList(docNode as HTMLUListElement | HTMLOListElement)
             default:
-                return [...docNode.childNodes].flatMap(child => this.processChildNode(child))
+                return [...docNode.childNodes].flatMap(child => this.toElement(child))
         }
     }
 
@@ -167,34 +167,35 @@ export class Html2DocxSection {
         const builder = new DocxBuilder()
         ;[...docNodes].forEach(node => {
             const nodeName = node.nodeName.toLowerCase()
+            const thisStyling = structuredClone(parentStyling)
 
             switch (nodeName) {
                 case "#text":
                     if (node.textContent) {
-                        textRuns.push(builder.TextRun({ text: node.textContent, ...parentStyling }))
+                        textRuns.push(builder.TextRun({ text: node.textContent, ...thisStyling }))
                     }
                     break
 
                 case "strong":
                 case "b":
-                    parentStyling["bold"] = true
+                    thisStyling["bold"] = true
                     break
 
                 case "em":
                 case "i":
-                    parentStyling["italics"] = true
+                    thisStyling["italics"] = true
                     break
 
                 case "u":
-                    parentStyling.underline = { type: UnderlineType.SINGLE }
+                    thisStyling.underline = { type: UnderlineType.SINGLE }
                     break
 
                 case "span": {
                     const span = node as HTMLSpanElement
-                    let style = span.style
+                    const style = span.style
                     if (span.getAttribute("data-template") !== null) {
-                        // Don't use styling for templates.
-                        style = new CSSStyleDeclaration()
+                        // Overrule styling for templates.
+                        style.color = "#000000"
                     }
 
                     let color: string | undefined = undefined
@@ -211,9 +212,9 @@ export class Html2DocxSection {
                         color = this.rgbToHex(r, g, b)
                     }
 
-                    parentStyling.bold = style.fontWeight === "bold"
-                    parentStyling.italics = style.fontStyle === "italic"
-                    parentStyling.color = color
+                    thisStyling.bold = style.fontWeight === "bold"
+                    thisStyling.italics = style.fontStyle === "italic"
+                    thisStyling.color = color
                     break
                 }
 
@@ -222,7 +223,7 @@ export class Html2DocxSection {
                     break
             }
             if (node.childNodes.length > 0) {
-                textRuns.push(...this.processInlineNodes(node.childNodes, parentStyling))
+                textRuns.push(...this.processInlineNodes(node.childNodes, thisStyling))
             }
         })
         return textRuns
@@ -280,7 +281,6 @@ class LanguageCorrectionCollector {
 
         const text = this.segments.map(c => c.content).join("")
         const corrections = await this.languageTool(text)
-        console.log(corrections)
         return this.applyCorrections(corrections)
     }
 

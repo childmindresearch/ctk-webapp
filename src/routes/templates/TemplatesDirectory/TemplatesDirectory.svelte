@@ -9,7 +9,6 @@
     import ExportTemplates from "../ExportTemplates.svelte"
     import ModalSearchDecisionTree from "./ModalSearchDecisionTree.svelte"
     import { openNodeIds } from "./store"
-    import { Spinner } from "$lib/components/ui/spinner"
 
     type Props = {
         nodes: DecisionTree
@@ -31,36 +30,32 @@
     }
 </script>
 
-{#if !nodes}
-    <Spinner />
-{:else}
-    <div class="flex space-x-3 pb-2">
-        <Dialog.Root bind:open={isSearchModalOpen}>
-            <Dialog.Trigger>
-                <Button variant="default">
-                    <Search class="mr-2 h-4 w-4" />
-                    Search
-                </Button>
-            </Dialog.Trigger>
-            <Dialog.Content class="max-w-4xl max-h-[90vh] p-0">
-                <ModalSearchDecisionTree root={nodes} {onSearchClick} onSaveClick={onAddToCart} />
-            </Dialog.Content>
-        </Dialog.Root>
+<div class="flex space-x-3 pb-2">
+    <Dialog.Root bind:open={isSearchModalOpen}>
+        <Dialog.Trigger>
+            <Button variant="default">
+                <Search class="mr-2 h-4 w-4" />
+                Search
+            </Button>
+        </Dialog.Trigger>
+        <Dialog.Content class="max-w-4xl max-h-[90vh] p-0">
+            <ModalSearchDecisionTree root={nodes} {onSearchClick} onSaveClick={onAddToCart} />
+        </Dialog.Content>
+    </Dialog.Root>
 
-        {#if isAdmin}
-            <ExportTemplates {nodes} />
-            <div class="flex items-center space-x-2 ml-auto">
-                <Switch
-                    id="editable-mode"
-                    checked={editable}
-                    onCheckedChange={checked => {
-                        editable = checked
-                    }}
-                />
-                <Label for="editable-mode">Editable</Label>
-            </div>
-        {/if}
-    </div>
+    {#if isAdmin}
+        <ExportTemplates node={nodes} />
+        <div class="flex items-center space-x-2 ml-auto">
+            <Switch
+                id="editable-mode"
+                checked={editable}
+                onCheckedChange={checked => {
+                    editable = checked
+                }}
+            />
+            <Label for="editable-mode">Editable</Label>
+        </div>
+    {/if}
+</div>
 
-    <SortableNested node={filteredNodes} {onAddToCart} {editable} />
-{/if}
+<SortableNested node={filteredNodes} {onAddToCart} {editable} />

@@ -45,8 +45,12 @@ type AwaitableProps<T> = {
           : Awaitable<T[K]>
 }
 
-type AwaitablePropsWithPredicate<T> = AwaitableProps<T> & {
+type AwaitablePropsWithOptionalPredicate<T> = AwaitableProps<T> & {
     predicate?: () => boolean | Promise<boolean>
+}
+
+type AwaitablePropsWithRequiredPredicate<T> = AwaitableProps<T> & {
+    predicate: () => boolean | Promise<boolean>
 }
 
 function isPlainObject(value: unknown): value is Record<string, unknown> {
@@ -110,12 +114,16 @@ async function resolveProps<T extends Record<string, unknown>>(
 function createBaseBuilder<TOptions extends Record<string, unknown>, TComponent>(
     ComponentClass: new (options: TOptions) => TComponent
 ) {
-    return async (options: AwaitablePropsWithPredicate<TOptions>): Promise<TComponent | NullComponent> => {
+    async function builder(options: AwaitablePropsWithRequiredPredicate<TOptions>): Promise<TComponent | NullComponent>
+    async function builder(options: AwaitableProps<TOptions>): Promise<TComponent>
+    async function builder(
+        options: AwaitablePropsWithOptionalPredicate<TOptions>
+    ): Promise<TComponent | NullComponent> {
         const { predicate, ...optionsWithoutPredicate } = options
         if (predicate && !(await predicate())) return new NullComponent()
-
         return new ComponentClass(await resolveProps(optionsWithoutPredicate as AwaitableProps<TOptions>))
     }
+    return builder
 }
 
 /*
@@ -124,17 +132,19 @@ function createBaseBuilder<TOptions extends Record<string, unknown>, TComponent>
 function createStringBuilder<TOptions extends Record<string, unknown>, TComponent>(
     ComponentClass: new (options: TOptions | string) => TComponent
 ) {
-    return async (
-        options: AwaitablePropsWithPredicate<TOptions> | Awaitable<string>
-    ): Promise<TComponent | NullComponent> => {
+    async function builder(options: AwaitablePropsWithRequiredPredicate<TOptions>): Promise<TComponent | NullComponent>
+    async function builder(options: AwaitableProps<TOptions> | Awaitable<string>): Promise<TComponent>
+    async function builder(
+        options: AwaitablePropsWithOptionalPredicate<TOptions> | Awaitable<string>
+    ): Promise<TComponent | NullComponent> {
         const resolved = await options
         if (resolved === null) return new NullComponent()
-
         if (typeof resolved === "string") {
             return new ComponentClass(resolved)
         }
         return createBaseBuilder(ComponentClass as new (options: TOptions) => TComponent)(resolved)
     }
+    return builder
 }
 
 export class DocxBuilder {
@@ -153,7 +163,13 @@ export class DocxBuilder {
     /*
      * Section does not have a constructor in js docx, so we need to build our own.
      */
-    async section(options: AwaitablePropsWithPredicate<ISectionOptions>): Promise<ISectionOptions | NullComponent> {
+    async section(
+        options: AwaitablePropsWithRequiredPredicate<ISectionOptions>
+    ): Promise<ISectionOptions | NullComponent>
+    async section(options: AwaitableProps<ISectionOptions>): Promise<ISectionOptions>
+    async section(
+        options: AwaitablePropsWithOptionalPredicate<ISectionOptions>
+    ): Promise<ISectionOptions | NullComponent> {
         const { predicate, ...otherOptions } = options
         if (predicate && !(await predicate())) return new NullComponent()
         return await resolveProps(otherOptions as AwaitableProps<ISectionOptions>)
