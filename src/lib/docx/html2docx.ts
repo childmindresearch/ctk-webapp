@@ -104,7 +104,7 @@ export class Html2Docx {
         const reducedFragments = fragments.reduce(
             (acc, curr) => {
                 if (curr.length === 0) return acc
-                if (isTextSegment(acc[acc.length - 1]) && isTextSegment(curr[0])) {
+                if (acc.length > 0 && isTextSegment(acc[acc.length - 1][0]) && isTextSegment(curr[0])) {
                     // @ts-expect-error type errors covered by above if-statement.
                     acc[acc.length - 1].push(...curr)
                     return acc
@@ -118,6 +118,7 @@ export class Html2Docx {
         const paragraphs: (Paragraph[] | Table[])[] = []
         const builder = new DocxBuilderClient()
 
+        console.log(reducedFragments)
         for (let index = 0; index < reducedFragments.length; index++) {
             const fragment = reducedFragments[index]
             if (!isTextSegmentArray(fragment)) {
@@ -165,7 +166,7 @@ export class Html2Docx {
                 case "#text":
                     if (node.textContent) {
                         segments.push({
-                            content: node.textContent.trim(),
+                            content: node.textContent,
                             formatting: thisStyle
                         })
                     }
