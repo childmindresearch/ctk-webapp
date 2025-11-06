@@ -1,30 +1,10 @@
 import type { DecisionTree } from "../DecisionTree.svelte"
 import commands, { type TemplateName } from "$lib/components/edra/commands/toolbar-commands"
-import {
-    HeadingLevel,
-    Paragraph,
-    SectionType,
-    type Document as DocxDocument,
-    type ISectionOptions,
-    type IStylesOptions
-} from "docx"
+import { HeadingLevel, Paragraph, SectionType, Table, type Document as DocxDocument, type ISectionOptions } from "docx"
 import { DocxBuilderClient } from "$lib/docx/builder"
 import { Html2Docx } from "$lib/docx/html2docx"
 import sanitizeHtml from "sanitize-html"
 
-const BASE_STYLES: IStylesOptions = {
-    paragraphStyles: [
-        {
-            id: "Normal",
-            name: "Normal",
-            next: "Normal",
-            run: {
-                font: "Times",
-                size: 24 // Font size in Word seems to be size/2.
-            }
-        }
-    ]
-}
 export function getNodeTemplates(node: DecisionTree): TemplateName[] {
     const names = commands.templates.map(c => c.name)
     return names.filter(name => node.text.includes(`data-name="${name}"`))
@@ -59,37 +39,41 @@ export async function exportTemplates(
             properties: { type: SectionType.CONTINUOUS }
         }
     })
-    return await builder.document({ sections, styles: BASE_STYLES })
+    return await builder.document({ sections })
 }
 
-function exportRootParagraphs(node: DecisionTree, depth: number = 1): Promise<Paragraph>[] {
+/* Converts the paragraphs of a node and all its children. As paragraphs in HTML can contain tables, the output includes tables.
+ */
+async function exportRootParagraphs(node: DecisionTree, depth: number = 1): Promise<(Paragraph | Table)[]> {
     if (node.children.length === 0) {
         const parser = new DOMParser()
         const doc = parser.parseFromString(node.text, "text/html")
-        return getParagraphs(doc)
+        return await getParagraphs(doc)
     }
-    const builder = new DocxBuilderClient()
+    const childParagraphs = (
+        await Promise.all(node.children.map(child => exportRootParagraphs(child, depth + 1)))
+    ).flat()
+
     return [
-        builder.Paragraph({
+        new Paragraph({
             text: sanitizeHtml(node.text, { allowedTags: [] }),
             // @ts-expect-error type narrowing issue on heading.
             heading: HeadingLevel[`HEADING_${Math.min(depth, 6)}`]
         }),
-        ...node.children.flatMap(child => exportRootParagraphs(child, depth + 1))
+        ...childParagraphs
     ]
 }
 
-function getParagraphs(doc: Document): Promise<Paragraph>[] {
-    function getParagraphNode(node: ChildNode): Promise<Paragraph>[] {
+async function getParagraphs(doc: Document): Promise<(Paragraph | Table)[]> {
+    async function getParagraphNode(node: ChildNode): Promise<(Paragraph | Table)[]> {
         const nodeName = node.nodeName.toLowerCase()
-        console.log(nodeName)
         if (nodeName === "p" || (nodeName.length === 2 && nodeName.startsWith("h"))) {
-            const convertor = new Html2Docx({ useLanguageTool: false })
-            return convertor.toElements(node) as Promise<Paragraph>[]
+            const converter = new Html2Docx({ useLanguageTool: false })
+            return converter.toElements(node)
         }
-        return [...node.childNodes].flatMap(getParagraphNode)
+        return (await Promise.all([...node.childNodes].map(getParagraphNode))).flat()
     }
-    return [...doc.childNodes].flatMap(getParagraphNode)
+    return (await Promise.all([...doc.childNodes].map(getParagraphNode))).flat()
 }
 
 function replaceTemplates(node: DecisionTree, replacements: Record<TemplateName, string>): Document {
