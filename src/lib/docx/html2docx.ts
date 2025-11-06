@@ -18,6 +18,7 @@ type Match = {
     offset: number
     replacements?: { value: string }[]
     length: number
+    rule: { id: string }
 }
 type Html2DocxOptions = {
     useLanguageTool: boolean
@@ -44,6 +45,16 @@ function isTextSegment(obj: object): obj is TextSegment {
 function isTextSegmentArray(arr: object[]): arr is TextSegment[] {
     return arr.every(isTextSegment)
 }
+
+const LANGUAGETOOL_RULES = [
+    "BASE_FORM",
+    "CONSECUTIVE_SPACES",
+    "PERS_PRONOUN_AGREEMENT",
+    "NON3PRS_VERB",
+    "THE_US",
+    "UPPERCASE_SENTENCE_START",
+    "WEEK_HYPHEN"
+]
 
 export class Html2Docx {
     private useLanguageTool: boolean
@@ -118,7 +129,6 @@ export class Html2Docx {
         const paragraphs: (Paragraph[] | Table[])[] = []
         const builder = new DocxBuilderClient()
 
-        console.log(reducedFragments)
         for (let index = 0; index < reducedFragments.length; index++) {
             const fragment = reducedFragments[index]
             if (!isTextSegmentArray(fragment)) {
@@ -304,7 +314,7 @@ class LanguageCorrectionCollector {
     public async collect(): Promise<TextSegment[]> {
         if (this.segments.length === 0) return []
         const text = this.segments.map(c => c.content).join("")
-        const corrections = await this.languageTool(text)
+        const corrections = (await this.languageTool(text)).filter(match => LANGUAGETOOL_RULES.includes(match.rule.id))
         return this.applyCorrections(corrections)
     }
 
