@@ -1,13 +1,15 @@
 import {
+    Paragraph,
+    Table,
     type HeadingLevel,
     UnderlineType,
-    type Table,
     type ISectionOptions,
-    type Paragraph,
-    type TextRun,
-    type IRunStylePropertiesOptions
+    type IRunStylePropertiesOptions,
+    TextRun,
+    TableCell,
+    TableRow
 } from "docx"
-import { DocxBuilder, NullComponent } from "./builder"
+import { DocxBuilderClient } from "./builder"
 
 type Mutable<T> = {
     -readonly [P in keyof T]: T[P]
@@ -31,6 +33,18 @@ type TextRunFormatting = {
     color?: string
 }
 
+function isTextSegment(obj: object): obj is TextSegment {
+    try {
+        return Object.hasOwn(obj, "content") && Object.hasOwn(obj, "formatting")
+    } catch {
+        return false
+    }
+}
+
+function isTextSegmentArray(arr: object[]): arr is TextSegment[] {
+    return arr.every(isTextSegment)
+}
+
 export class Html2Docx {
     private useLanguageTool: boolean
 
@@ -39,12 +53,13 @@ export class Html2Docx {
     }
 
     public toSection(doc: Document): Promise<ISectionOptions> {
-        const builder = new DocxBuilder()
-        return builder.section({ children: [...doc.childNodes].flatMap(child => this.toElement(child)) })
+        const builder = new DocxBuilderClient()
+        return builder.section({ children: [...doc.childNodes].flatMap(child => this.toElements(child)) })
     }
 
-    public toElement(docNode: ChildNode): Promise<NullComponent | Paragraph | Table>[] {
+    public async toElements(docNode: ChildNode): Promise<(Paragraph | Table)[]> {
         const nodeName = docNode.nodeName.toLowerCase()
+        console.log("toElements", nodeName)
         switch (nodeName) {
             case "p":
             case "h1":
@@ -53,51 +68,95 @@ export class Html2Docx {
             case "h4":
             case "h5":
             case "h6":
-                return [this.processParagraph(docNode as HTMLParagraphElement)]
+                return this.processParagraph(docNode as HTMLParagraphElement)
             case "table":
                 return [this.processTable(docNode as HTMLTableElement)]
             case "ul":
             case "ol":
                 return this.processList(docNode as HTMLUListElement | HTMLOListElement)
             default:
-                return [...docNode.childNodes].flatMap(child => this.toElement(child))
+                return (await Promise.all([...docNode.childNodes].map(child => this.toElements(child)))).flat()
         }
     }
 
-    private async processParagraph(
-        docNode: HTMLParagraphElement | HTMLHeadingElement
-    ): Promise<Paragraph | NullComponent> {
+    /*
+     * Processes paragraph and heading elements. As HTML allows for nesting of lists and tables inside paragraphs
+     * but Word expects them as separate paragraphs and Paragraphs are the unit where we have to run (async)
+     * LanguageTool, this function gets a bit messy.
+     */
+    private async processParagraph(docNode: HTMLParagraphElement | HTMLHeadingElement): Promise<(Paragraph | Table)[]> {
         const nodeName = docNode.nodeName.toLowerCase()
-        const builder = new DocxBuilder()
         const heading =
             nodeName !== "p"
                 ? (`Heading${parseInt(nodeName[1])}` as (typeof HeadingLevel)[keyof typeof HeadingLevel])
                 : undefined
 
-        if (!this.useLanguageTool) {
-            const textRuns = this.processInlineNodes(docNode.childNodes)
-            return builder.Paragraph({ heading, children: textRuns })
-        }
-
-        const collector = new LanguageCorrectionCollector()
-        this.collectInlineSegments(docNode.childNodes, collector)
-        const correctedSegments = await collector.collect()
-
-        const textRuns = correctedSegments.map(segment =>
-            builder.TextRun({ text: segment.content, ...segment.formatting })
+        const fragments = await Promise.all(
+            [...docNode.childNodes].map(child => {
+                const nodeName = child.nodeName.toLowerCase()
+                if (["ul", "ol", "p", "h1", "h2", "h3", "h4", "h5", "h6", "table"].includes(nodeName)) {
+                    return this.toElements(child)
+                }
+                return this.extractInlineSegments([child])
+            })
         )
 
-        return builder.Paragraph({
-            heading,
-            children: textRuns
-        })
+        const reducedFragments = fragments.reduce(
+            (acc, curr) => {
+                if (curr.length === 0) return acc
+                if (isTextSegment(acc[acc.length - 1]) && isTextSegment(curr[0])) {
+                    // @ts-expect-error type errors covered by above if-statement.
+                    acc[acc.length - 1].push(...curr)
+                    return acc
+                }
+                acc.push(curr)
+                return acc
+            },
+            [] as (Paragraph[] | Table[] | TextSegment[])[]
+        )
+
+        const paragraphs: (Paragraph[] | Table[])[] = []
+        const builder = new DocxBuilderClient()
+
+        for (let index = 0; index < reducedFragments.length; index++) {
+            const fragment = reducedFragments[index]
+            if (!isTextSegmentArray(fragment)) {
+                paragraphs.push(fragment)
+                continue
+            }
+
+            let corrected: TextSegment[] = fragment
+            if (this.useLanguageTool) {
+                const collector = new LanguageCorrectionCollector()
+                collector.push(...fragment)
+                corrected = await collector.collect()
+            }
+
+            const textRuns = corrected.map(
+                segment =>
+                    new TextRun({
+                        text: (segment as TextSegment).content,
+                        ...(segment as TextSegment).formatting
+                    })
+            )
+
+            paragraphs.push([
+                await builder.Paragraph({
+                    heading,
+                    children: textRuns
+                })
+            ])
+        }
+
+        return paragraphs.flat()
     }
 
-    private collectInlineSegments(
-        docNodes: NodeListOf<ChildNode>,
-        collector: LanguageCorrectionCollector,
+    private extractInlineSegments(
+        docNodes: NodeListOf<ChildNode> | ChildNode[],
         parentStyling: Mutable<IRunStylePropertiesOptions> = {}
-    ): void {
+    ): TextSegment[] {
+        const segments: TextSegment[] = []
+
         ;[...docNodes].forEach(node => {
             let thisStyle = structuredClone(parentStyling)
             const nodeName = node.nodeName.toLowerCase()
@@ -105,49 +164,57 @@ export class Html2Docx {
             switch (nodeName) {
                 case "#text":
                     if (node.textContent) {
-                        collector.push(node.textContent, thisStyle)
+                        segments.push({
+                            content: node.textContent.trim(),
+                            formatting: thisStyle
+                        })
                     }
                     break
-
                 case "strong":
                 case "b":
                     thisStyle.bold = true
                     break
-
                 case "em":
                 case "i":
                     thisStyle.italics = true
                     break
-
                 case "u":
                     thisStyle.underline = { type: UnderlineType.SINGLE }
                     break
-
                 case "span": {
                     const span = node as HTMLSpanElement
-                    const style = span.getAttribute("data-template") !== null ? undefined : span.style
+                    const isTemplate = span.getAttribute("data-template") !== null
+                    const style = isTemplate ? undefined : span.style
+
                     thisStyle = {
                         ...thisStyle,
-                        bold: style === undefined ? undefined : style.fontWeight === "bold",
-                        italics: style === undefined ? undefined : style.fontStyle === "italic",
-                        color: style === undefined ? undefined : this.extractColor(style.color)
+                        bold: style?.fontWeight === "bold" || thisStyle.bold,
+                        italics: style?.fontStyle === "italic" || thisStyle.italics,
+                        color: style ? this.extractColor(style.color) : thisStyle.color
                     }
                     break
                 }
+                case "br":
+                    segments.push({
+                        content: "\n",
+                        formatting: { ...thisStyle }
+                    })
+                    break
             }
+
             if (node.childNodes.length > 0) {
-                this.collectInlineSegments(node.childNodes, collector, thisStyle)
+                segments.push(...this.extractInlineSegments(node.childNodes, thisStyle))
             }
         })
+
+        return segments
     }
 
     private extractColor(color: string | undefined): string | undefined {
         if (!color) return undefined
-
         if (color.startsWith("#")) {
             return color.slice(1)
         }
-
         if (color.startsWith("rgb(")) {
             const [r, g, b] = color
                 .slice(4, -1)
@@ -155,109 +222,66 @@ export class Html2Docx {
                 .map(s => Number(s.trim()))
             return this.rgbToHex(r, g, b).slice(1) // Remove leading #
         }
-
         return undefined
     }
 
-    private processInlineNodes(
-        docNodes: NodeListOf<ChildNode>,
-        parentStyling: Mutable<IRunStylePropertiesOptions> = {}
-    ): Promise<TextRun | NullComponent>[] {
-        const textRuns: Promise<TextRun | NullComponent>[] = []
-        const builder = new DocxBuilder()
-        ;[...docNodes].forEach(node => {
-            const nodeName = node.nodeName.toLowerCase()
-            const thisStyling = structuredClone(parentStyling)
-
-            switch (nodeName) {
-                case "#text":
-                    if (node.textContent) {
-                        textRuns.push(builder.TextRun({ text: node.textContent, ...thisStyling }))
-                    }
-                    break
-
-                case "strong":
-                case "b":
-                    thisStyling["bold"] = true
-                    break
-
-                case "em":
-                case "i":
-                    thisStyling["italics"] = true
-                    break
-
-                case "u":
-                    thisStyling.underline = { type: UnderlineType.SINGLE }
-                    break
-
-                case "span": {
-                    const span = node as HTMLSpanElement
-                    const style = span.style
-                    if (span.getAttribute("data-template") !== null) {
-                        // Overrule styling for templates.
-                        style.color = "#000000"
-                    }
-
-                    let color: string | undefined = undefined
-                    if (style.color !== undefined) {
-                        if (style.color.startsWith("#")) {
-                            color = style.color.slice(1)
-                        }
-                        // Assume RGB code in the form `rgb(R, G, B)`.
-                        const [r, g, b] = style.color
-                            .slice(4, -1)
-                            .split(",")
-                            .map(s => s.trim())
-                            .map(Number)
-                        color = this.rgbToHex(r, g, b)
-                    }
-
-                    thisStyling.bold = style.fontWeight === "bold"
-                    thisStyling.italics = style.fontStyle === "italic"
-                    thisStyling.color = color
-                    break
-                }
-
-                case "br":
-                    textRuns.push(builder.TextRun({ break: 1 }))
-                    break
-            }
-            if (node.childNodes.length > 0) {
-                textRuns.push(...this.processInlineNodes(node.childNodes, thisStyling))
-            }
-        })
-        return textRuns
-    }
-    private processTable(node: HTMLTableElement): Promise<Table | NullComponent> {
-        const builder = new DocxBuilder()
+    private processTable(node: HTMLTableElement): Table {
         const rows = [...node.querySelectorAll("tr")].map(tr => {
             const cells = [...tr.querySelectorAll("td, th")].map(cell => {
-                return builder.TableCell({
+                const segments = this.extractInlineSegments(cell.childNodes)
+                const textRuns = segments.map(segment => new TextRun({ text: segment.content, ...segment.formatting }))
+                return new TableCell({
                     children: [
-                        builder.Paragraph({
-                            children: this.processInlineNodes(cell.childNodes)
+                        new Paragraph({
+                            children: textRuns
                         })
                     ]
                 })
             })
-
-            return builder.TableRow({ children: cells })
+            return new TableRow({ children: cells })
         })
-
-        return builder.Table({ rows })
+        return new Table({ rows })
     }
 
-    private processList(node: HTMLUListElement | HTMLOListElement): Promise<Paragraph | NullComponent>[] {
-        const builder = new DocxBuilder()
+    private processList(node: HTMLUListElement | HTMLOListElement, level: number = 0): Paragraph[] {
         const isOrdered = node.nodeName.toLowerCase() === "ol"
-
-        return [...node.querySelectorAll("li")].map(li => {
-            return builder.Paragraph({
-                bullet: isOrdered ? undefined : { level: 0 },
-                numbering: isOrdered ? { reference: "default", level: 0 } : undefined,
-                children: this.processInlineNodes(li.childNodes)
-            })
+        return [...node.children].flatMap(li => {
+            if (li.nodeName.toLowerCase() === "li") {
+                return this.processListItem(li as HTMLLIElement, level, isOrdered)
+            }
+            return []
         })
+    }
+
+    private processListItem(li: HTMLLIElement, level: number, isOrdered: boolean): Paragraph[] {
+        const paragraphs: Paragraph[] = []
+        const contentNodes: ChildNode[] = []
+        const nestedLists: (HTMLUListElement | HTMLOListElement)[] = []
+
+        li.childNodes.forEach(child => {
+            const nodeName = child.nodeName.toLowerCase()
+            if (["ul", "ol"].includes(nodeName)) {
+                nestedLists.push(child as HTMLUListElement | HTMLOListElement)
+            } else {
+                contentNodes.push(child)
+            }
+        })
+
+        const segments = this.extractInlineSegments(contentNodes)
+        const textRuns = segments.map(segment => new TextRun({ text: segment.content, ...segment.formatting }))
+        paragraphs.push(
+            new Paragraph({
+                bullet: isOrdered ? undefined : { level },
+                numbering: isOrdered ? { reference: "default", level } : undefined,
+                children: textRuns
+            })
+        )
+
+        nestedLists.forEach(nestedList => {
+            paragraphs.push(...this.processList(nestedList, level + 1))
+        })
+
+        return paragraphs
     }
 
     private rgbToHex(r: number, g: number, b: number): string {
@@ -272,13 +296,12 @@ export class Html2Docx {
 class LanguageCorrectionCollector {
     private segments: TextSegment[] = []
 
-    public push(content: string, formatting: TextRunFormatting): void {
-        this.segments.push({ content, formatting })
+    public push(...segments: TextSegment[]): void {
+        this.segments.push(...segments)
     }
 
     public async collect(): Promise<TextSegment[]> {
         if (this.segments.length === 0) return []
-
         const text = this.segments.map(c => c.content).join("")
         const corrections = await this.languageTool(text)
         return this.applyCorrections(corrections)
@@ -294,18 +317,15 @@ class LanguageCorrectionCollector {
                 if (acc.length === 0) return [0]
                 return [...acc, (acc.at(-1) as number) + segments[index - 1].content.length]
             }, [] as number[])
-
         sortedCorrections.forEach(corr => {
             if (corr.replacements === undefined || corr.replacements.length === 0) return
             const startRunIndex = offsets.findLastIndex(offset => offset <= corr.offset)
             let endRunIndex = offsets.findLastIndex(offset => offset < corr.offset + corr.length)
             if (endRunIndex === -1) endRunIndex = offsets.length - 1
-
             segments[startRunIndex].content =
                 segments[startRunIndex].content.slice(0, corr.offset - offsets[startRunIndex]) +
                 corr.replacements[0].value +
                 segments[startRunIndex].content.slice(corr.offset + corr.length - offsets[startRunIndex])
-
             let currIndex = startRunIndex + 1
             while (currIndex < endRunIndex + 1) {
                 segments[currIndex].content = segments[currIndex].content.slice(
@@ -326,11 +346,9 @@ class LanguageCorrectionCollector {
                 },
                 body: JSON.stringify({ text })
             })
-
             if (!resp.ok) {
                 throw new Error(`HTTP error: status: ${resp.status}`)
             }
-
             return (await resp.json())["matches"]
         } catch (error) {
             console.error("LanguageTool error:", error)

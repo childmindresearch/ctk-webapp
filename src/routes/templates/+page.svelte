@@ -13,7 +13,6 @@
     let tabSet = $state("templates")
 
     let nodes = $state(new DecisionTree(data.templateRows))
-    nodes.recursiveSortChildren()
     function onAddToCart(node: DecisionTree) {
         if (!node) return
         if (selectedNodes.find(savedNode => savedNode.id === node.id)) {

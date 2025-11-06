@@ -1,5 +1,6 @@
 // Factory for overloads of docx classes that allows for awaitable properties.
 import {
+    AlignmentType,
     Document,
     Footer,
     Header,
@@ -13,6 +14,7 @@ import {
     type ITableCellOptions,
     type ITableOptions,
     type ITableRowOptions,
+    LevelFormat,
     Paragraph,
     patchDocument,
     type PatchDocumentOptions,
@@ -21,6 +23,7 @@ import {
     TableRow,
     TextRun
 } from "docx"
+
 type Awaitable<T> =
     // leave `undefined` alone
     [T] extends [undefined]
@@ -147,7 +150,7 @@ function createStringBuilder<TOptions extends Record<string, unknown>, TComponen
     return builder
 }
 
-export class DocxBuilder {
+export class DocxBuilderClient {
     Paragraph = createStringBuilder<IParagraphOptions, Paragraph>(Paragraph)
     TextRun = createStringBuilder<IRunOptions, TextRun>(TextRun)
 
@@ -178,10 +181,31 @@ export class DocxBuilder {
     /*
      * Document needs a separate constructor so that generated comments can be added after section generation.
      * Adding your own comments is not (yet) supported.
+     * Adds some sensible defaults that can be overriden with the options.
      */
     async document(options: AwaitableProps<Omit<IPropertiesOptions, "comments">>): Promise<Document> {
         const resolved = await resolveProps(options)
         return new Document({
+            numbering: {
+                config: [
+                    {
+                        reference: "default",
+                        levels: [
+                            {
+                                level: 0,
+                                format: LevelFormat.UPPER_ROMAN,
+                                text: "%1",
+                                alignment: AlignmentType.START,
+                                style: {
+                                    paragraph: {
+                                        indent: { left: 2880, hanging: 2420 }
+                                    }
+                                }
+                            }
+                        ]
+                    }
+                ]
+            },
             ...resolved
         })
     }

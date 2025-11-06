@@ -8,7 +8,7 @@ import {
     type ISectionOptions,
     type IStylesOptions
 } from "docx"
-import { DocxBuilder } from "$lib/docx/builder"
+import { DocxBuilderClient } from "$lib/docx/builder"
 import { Html2Docx } from "$lib/docx/html2docx"
 import sanitizeHtml from "sanitize-html"
 
@@ -31,7 +31,7 @@ export function getNodeTemplates(node: DecisionTree): TemplateName[] {
 }
 
 export function exportRoot(node: DecisionTree): Promise<DocxDocument> {
-    const builder = new DocxBuilder()
+    const builder = new DocxBuilderClient()
     return builder.document({
         sections: [
             {
@@ -50,7 +50,7 @@ export async function exportTemplates(
         node => (node.text = `<p><i><u>${node.parent !== undefined ? node.parent.text : ""}</u></i>${node.text}</p>`)
     )
     const docs = nodesWithHeader.map(node => replaceTemplates(node, replacements))
-    const builder = new DocxBuilder()
+    const builder = new DocxBuilderClient()
     const convertor = new Html2Docx({ useLanguageTool: true })
     const sectionContents = await Promise.all(docs.map(d => convertor.toSection(d)))
     const sections = sectionContents.map(s => {
@@ -68,7 +68,7 @@ function exportRootParagraphs(node: DecisionTree, depth: number = 1): Promise<Pa
         const doc = parser.parseFromString(node.text, "text/html")
         return getParagraphs(doc)
     }
-    const builder = new DocxBuilder()
+    const builder = new DocxBuilderClient()
     return [
         builder.Paragraph({
             text: sanitizeHtml(node.text, { allowedTags: [] }),
@@ -85,7 +85,7 @@ function getParagraphs(doc: Document): Promise<Paragraph>[] {
         console.log(nodeName)
         if (nodeName === "p" || (nodeName.length === 2 && nodeName.startsWith("h"))) {
             const convertor = new Html2Docx({ useLanguageTool: false })
-            return convertor.toElement(node) as Promise<Paragraph>[]
+            return convertor.toElements(node) as Promise<Paragraph>[]
         }
         return [...node.childNodes].flatMap(getParagraphNode)
     }
