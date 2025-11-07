@@ -5,7 +5,7 @@
     import { Input } from "$lib/components/ui/input"
     import * as Select from "$lib/components/ui/select"
     import { Card } from "$lib/components/ui/card"
-    import { getNodeTemplates, nodes2Docx } from "./CheckoutUtils"
+    import { getNodeTemplates, exportTemplates } from "./CheckoutUtils"
     import commands, { type TemplateName } from "$lib/components/edra/commands/toolbar-commands"
     import Label from "$lib/components/ui/label/label.svelte"
     import { Packer } from "docx"
@@ -73,7 +73,7 @@
         }
 
         try {
-            const docx = await nodes2Docx(nodes, replacements)
+            const docx = await exportTemplates(nodes, replacements)
             Packer.toBlob(docx).then(blob => {
                 downloadBlob(blob, "ctk_templates.docx")
             })

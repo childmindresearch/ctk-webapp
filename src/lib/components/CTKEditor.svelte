@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { EdraEditor, EdraToolBar, EdraDragHandleExtended } from "$lib/components/edra/shadcn/index.js"
+    import { EdraEditor, EdraToolBar } from "$lib/components/edra/shadcn/index.js"
     import type { Editor } from "svelte-tiptap"
 
     type Props = {
@@ -22,8 +22,8 @@
         <EdraToolBar
             class="bg-secondary/50 flex w-full items-center overflow-x-auto border-b border-dashed p-0.5"
             {editor}
+            excludedCommands={["media"]}
         />
-        <EdraDragHandleExtended {editor} />
     {/if}
     <EdraEditor bind:editor {content} class="h-[30rem] max-h-screen overflow-y-scroll pr-2 pl-6" {onUpdate} />
 </div>

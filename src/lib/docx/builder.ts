@@ -1,5 +1,6 @@
 // Factory for overloads of docx classes that allows for awaitable properties.
 import {
+    AlignmentType,
     Document,
     Footer,
     Header,
@@ -13,6 +14,7 @@ import {
     type ITableCellOptions,
     type ITableOptions,
     type ITableRowOptions,
+    LevelFormat,
     Paragraph,
     patchDocument,
     type PatchDocumentOptions,
@@ -21,6 +23,7 @@ import {
     TableRow,
     TextRun
 } from "docx"
+
 type Awaitable<T> =
     // leave `undefined` alone
     [T] extends [undefined]
@@ -45,8 +48,12 @@ type AwaitableProps<T> = {
           : Awaitable<T[K]>
 }
 
-type AwaitablePropsWithPredicate<T> = AwaitableProps<T> & {
+type AwaitablePropsWithOptionalPredicate<T> = AwaitableProps<T> & {
     predicate?: () => boolean | Promise<boolean>
+}
+
+type AwaitablePropsWithRequiredPredicate<T> = AwaitableProps<T> & {
+    predicate: () => boolean | Promise<boolean>
 }
 
 function isPlainObject(value: unknown): value is Record<string, unknown> {
@@ -110,12 +117,16 @@ async function resolveProps<T extends Record<string, unknown>>(
 function createBaseBuilder<TOptions extends Record<string, unknown>, TComponent>(
     ComponentClass: new (options: TOptions) => TComponent
 ) {
-    return async (options: AwaitablePropsWithPredicate<TOptions>): Promise<TComponent | NullComponent> => {
+    async function builder(options: AwaitablePropsWithRequiredPredicate<TOptions>): Promise<TComponent | NullComponent>
+    async function builder(options: AwaitableProps<TOptions>): Promise<TComponent>
+    async function builder(
+        options: AwaitablePropsWithOptionalPredicate<TOptions>
+    ): Promise<TComponent | NullComponent> {
         const { predicate, ...optionsWithoutPredicate } = options
         if (predicate && !(await predicate())) return new NullComponent()
-
         return new ComponentClass(await resolveProps(optionsWithoutPredicate as AwaitableProps<TOptions>))
     }
+    return builder
 }
 
 /*
@@ -124,20 +135,22 @@ function createBaseBuilder<TOptions extends Record<string, unknown>, TComponent>
 function createStringBuilder<TOptions extends Record<string, unknown>, TComponent>(
     ComponentClass: new (options: TOptions | string) => TComponent
 ) {
-    return async (
-        options: AwaitablePropsWithPredicate<TOptions> | Awaitable<string>
-    ): Promise<TComponent | NullComponent> => {
+    async function builder(options: AwaitablePropsWithRequiredPredicate<TOptions>): Promise<TComponent | NullComponent>
+    async function builder(options: AwaitableProps<TOptions> | Awaitable<string>): Promise<TComponent>
+    async function builder(
+        options: AwaitablePropsWithOptionalPredicate<TOptions> | Awaitable<string>
+    ): Promise<TComponent | NullComponent> {
         const resolved = await options
         if (resolved === null) return new NullComponent()
-
         if (typeof resolved === "string") {
             return new ComponentClass(resolved)
         }
         return createBaseBuilder(ComponentClass as new (options: TOptions) => TComponent)(resolved)
     }
+    return builder
 }
 
-export class DocxBuilder {
+export class DocxBuilderClient {
     Paragraph = createStringBuilder<IParagraphOptions, Paragraph>(Paragraph)
     TextRun = createStringBuilder<IRunOptions, TextRun>(TextRun)
 
@@ -153,7 +166,13 @@ export class DocxBuilder {
     /*
      * Section does not have a constructor in js docx, so we need to build our own.
      */
-    async section(options: AwaitablePropsWithPredicate<ISectionOptions>): Promise<ISectionOptions | NullComponent> {
+    async section(
+        options: AwaitablePropsWithRequiredPredicate<ISectionOptions>
+    ): Promise<ISectionOptions | NullComponent>
+    async section(options: AwaitableProps<ISectionOptions>): Promise<ISectionOptions>
+    async section(
+        options: AwaitablePropsWithOptionalPredicate<ISectionOptions>
+    ): Promise<ISectionOptions | NullComponent> {
         const { predicate, ...otherOptions } = options
         if (predicate && !(await predicate())) return new NullComponent()
         return await resolveProps(otherOptions as AwaitableProps<ISectionOptions>)
@@ -162,10 +181,44 @@ export class DocxBuilder {
     /*
      * Document needs a separate constructor so that generated comments can be added after section generation.
      * Adding your own comments is not (yet) supported.
+     * Adds some sensible defaults that can be overridden with the options.
      */
     async document(options: AwaitableProps<Omit<IPropertiesOptions, "comments">>): Promise<Document> {
         const resolved = await resolveProps(options)
         return new Document({
+            styles: {
+                paragraphStyles: [
+                    {
+                        id: "Normal",
+                        name: "Normal",
+                        next: "Normal",
+                        run: {
+                            font: "Cambria",
+                            size: 24 // Font size in Word seems to be size/2.
+                        }
+                    }
+                ]
+            },
+            numbering: {
+                config: [
+                    {
+                        reference: "default",
+                        levels: [
+                            {
+                                level: 0,
+                                format: LevelFormat.UPPER_ROMAN,
+                                text: "%1",
+                                alignment: AlignmentType.START,
+                                style: {
+                                    paragraph: {
+                                        indent: { left: 2880, hanging: 2420 }
+                                    }
+                                }
+                            }
+                        ]
+                    }
+                ]
+            },
             ...resolved
         })
     }
