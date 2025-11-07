@@ -193,7 +193,7 @@ export class DocxBuilderClient {
                         name: "Normal",
                         next: "Normal",
                         run: {
-                            font: "Times",
+                            font: "Cambria",
                             size: 24 // Font size in Word seems to be size/2.
                         }
                     }

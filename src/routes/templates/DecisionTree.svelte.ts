@@ -50,7 +50,7 @@ export class DecisionTree {
         return parents
     }
 
-    private getChildrenRecursive(): DecisionTree[] {
+    public getChildrenRecursive(): DecisionTree[] {
         const children: DecisionTree[] = []
         for (const child of this.children) {
             children.push(child)
