@@ -5,7 +5,7 @@ test("the user can navigate to the templates page and download a template .docx 
     await page.locator(".lucide-folder-closed").nth(0).waitFor()
 
     const folder = page.locator(".lucide-folder-closed").nth(0)
-    await folder.watFor({ state: "visible" })
+    await folder.waitFor({ state: "visible" })
     await folder.click({ force: true })
 
     const leaf = page.locator(".lucide-file-plus-2").nth(0)
