@@ -4,7 +4,7 @@ test("the user can navigate to the templates page and download a template .docx 
     await page.goto("/templates")
     await page.locator(".lucide-folder-closed").nth(0).waitFor()
 
-    await page.waitForTimeout(100) // May solve E2E failure due to slow Github runner?
+    await page.waitForTimeout(100) // Solves E2E failure due to slow Github runner?
     const folder = page.locator(".lucide-folder-closed").nth(0)
     await folder.waitFor({ state: "visible" })
     await folder.click({ force: true })
@@ -16,6 +16,7 @@ test("the user can navigate to the templates page and download a template .docx 
     const generationPage = page.getByRole("tab").nth(2)
     await generationPage.click()
 
+    await page.waitForTimeout(100) // Solves E2E failure due to slow Github runner?
     const downloadButton = page.getByText("Download").nth(1)
     await downloadButton.click()
 
