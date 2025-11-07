@@ -1,14 +1,14 @@
 import { describe, it, expect } from "vitest"
 import { DecisionTree } from "./DecisionTree.svelte"
-import type { SqlTemplateSchema } from "$lib/server/sql"
+import { templates } from "$lib/server/db/schema"
 
 describe("DecisionTree", () => {
-    const mockData: SqlTemplateSchema[] = [
-        { id: 1, text: "Root", parent_id: null, priority: 0 },
-        { id: 2, text: "Child 1", parent_id: 1, priority: 0 },
-        { id: 3, text: "Child 2", parent_id: 1, priority: 1 },
-        { id: 4, text: "Grandchild 1", parent_id: 2, priority: 0 },
-        { id: 5, text: "Grandchild 2", parent_id: 2, priority: 1 }
+    const mockData: (typeof templates.$inferSelect)[] = [
+        { id: 1, text: "Root", parentId: null, priority: 0 },
+        { id: 2, text: "Child 1", parentId: 1, priority: 0 },
+        { id: 3, text: "Child 2", parentId: 1, priority: 1 },
+        { id: 4, text: "Grandchild 1", parentId: 2, priority: 0 },
+        { id: 5, text: "Grandchild 2", parentId: 2, priority: 1 }
     ]
 
     it("should construct a tree correctly", () => {
@@ -73,7 +73,7 @@ describe("DecisionTree", () => {
 
     it("should add child correctly", () => {
         const tree = new DecisionTree(mockData)
-        const newChild = new DecisionTree([{ id: 6, text: "New Child", parent_id: 1, priority: 0 }], 6)
+        const newChild = new DecisionTree([{ id: 6, text: "New Child", parentId: 1, priority: 0 }], 6)
 
         tree.addChild(newChild, 1)
 
@@ -85,7 +85,7 @@ describe("DecisionTree", () => {
 
     it("should add child at end for index too large", () => {
         const tree = new DecisionTree(mockData)
-        const newChild = new DecisionTree([{ id: 6, text: "New Child", parent_id: 1, priority: 0 }], 6)
+        const newChild = new DecisionTree([{ id: 6, text: "New Child", parentId: 1, priority: 0 }], 6)
 
         tree.addChild(newChild, 99)
 
@@ -114,10 +114,10 @@ describe("DecisionTree", () => {
     })
 
     it("should sort children recursively", () => {
-        const unsortedData: SqlTemplateSchema[] = [
-            { id: 1, text: "Root", parent_id: null, priority: 0 },
-            { id: 2, text: "Child 1", parent_id: 1, priority: 1 },
-            { id: 3, text: "Child 2", parent_id: 1, priority: 0 }
+        const unsortedData: (typeof templates.$inferSelect)[] = [
+            { id: 1, text: "Root", parentId: null, priority: 0 },
+            { id: 2, text: "Child 1", parentId: 1, priority: 1 },
+            { id: 3, text: "Child 2", parentId: 1, priority: 0 }
         ]
         const tree = new DecisionTree(unsortedData)
         expect(tree.children[0].id).toBe(3)

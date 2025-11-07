@@ -11,7 +11,7 @@ export async function POST({ fetch, request }) {
     if (formattingValue && typeof formattingValue === "string") {
         try {
             formatting = JSON.parse(formattingValue)
-        } catch (e) {
+        } catch {
             logger.warn("Failed to parse formatting, using default")
             formatting = {}
         }

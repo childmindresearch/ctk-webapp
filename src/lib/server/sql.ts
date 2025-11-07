@@ -20,13 +20,6 @@ const config = {
 
 export const pool = new Pool(config)
 
-export type SqlTemplateSchema = {
-    id: number
-    text: string
-    parent_id: number | null
-    priority: number
-}
-
 export type SqlDsmCodeSchema = {
     id: number
     code: string

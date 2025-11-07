@@ -3,16 +3,18 @@
     import type { DecisionTree } from "../DecisionTree.svelte"
     import SortableNestedNode from "./SortableNestedNode.svelte"
     import Sortable, { type SortableEvent } from "sortablejs"
-    import { Modal } from "@skeletonlabs/skeleton-svelte"
+    import * as AlertDialog from "$lib/components/ui/alert-dialog"
+    import { Button } from "$lib/components/ui/button"
 
     type Props = {
         node: DecisionTree
         onAddToCart: (node: DecisionTree) => void
         editable?: boolean
     }
-    let { node, onAddToCart, editable = true }: Props = $props()
-    let isModalOpen = $state(false)
 
+    let { node, onAddToCart, editable = true }: Props = $props()
+
+    let isModalOpen = $state(false)
     let movedNode = $state(node)
     let targetParentNode: DecisionTree | null = $state(node)
     let lastEvent: Sortable.SortableEvent | undefined = undefined
@@ -21,7 +23,6 @@
         isModalOpen = false
     }
 
-    //TODO: Clean up the onDrag / onMove interaction.
     async function onDrag(event: Sortable.SortableEvent) {
         if (event.oldIndex === undefined) return
         if (event.newIndex === undefined) return
@@ -33,7 +34,9 @@
 
         const sourceParentNode = node.getNodeById(sourceId)
         targetParentNode = node.getNodeById(targetId)
+
         if (!sourceParentNode || !targetParentNode) return
+
         movedNode = sourceParentNode.children[event.oldIndex]
         lastEvent = event
         isModalOpen = true
@@ -56,6 +59,7 @@
             })
         }).then(response => {
             if (!response.ok) return
+
             if (sourceId === targetId) {
                 // @ts-expect-error Typescript doesn't detect that newIndex cannot be undefined.
                 targetParentNode.moveChild(movedNode.id, lastEvent.newIndex)
@@ -64,30 +68,33 @@
                 ;(targetParentNode as DecisionTree).addChild(movedNode, (lastEvent as SortableEvent).newIndex)
             }
         })
+
+        modalClose()
     }
 </script>
 
 {#if targetParentNode !== null}
-    <Modal
-        open={isModalOpen}
-        onOpenChange={e => (isModalOpen = e.open)}
-        triggerBase="btn preset-tonal"
-        contentBase="card bg-surface-100-900 p-4 space-y-4 shadow-xl max-w-screen-sm"
-        backdropClasses="backdrop-blur-sm"
-    >
-        {#snippet content()}
-            <header>Move template</header>
-            <article>
-                Are you sure you want to move {shortenText(movedNode.text)} to {shortenText(
-                    (targetParentNode as DecisionTree).text
-                )}?
-            </article>
-            <footer class="flex justify-end gap-4">
-                <button type="button" class="btn preset-tonal" onclick={modalClose}>Cancel</button>
-                <button type="button" class="btn preset-filled" onclick={onMove}>Move</button>
-            </footer>
-        {/snippet}
-    </Modal>
+    <AlertDialog.Root bind:open={isModalOpen}>
+        <AlertDialog.Content>
+            <AlertDialog.Header>
+                <AlertDialog.Title>Move template</AlertDialog.Title>
+                <AlertDialog.Description>
+                    Are you sure you want to move
+                    <span class="font-semibold">{shortenText(movedNode.text)}</span>
+                    to
+                    <span class="font-semibold">{shortenText((targetParentNode as DecisionTree).text)}</span>?
+                </AlertDialog.Description>
+            </AlertDialog.Header>
+            <AlertDialog.Footer>
+                <AlertDialog.Cancel>
+                    <Button variant="outline">Cancel</Button>
+                </AlertDialog.Cancel>
+                <AlertDialog.Action>
+                    <Button onclick={onMove}>Move</Button>
+                </AlertDialog.Action>
+            </AlertDialog.Footer>
+        </AlertDialog.Content>
+    </AlertDialog.Root>
 {/if}
 
 <SortableNestedNode {node} {editable} _isRoot={true} {onAddToCart} {onDrag} />

@@ -6,6 +6,7 @@ import { DEVELOPMENT_USER } from "$lib/server/environment"
 import type { User } from "$lib/types"
 import type { HandleFetch, RequestEvent } from "@sveltejs/kit"
 import { StatusCode } from "$lib/utils"
+import type { RouteId } from "$app/types"
 
 type Endpoint = {
     path: string
@@ -57,6 +58,7 @@ export const handleFetch: HandleFetch = async ({ event, request, fetch }) => {
         try {
             logResponseData.error = await response.clone().text()
         } catch (e) {
+            logger.error(e)
             logResponseData.error = "Could not parse error response."
         }
     }
@@ -157,7 +159,7 @@ export async function getOrInsertUser(email?: string) {
     })
 }
 
-function isUserAuthorized(event: RequestEvent<Partial<Record<string, string>>, string | null>, user: User) {
+function isUserAuthorized(event: RequestEvent<Partial<Record<string, string>>, RouteId | null>, user: User): boolean {
     if (!user.is_admin && ADMIN_ENDPOINT_PATHS.some(path => event.request.url.match(path))) {
         return false
     }

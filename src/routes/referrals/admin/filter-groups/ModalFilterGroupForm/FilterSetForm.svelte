@@ -38,7 +38,7 @@
         <h3 class="text-lg font-semibold">Locations</h3>
     </div>
     <div class="grid grid-cols-3">
-        {#each locationAutoCompletions as location}
+        {#each locationAutoCompletions as location (location)}
             <label
                 class="flex items-center gap-2 cursor-pointer p-2 rounded-lg transition-colors duration-200 hover:preset-filled-surface-200-800 hover:shadow-sm"
             >
@@ -52,7 +52,7 @@
         <h3 class="text-lg font-semibold">Services</h3>
     </div>
     <div class="grid grid-cols-3">
-        {#each serviceAutoCompletions as service}
+        {#each serviceAutoCompletions as service (service)}
             <label
                 class="flex items-center gap-2 cursor-pointer p-2 rounded-lg transition-colors duration-200 hover:preset-filled-surface-200-800 hover:shadow-sm"
             >

@@ -1,4 +1,4 @@
-import type { SqlTemplateSchema } from "$lib/server/sql"
+import type { templates } from "$lib/server/db/schema"
 
 export class DecisionTree {
     id: number
@@ -6,10 +6,10 @@ export class DecisionTree {
     parent?: DecisionTree = $state(undefined)
     children: DecisionTree[] = $state([])
 
-    constructor(table: SqlTemplateSchema[], rootId?: number, parent?: DecisionTree) {
-        let root: SqlTemplateSchema | undefined
+    constructor(table: (typeof templates.$inferSelect)[], rootId?: number, parent?: DecisionTree) {
+        let root: typeof templates.$inferSelect | undefined
         if (rootId === undefined) {
-            root = table.find(node => node.parent_id === null)
+            root = table.find(node => node.parentId === null)
         } else {
             root = table.find(node => node.id === rootId)
         }
@@ -21,7 +21,7 @@ export class DecisionTree {
         this.text = root.text
         this.parent = parent
         this.children = table
-            .filter(node => node.parent_id === this.id)
+            .filter(node => node.parentId === this.id)
             .sort((a, b) => a.priority - b.priority)
             .map(child => new DecisionTree(table, child.id, this))
         this.recursiveSortChildren()
@@ -31,7 +31,16 @@ export class DecisionTree {
         return this.parent?.children.findIndex(child => child.id === this.id) ?? 0
     }
 
-    getAncestors(): DecisionTree[] {
+    public copy(): DecisionTree {
+        const copy = Object.create(DecisionTree)
+        copy.id = this.id
+        copy.text = this.text
+        copy.parent = this.parent
+        copy.children = this.children
+        return copy
+    }
+
+    public getAncestors(): DecisionTree[] {
         const parents: DecisionTree[] = []
         let current: DecisionTree | undefined = this.parent
         while (current) {
@@ -41,7 +50,7 @@ export class DecisionTree {
         return parents
     }
 
-    getChildrenRecursive(): DecisionTree[] {
+    public getChildrenRecursive(): DecisionTree[] {
         const children: DecisionTree[] = []
         for (const child of this.children) {
             children.push(child)
@@ -50,11 +59,11 @@ export class DecisionTree {
         return children
     }
 
-    filterChildrenByIds(ids: number[]): DecisionTree[] {
+    public filterChildrenByIds(ids: number[]): DecisionTree[] {
         return this.getChildrenRecursive().filter(child => ids.includes(child.id))
     }
 
-    getPath(): string[] {
+    public getPath(): string[] {
         const path: string[] = []
         let current: DecisionTree | undefined = this.parent
         while (current) {
@@ -64,7 +73,7 @@ export class DecisionTree {
         return path
     }
 
-    getNodeById(id: number | string): DecisionTree | null {
+    private getNodeById(id: number | string): DecisionTree | null {
         if (this.id === id) {
             return this
         }
@@ -77,7 +86,7 @@ export class DecisionTree {
         return null
     }
 
-    addChild(child: DecisionTree, index: number | undefined = undefined) {
+    public addChild(child: DecisionTree, index: number | undefined = undefined): this {
         if (index === undefined) {
             index = this.children.length
         }
@@ -86,7 +95,7 @@ export class DecisionTree {
         return this
     }
 
-    deleteChild(id: number) {
+    public deleteChild(id: number): this {
         const childIndex = this.children.findIndex(child => child.id === id)
         if (childIndex === -1) {
             return this
@@ -95,7 +104,7 @@ export class DecisionTree {
         return this
     }
 
-    moveChild(id: number, newIndex: number) {
+    public moveChild(id: number, newIndex: number): this {
         if (newIndex >= this.children.length) return this
 
         const currentIndex = this.children.findIndex(child => child.id === id)
@@ -109,7 +118,7 @@ export class DecisionTree {
         return this
     }
 
-    recursiveSortChildren() {
+    private recursiveSortChildren(): void {
         this.children = this.children?.sort((a, b) => a.priority - b.priority)
         this.children?.forEach(child => child.recursiveSortChildren())
     }

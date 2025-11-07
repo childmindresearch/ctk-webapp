@@ -6,7 +6,7 @@
         tree: DecisionTree
         filteredNodes?: DecisionTree[]
     }
-    let { tree, filteredNodes = [tree] }: Props = $props()
+    let { tree, filteredNodes = $bindable([tree]) }: Props = $props()
 
     const allChildNodes = tree.getChildrenRecursive()
     const pathsTextsAndIds = allChildNodes.map(node => ({

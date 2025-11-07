@@ -91,7 +91,7 @@ The component uses a cascading filter approach where filters are applied in sequ
 
 <div class="flex flex-col gap-3 p-3">
     <!-- Top Level Filters -->
-    {#each Object.entries(topLevelFilterNames) as [key, name]}
+    {#each Object.entries(topLevelFilterNames) as [key, name] (name)}
         <div class="w-full">
             <MultiSelectFilter
                 options={providers.map(p => String(p[key as keyof typeof p])).filter(isUnique)}

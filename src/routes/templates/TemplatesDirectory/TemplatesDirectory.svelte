@@ -1,10 +1,12 @@
 <script lang="ts">
-    import LoadingBar from "$lib/components/LoadingBar.svelte"
-    import { Switch } from "@skeletonlabs/skeleton-svelte"
+    import { Switch } from "$lib/components/ui/switch"
+    import { Label } from "$lib/components/ui/label"
+    import { Button } from "$lib/components/ui/button"
+    import * as Dialog from "$lib/components/ui/dialog"
+    import { Search } from "lucide-svelte"
     import type { DecisionTree } from "../DecisionTree.svelte"
     import SortableNested from "./SortableNested.svelte"
     import ExportTemplates from "../ExportTemplates.svelte"
-    import { Modal } from "@skeletonlabs/skeleton-svelte"
     import ModalSearchDecisionTree from "./ModalSearchDecisionTree.svelte"
     import { openNodeIds } from "./store"
 
@@ -13,6 +15,7 @@
         onAddToCart: (node: DecisionTree) => void
         isAdmin: boolean
     }
+
     let { nodes, onAddToCart, isAdmin = false }: Props = $props()
 
     let filteredNodes: DecisionTree = nodes
@@ -27,38 +30,32 @@
     }
 </script>
 
-{#if !nodes}
-    <LoadingBar label="Processing templates..." />
-{:else}
-    <div class="flex space-x-3 pb-2">
-        <Modal
-            open={isSearchModalOpen}
-            onOpenChange={e => (isSearchModalOpen = e.open)}
-            triggerBase="btn preset-filled-primary-500"
-            contentBase="card bg-surface-50 p-4 space-y-4 w-[80%]"
-            backdropClasses="backdrop-blur-sm"
-        >
-            {#snippet trigger()}
-                <i class="fas fa-search mr-2"></i>
+<div class="flex space-x-3 pb-2">
+    <Dialog.Root bind:open={isSearchModalOpen}>
+        <Dialog.Trigger>
+            <Button variant="default">
+                <Search class="mr-2 h-4 w-4" />
                 Search
-            {/snippet}
-            {#snippet content()}
-                <ModalSearchDecisionTree root={nodes} {onSearchClick} onSaveClick={onAddToCart} />
-            {/snippet}
-        </Modal>
+            </Button>
+        </Dialog.Trigger>
+        <Dialog.Content class="max-w-4xl max-h-[90vh] p-0">
+            <ModalSearchDecisionTree root={nodes} {onSearchClick} onSaveClick={onAddToCart} />
+        </Dialog.Content>
+    </Dialog.Root>
 
-        {#if isAdmin}
-            <ExportTemplates bind:nodes />
-            <div class="right-0 content-center">
-                <Switch
-                    name="slider-editable"
-                    checked={editable}
-                    onCheckedChange={e => {
-                        editable = e.checked
-                    }}>Editable</Switch
-                >
-            </div>
-        {/if}
-    </div>
-    <SortableNested node={filteredNodes} {onAddToCart} {editable} />
-{/if}
+    {#if isAdmin}
+        <ExportTemplates node={nodes} />
+        <div class="flex items-center space-x-2 ml-auto">
+            <Switch
+                id="editable-mode"
+                checked={editable}
+                onCheckedChange={checked => {
+                    editable = checked
+                }}
+            />
+            <Label for="editable-mode">Editable</Label>
+        </div>
+    {/if}
+</div>
+
+<SortableNested node={filteredNodes} {onAddToCart} {editable} />

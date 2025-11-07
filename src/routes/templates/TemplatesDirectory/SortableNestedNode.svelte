@@ -1,14 +1,16 @@
 <script lang="ts">
-    import { FilePlus2, FolderClosed, FolderOpen } from "@lucide/svelte"
+    import { FilePlus2, FolderClosed, FolderOpen } from "lucide-svelte"
     import Sortable, { type SortableEvent } from "sortablejs"
     import { onMount } from "svelte"
-    import SvelteMarkdown from "svelte-markdown"
+    import { Button } from "$lib/components/ui/button"
+    import { cn } from "$lib/utils"
     import type { DecisionTree } from "../DecisionTree.svelte"
     import CreateButton from "./CreateButton.svelte"
     import DeleteButton from "./DeleteButton.svelte"
     import EditButton from "./EditButton.svelte"
     import SortableNestedNode from "./SortableNestedNode.svelte"
     import { openNodeIds } from "./store"
+    import sanitizeHtml from "sanitize-html"
 
     type Props = {
         node: DecisionTree
@@ -17,10 +19,21 @@
         onAddToCart: (node: DecisionTree) => void
         _isRoot?: boolean
     }
+
     let { node, editable, onDrag, onAddToCart, _isRoot }: Props = $props()
+
     let sorter: Sortable | undefined = undefined
     let hasDragged = $state(false)
 
+    function sanitize(html: string): string {
+        return sanitizeHtml(html, {
+            allowedTags: ["a", "span", "p", "h1", "h2", "h3", "table", "tbody", "td", "tfoot", "th", "thead", "tr"],
+
+            allowedAttributes: {
+                span: ["style"]
+            }
+        })
+    }
     async function onDragChildren(event: Sortable.SortableEvent) {
         await onDrag(event)
         hasDragged = !hasDragged
@@ -36,6 +49,7 @@
     }
 
     let isFolded = $state(_isRoot ? false : !$openNodeIds.has(node.id))
+
     const unsubscribe = openNodeIds.subscribe(value => {
         if (node === undefined) return
         isFolded = _isRoot ? false : !value.has(node.id)
@@ -45,6 +59,7 @@
         const rootElem = document.getElementById(`node-${node.id}`)
         if (!rootElem) return
         if (node.children.length === 0) return
+
         sorter = Sortable.create(rootElem, {
             group: {
                 name: `node-${node.id}`,
@@ -63,6 +78,7 @@
                 }
             }
         })
+
         return unsubscribe
     })
 
@@ -70,31 +86,40 @@
 </script>
 
 <div>
-    <div class="flex items-center space-x-1">
-        <button class="hover-highlight" onclick={node.children.length === 0 ? () => onAddToCart(node) : fold}>
+    <div class="flex items-center gap-1">
+        <Button
+            variant="ghost"
+            size="icon"
+            class="h-8 w-8 shrink-0"
+            onclick={node.children.length === 0 ? () => onAddToCart(node) : fold}
+            aria-label={node.children.length === 0 ? "Add to cart" : isFolded ? "Expand folder" : "Collapse folder"}
+        >
             {#if node.children.length === 0}
-                <FilePlus2 class="text-secondary-400 hover:text-secondary-200" size="1.3rem" />
+                <FilePlus2 class="h-5 w-5 text-muted-foreground hover:text-foreground transition-colors" />
             {:else if isFolded}
-                <FolderClosed class="text-secondary-900 hover:text-secondary-700" size="1.3rem" />
+                <FolderClosed class="h-5 w-5 text-foreground hover:text-primary transition-colors" />
             {:else}
-                <FolderOpen class="text-secondary-600 hover:text-secondary-400" size="1.3rem" />
+                <FolderOpen class="h-5 w-5 text-muted-foreground hover:text-primary transition-colors" />
             {/if}
-        </button>
-        <div class="indented-list overflow-y-auto max-h-[200px]">
-            <SvelteMarkdown source={node.text} />
+        </Button>
+
+        <div class="flex-1 overflow-y-auto max-h-[200px] prose prose-sm dark:prose-invert">
+            <!-- eslint-disable-next-line svelte/no-at-html-tags -->
+            {@html sanitize(node.text)}
         </div>
+
         {#if editable}
-            <span class="grid grid-rows-1 grid-flow-col gap-1 items-center">
+            <div class="flex items-center gap-1 shrink-0">
                 <CreateButton {node} />
                 {#if !_isRoot}
                     <EditButton {node} />
                     <DeleteButton {node} />
                 {/if}
-            </span>
+            </div>
         {/if}
     </div>
 
-    <div id={`node-${node.id}`} class:hidden={isFolded} class="border-secondary-500 border-l-2 pl-3 mb-2">
+    <div id={`node-${node.id}`} class={cn("border-l-2 border-border pl-3 mb-2 transition-all", isFolded && "hidden")}>
         {#if !isFolded}
             {#key hasDragged}
                 {#each node.children as child, index (child.id)}

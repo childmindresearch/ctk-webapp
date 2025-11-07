@@ -1,55 +1,37 @@
 <script lang="ts">
-    import LoadingBar from "$lib/components/LoadingBar.svelte"
-    import { toaster } from "$lib/utils"
     import { DecisionTree } from "./DecisionTree.svelte"
-
     import { downloadBlob } from "$lib/utils"
-    import { nodesToMarkdown } from "./TemplatesDirectory/templateExport"
+    import { Spinner } from "$lib/components/ui/spinner"
+    import { toast } from "svelte-sonner"
+    import { Button } from "$lib/components/ui/button"
+    import { Packer } from "docx"
+    import { exportRoot } from "./Checkout/CheckoutUtils"
 
-    export let nodes: DecisionTree
+    const { node }: { node: DecisionTree } = $props()
+    let isLoading = $state(false)
 
-    let isLoading = false
-
-    function exportTemplates() {
-        if (!nodes) {
-            toaster.error({ title: "Templates have not finished loading." })
-            return
+    async function exportTemplates() {
+        try {
+            const doc = await exportRoot(node)
+            console.log(doc)
+            Packer.toBlob(doc).then(blob => {
+                downloadBlob(blob, "ctk_template_export.docx")
+            })
+        } catch (e) {
+            toast.error("Something went wrong with the export. Contact a developer.")
+            console.log(e)
         }
-        isLoading = true
-        const markdown = nodesToMarkdown(nodes)
-        const form = new FormData()
-        form.append("markdown", markdown)
-
-        fetch("/api/markdown2docx", {
-            method: "POST",
-            body: form
-        })
-            .then(async res => {
-                if (!res.ok) {
-                    throw new Error(await res.text())
-                }
-                return await res.blob()
-            })
-            .then(blob => {
-                const filename = "allTemplates.docx"
-                downloadBlob(blob, filename)
-                isLoading = false
-            })
-            .catch(error => {
-                toaster.error({ title: error.message })
-                isLoading = false
-            })
     }
 </script>
 
 {#if isLoading}
-    <LoadingBar label="Preparing template document." />
+    <Spinner />
 {:else}
-    <button
+    <Button
         disabled={isLoading}
         class="btn preset-filled-primary-500 hover:preset-soft-primary-500"
-        on:click={exportTemplates}
+        onclick={exportTemplates}
     >
         Export Templates
-    </button>
+    </Button>
 {/if}
