@@ -29,7 +29,16 @@ import IFrame from "@lucide/svelte/icons/code-xml"
 import Table from "@lucide/svelte/icons/table"
 import { LayoutTemplateIcon } from "@lucide/svelte"
 
-export type TemplateName = "parent" | "child" | "pronoun-0" | "pronoun-1" | "pronoun-2" | "pronoun-3" | "pronoun-4"
+export const TemplateNames = [
+    "parent",
+    "child",
+    "pronoun-0",
+    "pronoun-1",
+    "pronoun-2",
+    "pronoun-3",
+    "pronoun-4"
+] as const
+export type TemplateName = (typeof TemplateNames)[number]
 
 const commands: Record<string, EdraToolBarCommands[]> & {
     templates: (EdraToolBarCommands & { name: TemplateName })[]

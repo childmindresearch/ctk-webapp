@@ -31,16 +31,7 @@ export class DecisionTree {
         return this.parent?.children.findIndex(child => child.id === this.id) ?? 0
     }
 
-    public copy(): DecisionTree {
-        const copy = Object.create(DecisionTree)
-        copy.id = this.id
-        copy.text = this.text
-        copy.parent = this.parent
-        copy.children = this.children
-        return copy
-    }
-
-    public getAncestors(): DecisionTree[] {
+    getAncestors(): DecisionTree[] {
         const parents: DecisionTree[] = []
         let current: DecisionTree | undefined = this.parent
         while (current) {
@@ -50,7 +41,7 @@ export class DecisionTree {
         return parents
     }
 
-    public getChildrenRecursive(): DecisionTree[] {
+    getChildrenRecursive(): DecisionTree[] {
         const children: DecisionTree[] = []
         for (const child of this.children) {
             children.push(child)
@@ -59,11 +50,11 @@ export class DecisionTree {
         return children
     }
 
-    public filterChildrenByIds(ids: number[]): DecisionTree[] {
+    filterChildrenByIds(ids: number[]): DecisionTree[] {
         return this.getChildrenRecursive().filter(child => ids.includes(child.id))
     }
 
-    public getPath(): string[] {
+    getPath(): string[] {
         const path: string[] = []
         let current: DecisionTree | undefined = this.parent
         while (current) {
@@ -73,7 +64,7 @@ export class DecisionTree {
         return path
     }
 
-    private getNodeById(id: number | string): DecisionTree | null {
+    getNodeById(id: number | string): DecisionTree | null {
         if (this.id === id) {
             return this
         }
@@ -86,7 +77,7 @@ export class DecisionTree {
         return null
     }
 
-    public addChild(child: DecisionTree, index: number | undefined = undefined): this {
+    addChild(child: DecisionTree, index: number | undefined = undefined) {
         if (index === undefined) {
             index = this.children.length
         }
@@ -95,7 +86,7 @@ export class DecisionTree {
         return this
     }
 
-    public deleteChild(id: number): this {
+    deleteChild(id: number) {
         const childIndex = this.children.findIndex(child => child.id === id)
         if (childIndex === -1) {
             return this
@@ -104,7 +95,7 @@ export class DecisionTree {
         return this
     }
 
-    public moveChild(id: number, newIndex: number): this {
+    moveChild(id: number, newIndex: number) {
         if (newIndex >= this.children.length) return this
 
         const currentIndex = this.children.findIndex(child => child.id === id)
@@ -118,7 +109,7 @@ export class DecisionTree {
         return this
     }
 
-    private recursiveSortChildren(): void {
+    recursiveSortChildren() {
         this.children = this.children?.sort((a, b) => a.priority - b.priority)
         this.children?.forEach(child => child.recursiveSortChildren())
     }

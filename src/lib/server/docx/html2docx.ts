@@ -9,17 +9,15 @@ import {
     TableCell,
     TableRow
 } from "docx"
-import { DocxBuilderClient } from "./builder"
+import { DocxBuilderClient } from "../../docx/builder"
+import { languageTool, type LanguageToolResponseSchema } from "../languageTool"
+import { DOMParser } from "linkedom"
+import type z from "zod"
 
 type Mutable<T> = {
     -readonly [P in keyof T]: T[P]
 }
-type Match = {
-    offset: number
-    replacements?: { value: string }[]
-    length: number
-    rule: { id: string }
-}
+
 type Html2DocxOptions = {
     useLanguageTool: boolean
 }
@@ -63,14 +61,17 @@ export class Html2Docx {
         this.useLanguageTool = options.useLanguageTool
     }
 
-    public toSection(doc: Document): Promise<ISectionOptions> {
+    public toSection(html: string): Promise<ISectionOptions> {
+        console.log(html)
         const builder = new DocxBuilderClient()
+        const parser = new DOMParser()
+        const doc = parser.parseFromString(html, "text/html")
         return builder.section({ children: [...doc.childNodes].flatMap(child => this.toElements(child)) })
     }
 
     public async toElements(docNode: ChildNode): Promise<(Paragraph | Table)[]> {
         const nodeName = docNode.nodeName.toLowerCase()
-        console.log("toElements", nodeName)
+        console.log(nodeName)
         switch (nodeName) {
             case "p":
             case "h1":
@@ -283,7 +284,7 @@ export class Html2Docx {
         paragraphs.push(
             new Paragraph({
                 bullet: isOrdered ? undefined : { level },
-                numbering: isOrdered ? { reference: "default", level } : undefined,
+                numbering: isOrdered ? { reference: "ddefault", level } : undefined,
                 children: textRuns
             })
         )
@@ -314,13 +315,13 @@ class LanguageCorrectionCollector {
     public async collect(): Promise<TextSegment[]> {
         if (this.segments.length === 0) return []
         const text = this.segments.map(c => c.content).join("")
-        const corrections = (await this.languageTool(text)).filter(match => LANGUAGETOOL_RULES.includes(match.rule.id))
+        const matches = (await languageTool(text)).matches
+        const corrections = matches.filter(match => LANGUAGETOOL_RULES.includes(match.rule.id))
         return this.applyCorrections(corrections)
     }
 
-    private applyCorrections(corrections: Match[]): TextSegment[] {
-        const sortedCorrections = [...corrections]
-        sortedCorrections.sort((a, b) => b.offset - a.offset)
+    private applyCorrections(matches: z.infer<typeof LanguageToolResponseSchema>["matches"]): TextSegment[] {
+        matches.sort((a, b) => b.offset - a.offset)
         const segments = [...this.segments]
         const offsets = segments
             .map(s => s.content)
@@ -328,7 +329,7 @@ class LanguageCorrectionCollector {
                 if (acc.length === 0) return [0]
                 return [...acc, (acc.at(-1) as number) + segments[index - 1].content.length]
             }, [] as number[])
-        sortedCorrections.forEach(corr => {
+        matches.forEach(corr => {
             if (corr.replacements === undefined || corr.replacements.length === 0) return
             const startRunIndex = offsets.findLastIndex(offset => offset <= corr.offset)
             let endRunIndex = offsets.findLastIndex(offset => offset < corr.offset + corr.length)
@@ -346,24 +347,5 @@ class LanguageCorrectionCollector {
             }
         })
         return segments
-    }
-
-    private async languageTool(text: string): Promise<Match[]> {
-        try {
-            const resp = await fetch("/api/language-tool", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({ text })
-            })
-            if (!resp.ok) {
-                throw new Error(`HTTP error: status: ${resp.status}`)
-            }
-            return (await resp.json())["matches"]
-        } catch (error) {
-            console.error("LanguageTool error:", error)
-            throw new Error("LanguageTool failed.")
-        }
     }
 }

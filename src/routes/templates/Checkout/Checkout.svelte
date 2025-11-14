@@ -5,13 +5,14 @@
     import { Input } from "$lib/components/ui/input"
     import * as Select from "$lib/components/ui/select"
     import { Card } from "$lib/components/ui/card"
-    import { getNodeTemplates, exportTemplates } from "./CheckoutUtils"
+    import { getNodeTemplates } from "./CheckoutUtils"
     import commands, { type TemplateName } from "$lib/components/edra/commands/toolbar-commands"
     import Label from "$lib/components/ui/label/label.svelte"
-    import { Packer } from "docx"
     import { downloadBlob } from "$lib/utils"
     import { toast } from "svelte-sonner"
     import { Spinner } from "$lib/components/ui/spinner"
+    import { TemplatesDownloadPOSTSchema } from "$api/templates/download/schemas"
+    import z from "zod"
 
     type Props = {
         nodes: DecisionTree[]
@@ -71,11 +72,21 @@
                 replacements[`pronoun-${index}` as TemplateName] = pnoun
             })
         }
+        const body: z.infer<typeof TemplatesDownloadPOSTSchema> = {
+            templateIds: nodes.map(n => n.id),
+            replacements
+        }
 
         try {
-            const docx = await exportTemplates(nodes, replacements)
-            Packer.toBlob(docx).then(blob => {
-                downloadBlob(blob, "ctk_templates.docx")
+            await fetch("/api/templates/download", {
+                body: JSON.stringify(body),
+                method: "POST"
+            }).then(async response => {
+                if (response.ok) {
+                    downloadBlob(await response.blob(), "ctk_templates.docx")
+                } else {
+                    toast.error(await response.text())
+                }
             })
         } catch (e) {
             console.log(e)
