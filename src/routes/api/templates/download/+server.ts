@@ -1,19 +1,19 @@
-import { logger } from "$lib/server/logging"
-import { PatchType } from "docx"
-import { Html2Docx } from "$lib/server/docx/html2docx"
-import { error } from "@sveltejs/kit"
-import { DocxBuilderServer } from "$lib/server/docx/builder"
 import { db } from "$lib/server/db"
 import { templates } from "$lib/server/db/schema"
-import { inArray, eq } from "drizzle-orm"
-import { alias } from "drizzle-orm/pg-core"
+import { DocxBuilderServer } from "$lib/server/docx/builder"
+import { Html2Docx } from "$lib/server/docx/html2docx"
+import { logger } from "$lib/server/logging"
 import { StatusCode } from "$lib/utils"
-import { TemplatesDownloadPOSTSchema } from "./schemas"
+import { error } from "@sveltejs/kit"
+import { PatchType } from "docx"
+import { eq, inArray } from "drizzle-orm"
+import { alias } from "drizzle-orm/pg-core"
 import fs from "fs"
 import path from "path"
+import { TemplatesDownloadPOSTSchema } from "./schemas"
 
 const TITLE_LEVEL = 2
-const DOCX_TEMPLATE = fs.readFileSync(path.join(process.cwd(), "src/lib/server/docx/patches/templates.docx"))
+const DOCX_TEMPLATE = fs.readFileSync(path.join(process.cwd(), "static", "templates.docx"))
 
 type TemplateParagraph = {
     title: string
