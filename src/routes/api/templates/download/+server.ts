@@ -13,7 +13,17 @@ import path from "path"
 import { TemplatesDownloadPOSTSchema } from "./schemas"
 
 const TITLE_LEVEL = 2
-const DOCX_TEMPLATE = fs.readFileSync(path.join(process.cwd(), "static", "templates.docx"))
+
+function getDocxTemplate() {
+    const devPath = path.join(process.cwd(), "static", "templates.docx")
+    const prodPath = path.join(process.cwd(), "build", "client", "templates.docx")
+
+    if (fs.existsSync(devPath)) {
+        return fs.readFileSync(devPath)
+    } else {
+        return fs.readFileSync(prodPath)
+    }
+}
 
 type TemplateParagraph = {
     title: string
@@ -62,7 +72,7 @@ async function exportTemplates(
         return s.children
     })
     const doc = (await builder.patchDocument({
-        data: DOCX_TEMPLATE,
+        data: getDocxTemplate(),
         outputType: "arraybuffer",
         patches: {
             content: {

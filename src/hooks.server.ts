@@ -1,19 +1,19 @@
+import type { RouteId } from "$app/types"
+import { DEVELOPMENT_USER } from "$lib/server/environment"
 import { logger } from "$lib/server/logging"
+import { pool } from "$lib/server/sql"
+import type { User } from "$lib/types"
+import { StatusCode } from "$lib/utils"
+import type { HandleFetch, RequestEvent } from "@sveltejs/kit"
 import { randomUUID } from "crypto"
 import { performance } from "perf_hooks"
-import { pool } from "$lib/server/sql"
-import { DEVELOPMENT_USER } from "$lib/server/environment"
-import type { User } from "$lib/types"
-import type { HandleFetch, RequestEvent } from "@sveltejs/kit"
-import { StatusCode } from "$lib/utils"
-import type { RouteId } from "$app/types"
 
 type Endpoint = {
     path: string
     method: "GET" | "PATCH" | "POST" | "PUT" | "DELETE"
 }
 
-const ADMIN_ENDPOINT_PATHS = ["/api/templates/.*?", "/api/dsm/.*?", ".*?/admin/.*?"]
+const ADMIN_ENDPOINT_PATHS = ["/api/templates/(?!download).*?", "/api/dsm/.*?", ".*?/admin/.*?"]
 const ADMIN_SPECIFIC_ENDPOINTS: Endpoint[] = [
     { path: "/api/dsm", method: "POST" },
     { path: "/api/dsm", method: "PUT" }
