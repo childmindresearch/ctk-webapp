@@ -337,10 +337,7 @@ export class Html2Docx {
         let match
 
         while ((match = numIdPattern.exec(numberingXml)) !== null) {
-            const numId = parseInt(match[1])
-            if (numId > maxNumId) {
-                maxNumId = numId
-            }
+            maxNumId = Math.max(maxNumId, parseInt(match[1]))
         }
 
         const pattern = new RegExp(`<w:numId w:val="\\{${NUMBERED_LIST_STYLE_REFERENCE}-(\\d+)-0\\}"\\/>`, "g")
