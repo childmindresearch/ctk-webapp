@@ -72,7 +72,7 @@ async function exportTemplates(
             }
         }
     })) as ArrayBuffer
-    return fixNumId(doc, 46)
+    return Html2Docx.fixNumericListNumId(doc)
 }
 
 function replaceTemplates(html: string, replacements: Record<string, string>): string {

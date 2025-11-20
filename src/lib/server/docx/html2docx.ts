@@ -13,6 +13,7 @@ import { DocxBuilderClient } from "../../docx/builder"
 import { languageTool, type LanguageToolResponseSchema } from "../languageTool"
 import { DOMParser } from "linkedom"
 import type z from "zod"
+import AdmZip from "adm-zip"
 
 type Mutable<T> = {
     -readonly [P in keyof T]: T[P]
@@ -31,6 +32,8 @@ type TextRunFormatting = {
     }
     color?: string
 }
+
+const NUMBERED_LIST_STYLE_REFERENCE = "custom-list"
 
 function isTextSegment(obj: object): obj is TextSegment {
     try {
@@ -56,13 +59,14 @@ const LANGUAGETOOL_RULES = [
 
 export class Html2Docx {
     private useLanguageTool: boolean
+    private listCounter: number
 
     constructor(options: Html2DocxOptions) {
         this.useLanguageTool = options.useLanguageTool
+        this.listCounter = 1
     }
 
     public toSection(html: string): Promise<ISectionOptions> {
-        console.log(html)
         const builder = new DocxBuilderClient()
         const parser = new DOMParser()
         const doc = parser.parseFromString(html, "text/html")
@@ -71,7 +75,6 @@ export class Html2Docx {
 
     public async toElements(docNode: ChildNode): Promise<(Paragraph | Table)[]> {
         const nodeName = docNode.nodeName.toLowerCase()
-        console.log(nodeName)
         switch (nodeName) {
             case "p":
             case "h1":
@@ -257,6 +260,7 @@ export class Html2Docx {
 
     private processList(node: HTMLUListElement | HTMLOListElement, level: number = 0): Paragraph[] {
         const isOrdered = node.nodeName.toLowerCase() === "ol"
+        if (level === 0) this.listCounter++
         return [...node.children].flatMap(li => {
             if (li.nodeName.toLowerCase() === "li") {
                 return this.processListItem(li as HTMLLIElement, level, isOrdered)
@@ -284,7 +288,9 @@ export class Html2Docx {
         paragraphs.push(
             new Paragraph({
                 bullet: isOrdered ? undefined : { level },
-                numbering: isOrdered ? { reference: "ddefault", level } : undefined,
+                numbering: isOrdered
+                    ? { reference: `${NUMBERED_LIST_STYLE_REFERENCE}-${this.listCounter}`, level }
+                    : undefined,
                 children: textRuns
             })
         )
@@ -302,6 +308,49 @@ export class Html2Docx {
             return hex.length === 1 ? "0" + hex : hex
         }
         return "#" + toHex(r) + toHex(g) + toHex(b)
+    }
+
+    /*
+     * Fixes invalid numbering list identifiers in a DOCX document to work around a js-docx patching bug.
+     *
+     * **Problem:** js-docx has a known issue when patching documents into which we've inserted numbered lists,
+     * where it inserts invalid numId values in the format `{STYLE_REF-0}` instead of plain
+     * numeric IDs. These invalid values cause Word to fail rendering the numbered lists correctly.
+     *
+     * **Solution:** This function extracts the document XML, finds all malformed numbered list
+     * references that match our custom style pattern, extracts the numeric portion, and ensures the
+     * new reference is unique.
+     *
+     * @see {@link https://github.com/dolanmiu/docx/issues/2088}
+     *
+     * @param arrayBuffer - The raw binary data of the .docx file to be modified
+     *
+     * @returns A new ArrayBufferLike containing the modified .docx file with valid numId values.
+     */
+    public static fixNumericListNumId(arrayBuffer: ArrayBuffer): ArrayBufferLike {
+        const zip = new AdmZip(Buffer.from(arrayBuffer))
+        const numberingXml = zip.readAsText("word/numbering.xml")
+        let documentXml = zip.readAsText("word/document.xml")
+
+        const numIdPattern = /<w:num w:numId="(\d+)"/g
+        let maxNumId = 0
+        let match
+
+        while ((match = numIdPattern.exec(numberingXml)) !== null) {
+            const numId = parseInt(match[1])
+            if (numId > maxNumId) {
+                maxNumId = numId
+            }
+        }
+
+        const pattern = new RegExp(`<w:numId w:val="\\{${NUMBERED_LIST_STYLE_REFERENCE}-(\\d+)-0\\}"\\/>`, "g")
+        documentXml = documentXml.replace(pattern, (_, num) => {
+            const newNumId = maxNumId + parseInt(num)
+            return `<w:numId w:val="${newNumId}"/>`
+        })
+
+        zip.updateFile("word/document.xml", Buffer.from(documentXml, "utf8"))
+        return zip.toBuffer().buffer
     }
 }
 

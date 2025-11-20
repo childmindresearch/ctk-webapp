@@ -25,6 +25,7 @@
     "@tanstack/table-core": "^8.21.3",
     "@testing-library/jest-dom": "^6.4.6",
     "@testing-library/svelte": "^5.2.4",
+    "@types/adm-zip": "^0.5.7",
     "@types/pg": "^8.15.4",
     "@types/sanitize-html": "^2.16.0",
     "@types/showdown": "^2.0.6",
