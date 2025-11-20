@@ -6,7 +6,6 @@
     import { Search } from "lucide-svelte"
     import type { DecisionTree } from "../DecisionTree.svelte"
     import SortableNested from "./SortableNested.svelte"
-    import ExportTemplates from "../ExportTemplates.svelte"
     import ModalSearchDecisionTree from "./ModalSearchDecisionTree.svelte"
     import { openNodeIds } from "./store"
 
@@ -44,7 +43,6 @@
     </Dialog.Root>
 
     {#if isAdmin}
-        <ExportTemplates node={nodes} />
         <div class="flex items-center space-x-2 ml-auto">
             <Switch
                 id="editable-mode"

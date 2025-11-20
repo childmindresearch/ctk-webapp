@@ -16,8 +16,6 @@ import {
     type ITableRowOptions,
     LevelFormat,
     Paragraph,
-    patchDocument,
-    type PatchDocumentOptions,
     Table,
     TableCell,
     TableRow,
@@ -40,7 +38,7 @@ type Awaitable<T> =
               : // scalars
                 T | Promise<T>
 
-type AwaitableProps<T> = {
+export type AwaitableProps<T> = {
     [K in keyof T]: T[K] extends Array<infer U>
         ? Array<Awaitable<U> | Promise<U[]> | Promise<U | null> | null> | Promise<Array<Awaitable<U> | null>>
         : T[K] extends Record<string, unknown>
@@ -80,7 +78,7 @@ export class NullComponent {
  * Utility function to resolve all awaitable properties on an object.
  * Handles promises in arrays and recurses into other objects.
  */
-async function resolveProps<T extends Record<string, unknown>>(
+export async function resolveProps<T extends Record<string, unknown>>(
     obj: AwaitableProps<T>
 ): Promise<{ [K in keyof T]: Awaited<T[K]> }> {
     const entries = await Promise.all(
@@ -221,10 +219,5 @@ export class DocxBuilderClient {
             },
             ...resolved
         })
-    }
-
-    async patchDocument(options: AwaitableProps<PatchDocumentOptions>) {
-        const resolved = await resolveProps(options)
-        return patchDocument(resolved)
     }
 }
