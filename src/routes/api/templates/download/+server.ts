@@ -1,9 +1,8 @@
-import AdmZip from "adm-zip"
 import { logger } from "$lib/server/logging"
 import { PatchType } from "docx"
 import { Html2Docx } from "$lib/server/docx/html2docx"
 import { error } from "@sveltejs/kit"
-import { DocxBuilderServer, fixNumId } from "$lib/server/docx/builder"
+import { DocxBuilderServer } from "$lib/server/docx/builder"
 import { db } from "$lib/server/db"
 import { templates } from "$lib/server/db/schema"
 import { inArray, eq } from "drizzle-orm"
@@ -43,7 +42,7 @@ export async function POST({ request }) {
             return error(StatusCode.BAD_REQUEST, "Cannot process root nodes.")
         }
         const file = await exportTemplates(rows as TemplateParagraph[], body.replacements)
-        return new Response(file)
+        return new Response(file as ArrayBuffer)
     } catch (e) {
         logger.error(e)
         return error(StatusCode.INTERNAL_SERVER_ERROR, "Something went wrong.")
@@ -53,7 +52,7 @@ export async function POST({ request }) {
 async function exportTemplates(
     paragraphs: TemplateParagraph[],
     replacements: Record<string, string> = {}
-): Promise<ArrayBuffer> {
+): Promise<ArrayBufferLike> {
     const htmls = paragraphs.map(n => `<h${TITLE_LEVEL}>${n.title}</h${TITLE_LEVEL}><p>${n.content}</p>`)
     const processedHtmls = htmls.map(html => replaceTemplates(html, replacements))
     const builder = new DocxBuilderServer()
