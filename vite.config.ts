@@ -5,6 +5,7 @@ import devtoolsJson from "vite-plugin-devtools-json"
 
 export default defineConfig(({ mode }) => ({
     plugins: [sveltekit(), tailwindcss(), devtoolsJson()],
+    assetsInclude: ["**/*.docx"],
     resolve: {
         conditions: mode === "test" ? ["browser"] : []
     },
