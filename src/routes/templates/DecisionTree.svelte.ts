@@ -31,7 +31,7 @@ export class DecisionTree {
         return this.parent?.children.findIndex(child => child.id === this.id) ?? 0
     }
 
-    getAncestors(): DecisionTree[] {
+    public getAncestors(): DecisionTree[] {
         const parents: DecisionTree[] = []
         let current: DecisionTree | undefined = this.parent
         while (current) {
@@ -41,7 +41,7 @@ export class DecisionTree {
         return parents
     }
 
-    getChildrenRecursive(): DecisionTree[] {
+    public getChildrenRecursive(): DecisionTree[] {
         const children: DecisionTree[] = []
         for (const child of this.children) {
             children.push(child)
@@ -50,11 +50,11 @@ export class DecisionTree {
         return children
     }
 
-    filterChildrenByIds(ids: number[]): DecisionTree[] {
+    public filterChildrenByIds(ids: number[]): DecisionTree[] {
         return this.getChildrenRecursive().filter(child => ids.includes(child.id))
     }
 
-    getPath(): string[] {
+    public getPath(): string[] {
         const path: string[] = []
         let current: DecisionTree | undefined = this.parent
         while (current) {
@@ -64,7 +64,7 @@ export class DecisionTree {
         return path
     }
 
-    getNodeById(id: number | string): DecisionTree | null {
+    public getNodeById(id: number | string): DecisionTree | null {
         if (this.id === id) {
             return this
         }
@@ -77,7 +77,7 @@ export class DecisionTree {
         return null
     }
 
-    addChild(child: DecisionTree, index: number | undefined = undefined) {
+    public addChild(child: DecisionTree, index: number | undefined = undefined) {
         if (index === undefined) {
             index = this.children.length
         }
@@ -86,7 +86,7 @@ export class DecisionTree {
         return this
     }
 
-    deleteChild(id: number) {
+    public deleteChild(id: number) {
         const childIndex = this.children.findIndex(child => child.id === id)
         if (childIndex === -1) {
             return this
@@ -95,7 +95,7 @@ export class DecisionTree {
         return this
     }
 
-    moveChild(id: number, newIndex: number) {
+    public moveChild(id: number, newIndex: number) {
         if (newIndex >= this.children.length) return this
 
         const currentIndex = this.children.findIndex(child => child.id === id)
@@ -109,7 +109,7 @@ export class DecisionTree {
         return this
     }
 
-    recursiveSortChildren() {
+    private recursiveSortChildren() {
         this.children = this.children?.sort((a, b) => a.priority - b.priority)
         this.children?.forEach(child => child.recursiveSortChildren())
     }
