@@ -9,6 +9,7 @@ import { PatchType } from "docx"
 import { eq, inArray } from "drizzle-orm"
 import { alias } from "drizzle-orm/pg-core"
 import fs from "fs"
+import { parseHTML } from "linkedom"
 import path from "path"
 import { TemplatesDownloadPOSTSchema } from "./schemas"
 
@@ -85,16 +86,17 @@ async function exportTemplates(
 }
 
 function replaceTemplates(html: string, replacements: Record<string, string>): string {
-    let result = html
+    const { document } = parseHTML(html)
+    const templateSpans = document.querySelectorAll('span[data-extension-type="template"]')
 
-    // Pattern: <span data-template="" data-name="TEMPLATE_NAME">content</span>
-    const spanRegex = /<span[^>]*data-template=""[^>]*data-name="([^"]*)"[^>]*>([^<]*)<\/span>/g
-    result = result.replace(spanRegex, (match, dataName, content) => {
+    templateSpans.forEach(span => {
+        const dataName = span.getAttribute("data-name")
+
         if (dataName && replacements[dataName]) {
-            return match.replace(content, replacements[dataName])
+            const newSpan = document.createElement("span")
+            newSpan.textContent = replacements[dataName]
+            span.replaceWith(newSpan)
         }
-        return match
     })
-
-    return result
+    return document.toString()
 }
