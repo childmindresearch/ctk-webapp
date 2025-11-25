@@ -22,8 +22,8 @@ The `$lib` directory should contain:
 
 - `$lib/shadcn/` - shadcn-svelte components following default shadcn structure.
 - `$lib/components/` - custom components that are used across multiple pages.
-- $lib/server - serverside components and functionality.
-- $lib/docx and $lib/server/docx - client-side and server-side handling of Word documents
+- `$lib/server` - serverside components and functionality.
+- `$lib/docx` and `$lib/server/docx` - client-side and server-side handling of Word documents
 - `$lib/utils.ts` - shared utility functions.
   - Prefer keeping functions with the components/pages that use them unless multiple use-cases already exist.
 
