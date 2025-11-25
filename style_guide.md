@@ -53,10 +53,11 @@ Endpoints whose primary purpose is file download must have URLs terminating in `
 
 ### Path Exports and Schemas
 
-Every endpoint must export a path object, schemas, and types from its `index.ts` file. Path objects must include a `pattern` string, a successCodes numeric list, and a `path` function for constructing the URL. Their name should be in SCREAMING_SNAKE_CASE, must start with the method and be followed by a descriptor of the endpoint.
+Every endpoint must export a path object, schemas, and types from its `index.ts` file. Path objects must include a `pattern` string, a successCodes numeric list, and a `path` function for constructing the URL. Their name should be in SCREAMING_SNAKE_CASE, must start with the method and be followed by a descriptor of the endpoint. Prefer using named status codes over raw numbers.
 
 ```typescript
 import { z } from "zod"
+import { StatusCode } from "$lib/utils"
 
 // Schemas as Zod schemas
 export const createUserPostSchema = z.object({
@@ -96,7 +97,7 @@ export const GET_USER_POSTS = {
         const params = new URLSearchParams(Object.entries(query).map(([k, v]) => [k, String(v)]))
         return `${url}?${params}`
     },
-    successCodes: [200] as const
+    successCodes: [StatusCode.OK] as const
 }
 ```
 
@@ -187,4 +188,4 @@ All code must be formatted using Prettier and checked for quality issues with ES
 
 **Pull Requests**: Pull Requests (PRs) must include a description of changes, and link to the Notion ticket at the end of the title. Commits should be squashed before merging (use Github's Squash + Merge option). Squashed commit messages should follow the same guidelines as regular commit messages. Example PR title: `feat: Add Azure OpenAI endpoint [DCH-123]`
 
-PRs should be as small as possible while still delivering a complete piece of functionality. Ideally, follow the principle of one ticket is one PR. If a ticket is too large for a single PR, create child tickets. If multiple tickets are required to deliver a single piece of functionality, consider linking them in Notion.
+PRs should be as small as possible while still delivering a complete piece of functionality. Ideally, follow the principle of one ticket is one PR. If a ticket is too large for a single PR, create child tickets. If multiple tickets are required to deliver a single piece of functionality, consider linking them to a common parent ticket.
