@@ -2,8 +2,8 @@
     import type { SqlDsmCodeSchema } from "$lib/server/sql"
     import type { User } from "$lib/types"
     import { onMount } from "svelte"
-    import CreateButton from "./CreateButton.svelte"
-    import ModalDsmForm from "./ModalDsmForm.svelte"
+    import CreateButton from "./components/CreateButton.svelte"
+    import ModalDsmForm from "./components/ModalDsmForm.svelte"
     import { indexForNewItemInSortedList } from "./utils"
     import { X, Pencil, Copy } from "lucide-svelte"
     import { toast } from "svelte-sonner"
@@ -12,6 +12,8 @@
     import { Badge } from "$lib/components/ui/badge"
     import * as Dialog from "$lib/components/ui/dialog"
     import * as Table from "$lib/components/ui/table"
+    import { DeleteDsm, GetDsm, PostDsm, PutDsm } from "$api/v1"
+    import { FetchError } from "$lib/utils"
 
     type Props = { data: { user: User } }
     let { data }: Props = $props()
@@ -29,11 +31,13 @@
     const isAdmin = data.user?.is_admin
 
     onMount(() => {
-        fetch("/api/dsm")
-            .then(res => res.json())
-            .then((data: SqlDsmCodeSchema[]) => {
-                dsmCodes = data.sort((a, b) => a.label.localeCompare(b.label))
-            })
+        GetDsm.fetch({}).then(data => {
+            if (data instanceof FetchError) {
+                toast.error("Could not get DSM codes.")
+                return
+            }
+            dsmCodes = data.sort((a, b) => a.label.localeCompare(b.label))
+        })
     })
 
     function onButtonClick(item: { label: string; id: number; code: string }) {
@@ -51,6 +55,7 @@
             return
         }
         function itemToString(item: { label: string; code: string }) {
+            // Different number of tabs depending on the code length in accordance with the HBN Report's styling.
             if (item.code.length < 13) {
                 return [item.code, item.label].join("\t\t")
             } else {
@@ -62,23 +67,19 @@
     }
 
     async function onCreate(code: string, label: string) {
-        let id: number
-        await fetch("/api/dsm", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ code, label })
+        await PostDsm.fetch({
+            body: { code, label }
         }).then(async result => {
-            if (!result.ok) {
-                toast.error(`Failed to create the DSM code: ${result.statusText}`)
-            } else {
-                id = (await result.json())["id"]
-                const index = indexForNewItemInSortedList(
-                    dsmCodes.map(d => d.label),
-                    label
-                )
-                dsmCodes = [...dsmCodes.slice(0, index), { id, code, label }, ...dsmCodes.slice(index)]
-                toast.success("Created the DSM code.")
+            if (result instanceof FetchError) {
+                toast.error(`Failed to create the DSM code: ${result.message}`)
+                return
             }
+            const index = indexForNewItemInSortedList(
+                dsmCodes.map(d => d.label),
+                label
+            )
+            dsmCodes = [...dsmCodes.slice(0, index), { id: result.id, code, label }, ...dsmCodes.slice(index)]
+            toast.success("Created the DSM code.")
         })
     }
 
@@ -89,19 +90,15 @@
             toast.error("Unexpected error editing the DSM code.")
             return
         }
-        await fetch(`/api/dsm/${id}`, {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ code: code, label: label })
-        }).then(result => {
-            if (!result.ok) {
-                toast.error(`Failed to edit the DSM code: ${result.statusText}`)
-            } else {
-                dsmItems[0].code = code
-                dsmItems[0].label = label
-                editingItem = null
-                toast.success("Edited the DSM code.")
+        PutDsm.fetch({ pathArgs: [id], body: { code, label } }).then(result => {
+            if (result instanceof FetchError) {
+                toast.error(`Failed to edit the DSM code: ${result.message}`)
+                return
             }
+            dsmItems[0].code = code
+            dsmItems[0].label = label
+            editingItem = null
+            toast.success("Edited the DSM code.")
         })
         isEditModalOpen = false
     }
@@ -117,18 +114,15 @@
         if (!confirm(`Are you sure you want to delete "${item.label}"?`)) {
             return
         }
-        dsmCodes = dsmCodes.filter(code => code.id !== item.id)
-        selected = selected.filter(code => code.id !== item.id)
 
-        fetch(`/api/dsm/${item.id}`, {
-            method: "DELETE"
-        }).then(result => {
-            if (!result.ok) {
-                toast.error(`Failed to delete the DSM code: ${result.statusText}`)
-                dsmCodes = [...dsmCodes, item].sort((a, b) => a.label.localeCompare(b.label))
-            } else {
-                toast.success("Deleted the DSM code.")
+        DeleteDsm.fetch({ pathArgs: [item.id] }).then(result => {
+            if (result instanceof FetchError) {
+                toast.error(`Failed to delete the DSM code: ${result.message}`)
+                return
             }
+            dsmCodes = dsmCodes.filter(code => code.id !== item.id)
+            selected = selected.filter(code => code.id !== item.id)
+            toast.success("Deleted the DSM code.")
         })
     }
 </script>

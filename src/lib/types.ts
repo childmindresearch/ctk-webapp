@@ -1,3 +1,5 @@
+import type { StatusCode } from "$lib/utils"
+
 export type User = {
     id: number
     email: string

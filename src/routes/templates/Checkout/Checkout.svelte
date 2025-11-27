@@ -11,7 +11,7 @@
     import { downloadBlob } from "$lib/utils"
     import { toast } from "svelte-sonner"
     import { Spinner } from "$lib/components/ui/spinner"
-    import { TemplatesDownloadPOSTSchema } from "$api/templates/download/schemas"
+    import { TemplatesDownloadPOSTSchema } from "$api/v1/templates/download/schemas"
     import z from "zod"
 
     type Props = {
