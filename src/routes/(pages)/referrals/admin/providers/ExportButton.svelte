@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type { getProviders } from "$api/referrals/crud.js"
+    import type { getProviders } from "$api/v1/referrals/crud.js"
     import { downloadBlob } from "$lib/utils.js"
     import { toast } from "svelte-sonner"
     import { exportProviders } from "./utils"
