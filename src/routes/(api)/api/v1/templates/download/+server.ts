@@ -11,7 +11,7 @@ import { alias } from "drizzle-orm/pg-core"
 import fs from "fs"
 import { parseHTML } from "linkedom"
 import path from "path"
-import { TemplatesDownloadPOSTSchema } from "./schemas"
+import { postTemplateDownloadSchema } from "./index.js"
 
 const TITLE_LEVEL = 2
 
@@ -34,8 +34,7 @@ type TemplateParagraph = {
 export async function POST({ request }) {
     logger.info("Downloading templates as docx")
     try {
-        const json = await request.json()
-        const body = TemplatesDownloadPOSTSchema.parse(json)
+        const body = postTemplateDownloadSchema.parse(await request.json())
         const parent = alias(templates, "parent")
         const rows = await db
             .select({

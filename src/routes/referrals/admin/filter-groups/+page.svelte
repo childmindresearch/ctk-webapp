@@ -5,8 +5,8 @@
     import ModalFilterGroupForm from "./ModalFilterGroupForm/ModalFilterGroupForm.svelte"
     import * as Dialog from "$lib/components/ui/dialog"
     import z from "zod"
-    import type { PostFilterGroup } from "$api/referrals/filter-groups/schemas"
-    import type { getFilterGroups } from "$api/referrals/crud"
+    import type { PostFilterGroup } from "$api/v1/referrals/filter-groups/schemas"
+    import type { getFilterGroups } from "$api/v1/referrals/crud"
     import type { referralFilterGroups } from "$lib/server/db/schema.js"
 
     const { data } = $props()

@@ -8,6 +8,8 @@
     import { Label } from "$lib/components/ui/label"
     import * as Card from "$lib/components/ui/card"
     import * as Alert from "$lib/components/ui/alert"
+    import { PostLlm } from "$api/v1"
+    import { FetchError } from "$lib/utils"
 
     let file: File | null = $state(null)
     let loading = $state(false)
@@ -36,22 +38,15 @@
         form.append("userPrompt", userPrompt)
         form.append("systemPrompt", systemPrompt)
         loading = true
-        const response = await fetch("/api/llm", {
-            method: "POST",
-            body: form
-        })
-            .then(async response => {
-                if (response.ok) {
-                    return await response.json()
+        const response = await PostLlm.fetch({ body: { system_prompt: systemPrompt, user_prompt: userPrompt } }).then(
+            result => {
+                if (result instanceof FetchError) {
+                    toast.error(`There was a problem connecting to the server: ${result.message}`)
+                    return
                 }
-                toast.error("There was a problem connecting to the server.")
-                return
-            })
-            .catch(error => {
-                toast.error(`The was a problem interpreting the server response: ${error}`)
-                loading = false
-                return
-            })
+                return result
+            }
+        )
         if (!response) {
             loading = false
             return
