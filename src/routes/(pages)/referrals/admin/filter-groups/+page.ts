@@ -1,4 +1,4 @@
-import type { getProviders, getFilterGroups } from "$api/referrals/crud"
+import type { getProviders, getFilterGroups } from "$api/v1/referrals/crud"
 
 export const load = async ({ fetch }) => {
     const providersPromise = fetch("/api/referrals/providers").then(response => response.json()) as ReturnType<

@@ -1,7 +1,7 @@
 <script lang="ts">
     import { downloadBlob } from "$lib/utils.js"
     import z from "zod"
-    import type { PostReferralSchema, ReferralTable } from "$api/referrals/document/schemas"
+    import type { PostReferralSchema, ReferralTable } from "$api/v1/referrals/document/schemas"
     import { toast } from "svelte-sonner"
 
     const { data } = $props()
