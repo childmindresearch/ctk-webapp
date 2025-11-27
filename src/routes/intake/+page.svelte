@@ -5,7 +5,7 @@
     import { toast } from "svelte-sonner"
     import { Spinner } from "$lib/components/ui/spinner"
     import FormInput from "$lib/components/FormInput.svelte"
-    import { GetIntakeDownload } from "$api/v1/intake-report/[id]/download"
+    import { GetIntakeDownload } from "$api/v1"
 
     let redcapSurveyId = $state("")
     let isLoading = $state(false)

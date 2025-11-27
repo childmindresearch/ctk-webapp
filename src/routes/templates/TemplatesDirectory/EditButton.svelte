@@ -1,12 +1,14 @@
 <script lang="ts">
-    import { Pencil } from "lucide-svelte"
-    import * as Dialog from "$lib/components/ui/dialog"
+    import { PutTemplate } from "$api/v1/templates/[id]"
     import CTKEditor from "$lib/components/CTKEditor.svelte"
     import { Button } from "$lib/components/ui/button"
+    import * as Dialog from "$lib/components/ui/dialog"
+    import { Spinner } from "$lib/components/ui/spinner"
+    import { FetchError } from "$lib/utils"
+    import type { Editor } from "@tiptap/core"
+    import { Pencil } from "lucide-svelte"
     import { toast } from "svelte-sonner"
     import { DecisionTree } from "../DecisionTree.svelte"
-    import type { Editor } from "@tiptap/core"
-    import { Spinner } from "$lib/components/ui/spinner"
 
     type Props = {
         node: DecisionTree
@@ -25,22 +27,17 @@
 
         if (!html) return
         isLoading = true
-        await fetch(`/api/templates/${node.id}`, {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ text: html, parentId, priority: node.priority })
+        const result = await PutTemplate.fetch({
+            pathArgs: [node.id],
+            body: { text: html, parentId, priority: node.priority }
         })
-            .then(result => {
-                if (!result.ok) {
-                    toast.error(`Failed to edit the template: ${result.statusText}`)
-                    return
-                }
-                node.text = html
-                dialogOpen = false
-            })
-            .finally(() => {
-                isLoading = false
-            })
+        if (result instanceof FetchError) {
+            toast.error(`Failed to edit the template: ${result.message}`)
+        } else {
+            node.text = html
+            dialogOpen = false
+        }
+        isLoading = false
     }
 </script>
 
