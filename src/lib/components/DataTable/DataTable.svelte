@@ -42,11 +42,11 @@
         Search,
         X
     } from "lucide-svelte"
-    import { Button } from "$lib/components/ui/button"
-    import { Input } from "$lib/components/ui/input"
-    import * as Table from "$lib/components/ui/table"
-    import * as Select from "$lib/components/ui/select"
-    import * as Card from "$lib/components/ui/card"
+    import { Button } from "$lib/shadcn/components/ui/button"
+    import { Input } from "$lib/shadcn/components/ui/input"
+    import * as Table from "$lib/shadcn/components/ui/table"
+    import * as Select from "$lib/shadcn/components/ui/select"
+    import * as Card from "$lib/shadcn/components/ui/card"
     import Controls from "./Controls.svelte"
 
     let { data, idColumn, hiddenColumns, searchableColumns, onCreate, onEdit, onDelete }: Props<T> = $props()

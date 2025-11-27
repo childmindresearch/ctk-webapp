@@ -19,9 +19,9 @@
 
 <script lang="ts">
     import { page } from "$app/state"
-    import { Button } from "$lib/components/ui/button"
-    import { Badge } from "$lib/components/ui/badge"
-    import * as Collapsible from "$lib/components/ui/collapsible"
+    import { Button } from "$lib/shadcn/components/ui/button"
+    import { Badge } from "$lib/shadcn/components/ui/badge"
+    import * as Collapsible from "$lib/shadcn/components/ui/collapsible"
     import ChevronRotating from "./ChevronRotating.svelte"
 
     let { pages: initialPages, isOpen = $bindable() }: Props = $props()

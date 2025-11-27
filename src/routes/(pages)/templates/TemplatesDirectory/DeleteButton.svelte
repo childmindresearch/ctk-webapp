@@ -1,7 +1,7 @@
 <script lang="ts">
     import { DeleteTemplate } from "$api/v1/templates/[id]"
-    import * as AlertDialog from "$lib/components/ui/alert-dialog"
-    import { Button } from "$lib/components/ui/button"
+    import * as AlertDialog from "$lib/shadcn/components/ui/alert-dialog"
+    import { Button } from "$lib/shadcn/components/ui/button"
     import { FetchError, shortenText } from "$lib/utils"
     import { Trash } from "lucide-svelte"
     import sanitizeHtml from "sanitize-html"
