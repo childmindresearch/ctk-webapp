@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { createProviderSchema } from "$api/referrals/providers/schemas.js"
+    import { createProviderSchema } from "$api/v1/referrals/providers/schemas.js"
     import DataTable from "$lib/components/DataTable/DataTable.svelte"
     import { isUnique } from "$lib/utils.js"
     import * as Dialog from "$lib/components/ui/dialog"

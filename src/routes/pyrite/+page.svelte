@@ -1,10 +1,11 @@
 <script lang="ts">
     import { Button } from "$lib/components/ui/button"
     import { Card, CardContent } from "$lib/components/ui/card"
-    import { downloadBlob } from "$lib/utils"
+    import { downloadBlob, FetchError } from "$lib/utils"
     import { toast } from "svelte-sonner"
     import { Spinner } from "$lib/components/ui/spinner"
     import FormInput from "$lib/components/FormInput.svelte"
+    import { GetPyriteDownload } from "$api/v1/pyrite/[id]/download"
 
     let mrn = $state("")
     let isLoading = $state(false)
@@ -15,16 +16,14 @@
             return
         }
         isLoading = true
-        await fetch(`/api/pyrite/${mrn}`)
-            .then(async response => {
-                if (!response.ok) {
-                    throw new Error(await response.text())
+        GetPyriteDownload.fetch({ pathArgs: [mrn] })
+            .then(result => {
+                if (result instanceof FetchError) {
+                    toast.error(`"Could not get Pyrite Report: ${result.message}`)
+                    return
                 }
-                return await response.blob()
-            })
-            .then(blob => {
                 const filename = `${mrn}_Pyrite_CTK.docx`
-                downloadBlob(blob, filename)
+                downloadBlob(result, filename)
             })
             .catch(() => {
                 toast.error("Could not download report.")

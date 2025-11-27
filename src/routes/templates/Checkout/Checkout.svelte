@@ -1,18 +1,17 @@
 <script lang="ts">
-    import { FileQuestionMark } from "lucide-svelte"
-    import type { DecisionTree } from "../DecisionTree.svelte"
-    import { Button } from "$lib/components/ui/button"
-    import { Input } from "$lib/components/ui/input"
-    import * as Select from "$lib/components/ui/select"
-    import { Card } from "$lib/components/ui/card"
-    import { getNodeTemplates } from "./CheckoutUtils"
+    import { PostTemplatesDownload } from "$api/v1/templates/download"
     import commands, { type TemplateName } from "$lib/components/edra/commands/toolbar-commands"
+    import { Button } from "$lib/components/ui/button"
+    import { Card } from "$lib/components/ui/card"
+    import { Input } from "$lib/components/ui/input"
     import Label from "$lib/components/ui/label/label.svelte"
-    import { downloadBlob } from "$lib/utils"
-    import { toast } from "svelte-sonner"
+    import * as Select from "$lib/components/ui/select"
     import { Spinner } from "$lib/components/ui/spinner"
-    import { TemplatesDownloadPOSTSchema } from "$api/templates/download/schemas"
-    import z from "zod"
+    import { downloadBlob, FetchError } from "$lib/utils"
+    import { FileQuestionMark } from "lucide-svelte"
+    import { toast } from "svelte-sonner"
+    import type { DecisionTree } from "../DecisionTree.svelte"
+    import { getNodeTemplates } from "./CheckoutUtils"
 
     type Props = {
         nodes: DecisionTree[]
@@ -72,22 +71,18 @@
                 replacements[`pronoun-${index}` as TemplateName] = pnoun
             })
         }
-        const body: z.infer<typeof TemplatesDownloadPOSTSchema> = {
+        const body = {
             templateIds: nodes.map(n => n.id),
             replacements
         }
 
         try {
-            await fetch("/api/templates/download", {
-                body: JSON.stringify(body),
-                method: "POST"
-            }).then(async response => {
-                if (response.ok) {
-                    downloadBlob(await response.blob(), "ctk_templates.docx")
-                } else {
-                    toast.error(await response.text())
-                }
-            })
+            const result = await PostTemplatesDownload.fetch({ body })
+            if (result instanceof FetchError) {
+                toast.error(`Could not download templates: ${result.message}`)
+            } else {
+                downloadBlob(result, "ctk_templates.docx")
+            }
         } catch (e) {
             console.log(e)
         } finally {

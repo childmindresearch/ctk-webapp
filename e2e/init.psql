@@ -40,7 +40,7 @@ RETURNS TRIGGER AS $$
 BEGIN
     -- Only set priority if it's NULL
     IF NEW.priority IS NULL THEN
-        NEW.priority := COALESCE((SELECT MAX(priority) FROM html_templatess), 0) + 1;
+        NEW.priority := COALESCE((SELECT MAX(priority) FROM html_templates), 0) + 1;
     END IF;
     RETURN NEW;
 END;

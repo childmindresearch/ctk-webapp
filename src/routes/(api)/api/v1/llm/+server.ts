@@ -1,24 +1,24 @@
 import { logger } from "$lib/server/logging"
 import { AZURE_FUNCTION_PYTHON_URL } from "$lib/server/environment"
+import { StatusCode } from "$lib/utils.js"
+import { postLlmRequestSchema, type PostLlmRequest } from "./index.js"
 
 export async function POST({ fetch, request }) {
     logger.info("Making LLM request.")
-    const formData = await request.formData()
 
-    const systemPrompt = formData.get("systemPrompt")
-    const userPrompt = formData.get("userPrompt")
-
-    if (!systemPrompt || !userPrompt) {
-        return new Response("System or user prompt not found.", { status: 400 })
+    let body: PostLlmRequest | undefined = undefined
+    try {
+        body = postLlmRequestSchema.parse(await request.json())
+    } catch {
+        return new Response("Invalid request body.", { status: StatusCode.BAD_REQUEST })
     }
-    const body = JSON.stringify({ system_prompt: systemPrompt, user_prompt: userPrompt })
 
     return await fetch(`${AZURE_FUNCTION_PYTHON_URL}/llm`, {
         method: "POST",
         headers: {
             "Content-Type": "application/json"
         },
-        body
+        body: JSON.stringify(body)
     })
         .then(async response => {
             if (response.ok && response.body) {

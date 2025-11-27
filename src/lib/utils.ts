@@ -1,5 +1,6 @@
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
+import type z from "zod"
 
 export function cn(...inputs: ClassValue[]) {
     return twMerge(clsx(inputs))
@@ -50,25 +51,6 @@ export function downloadBlob(blob: Blob, filename: string) {
     window.URL.revokeObjectURL(url)
     link.remove()
 }
-
-export const LLM_MODELS = [
-    {
-        name: "GPT-4o",
-        tag: "gpt-4o"
-    },
-    {
-        name: "Claude 3 Opus",
-        tag: "anthropic.claude-3-opus-20240229-v1:0"
-    },
-    {
-        name: "Claude 3.5 Sonnet V1",
-        tag: "anthropic.claude-3-5-sonnet-20240620-v1:0"
-    },
-    {
-        name: "Claude 3.5 Sonnet V2",
-        tag: "anthropic.claude-3-5-sonnet-20241022-v2:0"
-    }
-]
 
 export function giveMarkdownUrlsHyperlinks(text: string) {
     const urlRegex =
@@ -162,3 +144,95 @@ export const StatusCode = Object.freeze({
     NOT_EXTENDED: 510,
     NETWORK_AUTHENTICATION_REQUIRED: 511
 })
+
+export class FetchError extends Error {
+    readonly status: number | undefined
+
+    constructor(reason: string, status?: number) {
+        super(reason)
+        this.name = "FetchError"
+        this.status = status
+    }
+}
+
+type Method = "GET" | "POST" | "PUT" | "PATCH" | "DELETE"
+type ResponseType = "json" | "blob" | "text"
+
+export class Endpoint<
+    TResponse,
+    TPath extends (...args: (string | number)[]) => string = (...args: (string | number)[]) => string,
+    TSchema extends z.ZodType | undefined = undefined
+> {
+    private method: Method
+    private path: TPath
+    private schema: TSchema | undefined
+    private successCodes: (typeof StatusCode)[keyof typeof StatusCode][]
+    private responseType: ResponseType
+
+    constructor(options: {
+        method: Method
+        path: TPath
+        successCodes: (typeof StatusCode)[keyof typeof StatusCode][]
+        schema?: TSchema
+        responseType?: ResponseType
+    }) {
+        this.method = options.method
+        this.path = options.path
+        this.successCodes = options.successCodes
+        this.schema = options.schema
+        this.responseType = options.responseType ?? "json"
+    }
+
+    public async fetch(options: {
+        fetchOptions?: RequestInit
+        pathArgs?: Parameters<TPath>["length"] extends 0 ? never : Parameters<TPath>
+        body?: TSchema extends z.ZodType ? z.infer<TSchema> : never
+    }): Promise<TResponse | FetchError> {
+        const { fetchOptions, pathArgs = [], body } = options
+        let path: string
+        try {
+            path = this.path(...pathArgs)
+        } catch {
+            return new FetchError(`Invalid path arguments ${pathArgs.join(", ")}`)
+        }
+
+        let parsedBody: z.infer<TSchema> | undefined = undefined
+        if (this.schema) {
+            try {
+                parsedBody = this.schema.parse(body) as z.infer<TSchema>
+            } catch {
+                return new FetchError("Invalid body.")
+            }
+        }
+
+        let response: Response
+        try {
+            response = await fetch(path, {
+                ...fetchOptions,
+                body: parsedBody !== undefined ? JSON.stringify(parsedBody) : undefined,
+                headers: {
+                    ...(fetchOptions?.headers ?? {})
+                },
+                method: this.method
+            })
+        } catch (error) {
+            return new FetchError(error instanceof Error ? error.message : "Unknown error ocurred.")
+        }
+
+        if (!this.successCodes.includes(response.status as (typeof StatusCode)[keyof typeof StatusCode])) {
+            return new FetchError(`Invalid status ${response.status}`, response.status)
+        }
+
+        if (response.status === StatusCode.NO_CONTENT) {
+            return null as TResponse
+        }
+        try {
+            if (this.responseType === "json") {
+                return (await response.json()) as TResponse
+            }
+            return (await response.blob()) as TResponse
+        } catch {
+            return new FetchError("Failed to parse response.", response.status)
+        }
+    }
+}

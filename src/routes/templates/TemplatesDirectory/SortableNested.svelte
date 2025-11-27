@@ -1,10 +1,11 @@
 <script lang="ts">
-    import { shortenText } from "$lib/utils"
-    import type { DecisionTree } from "../DecisionTree.svelte"
-    import SortableNestedNode from "./SortableNestedNode.svelte"
-    import Sortable, { type SortableEvent } from "sortablejs"
+    import { PutTemplate } from "$api/v1/templates/[id]"
     import * as AlertDialog from "$lib/components/ui/alert-dialog"
     import { Button } from "$lib/components/ui/button"
+    import { FetchError, shortenText } from "$lib/utils"
+    import Sortable, { type SortableEvent } from "sortablejs"
+    import type { DecisionTree } from "../DecisionTree.svelte"
+    import SortableNestedNode from "./SortableNestedNode.svelte"
 
     type Props = {
         node: DecisionTree
@@ -43,23 +44,21 @@
     }
 
     async function onMove() {
-        if (!lastEvent) return
+        if (!lastEvent || lastEvent.newIndex === undefined) return
 
         const targetId = parseInt(lastEvent.to.id.split("-")[1])
         const sourceId = parseInt(lastEvent.from.id.split("-")[1])
         const sourceParentNode = node.getNodeById(sourceId) as DecisionTree
 
-        await fetch(`/api/templates/${movedNode.id}`, {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
+        const result = await PutTemplate.fetch({
+            pathArgs: [movedNode.id],
+            body: {
                 text: movedNode.text,
                 parentId: (targetParentNode as DecisionTree).id,
                 priority: lastEvent.newIndex
-            })
-        }).then(response => {
-            if (!response.ok) return
-
+            }
+        })
+        if (!(result instanceof FetchError)) {
             if (sourceId === targetId) {
                 // @ts-expect-error Typescript doesn't detect that newIndex cannot be undefined.
                 targetParentNode.moveChild(movedNode.id, lastEvent.newIndex)
@@ -67,7 +66,7 @@
                 sourceParentNode.deleteChild(movedNode.id)
                 ;(targetParentNode as DecisionTree).addChild(movedNode, (lastEvent as SortableEvent).newIndex)
             }
-        })
+        }
 
         modalClose()
     }

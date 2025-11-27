@@ -13,7 +13,7 @@ const config = {
             fallback: "index.html"
         }),
         alias: {
-            $api: "src/routes/api"
+            $api: "src/routes/(api)/api"
         }
     },
     compilerOptions: {

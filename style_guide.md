@@ -53,14 +53,15 @@ Endpoints whose primary purpose is file download must have URLs terminating in `
 
 ### Path Exports and Schemas
 
-Every endpoint must export a path object, schemas, and types from its `index.ts` file. Path objects must include a `pattern` string, a successCodes numeric list, and a `path` function for constructing the URL. Their name should be in SCREAMING_SNAKE_CASE, must start with the method and be followed by a descriptor of the endpoint. Prefer using named status codes over raw numbers.
+Every endpoint must export an `Endpoint` instance, schemas, and types from its `index.ts` file. Endpoint instances are created using the `Endpoint` class from `$lib/utils`, which provides type-safe request handling with automatic validation. Endpoint names should be in PascalCase, starting with the HTTP method followed by a descriptor (e.g., `GetUserPosts`, `PostUserPost`, `PutUserPost`, `DeleteUserPost`). Always use named status codes from `StatusCode` rather than raw numbers.
 
 ```typescript
 import { z } from "zod"
-import { StatusCode } from "$lib/utils"
+import { Endpoint, StatusCode } from "$lib/utils"
+import type { posts } from "$lib/server/db/schema"
 
 // Schemas as Zod schemas
-export const createUserPostSchema = z.object({
+export const postUserPostSchema = z.object({
     title: z.string(),
     content: z.string()
 })
@@ -70,35 +71,50 @@ export const getUserPostsQuerySchema = z.object({
     limit: z.coerce.number().optional()
 })
 
-// Request types as Typescript types
-export type CreateUserPostRequest = z.infer<typeof createUserPostSchema>
+// Request types as TypeScript types
+export type PostUserPostRequest = z.infer<typeof postUserPostSchema>
 export type GetUserPostsQuery = z.infer<typeof getUserPostsQuerySchema>
 
-// Response types as Typescript types
-export type UserPostResponse = {
-    id: string
-    userId: string
-    title: string
-    content: string
-    createdAt: string
-}
+// Response types as TypeScript types (infer from database schema when possible)
+export type PostUserPostResponse = typeof posts.$inferSelect
 
-export type UserPostsListResponse = {
-    posts: UserPostResponse[]
+export type GetUserPostsResponse = {
+    posts: (typeof posts.$inferSelect)[]
     total: number
 }
 
-// Path export
-export const GET_USER_POSTS = {
-    pattern: "/api/v1/users/[userId]/posts",
-    path: (userId: string, query?: GetUserPostsQuery) => {
-        const url = `/api/v1/users/${userId}/posts`
-        if (!query) return url
-        const params = new URLSearchParams(Object.entries(query).map(([k, v]) => [k, String(v)]))
-        return `${url}?${params}`
-    },
-    successCodes: [StatusCode.OK] as const
-}
+// Path function (accepts parameters for dynamic segments)
+const getUserPostsPath = (userId: string | number) => `/api/v1/users/${userId}/posts`
+
+// Endpoint export with GET method (includes query parameters in schema)
+export const GetUserPosts = new Endpoint<GetUserPostsResponse, typeof getUserPostsPath>({
+    method: "GET",
+    path: getUserPostsPath,
+    successCodes: [StatusCode.OK]
+})
+
+// Endpoint export with POST method (includes request body schema)
+export const PostUserPost = new Endpoint<
+    PostUserPostResponse,
+    typeof getUserPostsPath,
+    typeof postUserPostSchema
+>({
+    method: "POST",
+    path: getUserPostsPath,
+    successCodes: [StatusCode.CREATED],
+    schema: postUserPostSchema
+})
+
+// For blob responses (file downloads), specify responseType
+const downloadPath = (userId: string | number, postId: string | number) =>
+    `/api/v1/users/${userId}/posts/${postId}/download`
+
+export const GetUserPostDownload = new Endpoint<Blob, typeof downloadPath>({
+    method: "GET",
+    path: downloadPath,
+    successCodes: [StatusCode.OK],
+    responseType: "blob"
+})
 ```
 
 
@@ -120,32 +136,58 @@ The `any` type is forbidden. Use `unknown` when the type is genuinely unknown, e
 
 ### Client-Side Requests
 
-Pages with client-side fetch requests should include a `requests.ts` file in the same directory as `+page.svelte`. The `requests.ts` file handles all request/response logic for the page, including:
+Client-side code should use the `Endpoint.fetch()` method for all API requests. This provides automatic type safety, request validation, and consistent error handling through the `FetchError` class.
 
 **Structure**:
 
 ```typescript
-import type { UserResponse } from "$lib/api/v1/users"
-import { USERS } from "$lib/api/v1/users"
+import { GetUserPosts, PostUserPost } from "$api/v1/users/[userId]/posts"
+import type { GetUserPostsResponse, PostUserPostRequest } from "$api/v1/users/[userId]/posts"
+import { FetchError } from "$lib/utils"
+import { toast } from "svelte-sonner"
 
-export async function fetchUser (
-    id: number,
-    onError: (error: Error) => void = defaultErrorHandler
-): Promise<UserResponse | undefined> {
-    try {
-        const response = await fetch(USERS.path(String(id)))
-        if (!response.ok) {
-            throw new Error(`HTTP ${response.status}`)
-        }
-        return await response.json()
-    } catch (error) {
-        onError(error as Error)
+// Example: GET request with path parameters
+async function fetchUserPosts(userId: number): Promise<GetUserPostsResponse | undefined> {
+    const result = await GetUserPosts.fetch({ pathArgs: [userId] })
+
+    if (result instanceof FetchError) {
+        toast.error(`Failed to fetch posts: ${result.message}`)
         return undefined
     }
+
+    return result
+}
+
+// Example: POST request with path parameters and request body
+async function createUserPost(userId: number, data: PostUserPostRequest): Promise<void> {
+    const result = await PostUserPost.fetch({
+        pathArgs: [userId],
+        body: data
+    })
+
+    if (result instanceof FetchError) {
+        toast.error(`Failed to create post: ${result.message}`)
+        return
+    }
+
+    toast.success("Post created successfully")
+}
+
+// Example: File download
+import { GetUserPostDownload } from "$api/v1/users/[userId]/posts/[postId]/download"
+import { downloadBlob } from "$lib/utils"
+
+async function downloadPost(userId: number, postId: number): Promise<void> {
+    const result = await GetUserPostDownload.fetch({ pathArgs: [userId, postId] })
+
+    if (result instanceof FetchError) {
+        toast.error(`Failed to download: ${result.message}`)
+        return
+    }
+
+    downloadBlob(result, "post.docx")
 }
 ```
-
-Every function in `requests.ts` must accept an `onError` callback parameter for handling errors. HTTP response handling is determined on a per-endpoint basis, but should generally treat 2XX and 3XX status codes as success and all others as errors. Functions should return the server response as-is without any transformation, using type definitions that already exist in the API endpoint's `index.ts` file.
 
 ## Code Organization
 

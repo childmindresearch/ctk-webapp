@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { GetHealth } from "$api/v1"
     import { browser } from "$app/environment"
     import { page } from "$app/stores"
     import Navigation from "$lib/components/Navigation/Navigation.svelte"
@@ -32,7 +33,7 @@
 
         if (now - lastWarmupTime < threeMinutesInMs) return
 
-        await fetch("/api/health")
+        await GetHealth.fetch({})
         lastWarmupTime = now
     }
 </script>
