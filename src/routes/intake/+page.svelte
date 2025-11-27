@@ -1,10 +1,11 @@
 <script lang="ts">
     import { Button } from "$lib/components/ui/button"
     import { Card, CardContent } from "$lib/components/ui/card"
-    import { downloadBlob } from "$lib/utils"
+    import { downloadBlob, FetchError } from "$lib/utils"
     import { toast } from "svelte-sonner"
     import { Spinner } from "$lib/components/ui/spinner"
     import FormInput from "$lib/components/FormInput.svelte"
+    import { GetIntakeDownload } from "$api/v1/intake-report/[id]/download"
 
     let redcapSurveyId = $state("")
     let isLoading = $state(false)
@@ -15,20 +16,15 @@
             return
         }
         isLoading = true
-        fetch(`/api/intake-report/${redcapSurveyId}`)
-            .then(async response => {
-                if (!response.ok) {
-                    throw new Error(await response.text())
+        GetIntakeDownload.fetch({ pathArgs: [redcapSurveyId] })
+            .then(result => {
+                if (result instanceof FetchError) {
+                    toast.error(`Could not download intake report: ${result.message}.`)
+                    return
                 }
-                return await response.blob()
-            })
-            .then(blob => {
+
                 const filename = `${redcapSurveyId}_V0_CTK.docx`
-                downloadBlob(blob, filename)
-            })
-            .catch(error => {
-                toast.error(error.message)
-                isLoading = false
+                downloadBlob(result, filename)
             })
             .finally(() => {
                 isLoading = false
