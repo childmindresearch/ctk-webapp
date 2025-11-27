@@ -17,12 +17,12 @@ export type PostDsmRequest = z.infer<typeof postDsmRequestSchema>
 const path = () => "/api/v1/dsm"
 export const GetDsm = new Endpoint<GetDsmResponse, typeof path>({
     method: "GET",
-    pattern: path,
+    path: path,
     successCodes: [StatusCode.OK]
 })
 export const PostDsm = new Endpoint<PostDsmResponse, typeof path, typeof postDsmRequestSchema>({
     method: "POST",
-    pattern: path,
+    path: path,
     successCodes: [StatusCode.CREATED],
     schema: postDsmRequestSchema
 })

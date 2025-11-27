@@ -7,22 +7,22 @@
     import FormInput from "$lib/components/FormInput.svelte"
     import { GetPyriteDownload } from "$api/v1/pyrite/[id]/download"
 
-    let id = $state("")
+    let mrn = $state("")
     let isLoading = $state(false)
 
     async function onSubmit() {
-        if (id === "") {
+        if (mrn === "") {
             toast.error("Did not find an MRN.")
             return
         }
         isLoading = true
-        GetPyriteDownload.fetch({ pathArgs: [id] })
+        GetPyriteDownload.fetch({ pathArgs: [mrn] })
             .then(result => {
                 if (result instanceof FetchError) {
                     toast.error(`"Could not get Pyrite Report: ${result.message}`)
                     return
                 }
-                const filename = `${id}_Pyrite_CTK.docx`
+                const filename = `${mrn}_Pyrite_CTK.docx`
                 downloadBlob(result, filename)
             })
             .catch(() => {
@@ -55,7 +55,7 @@
                         type="text"
                         required
                         placeholder="Enter MRN"
-                        bind:value={id}
+                        bind:value={mrn}
                         data-testid="intakeInput"
                         autocomplete="off"
                     />
@@ -63,7 +63,7 @@
                         <Button
                             type="submit"
                             class="min-w-32"
-                            disabled={isLoading || !id?.trim()}
+                            disabled={isLoading || !mrn?.trim()}
                             data-testid="intakeSubmit"
                         >
                             Generate Report
