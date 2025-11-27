@@ -12,9 +12,14 @@ export type PutDsmRequest = z.infer<typeof putDsmRequestSchema>
 export type PutDsmResponse = typeof dsmCodes.$inferSelect
 
 const path = (id: string | number) => `/api/v1/dsm/${id}`
-export const PutDsm = new Endpoint<PutDsmResponse, typeof path, typeof putDsmRequestSchema>(
+export const PutDsm = new Endpoint<PutDsmResponse, typeof path, typeof putDsmRequestSchema>({
+    method: "PUT",
     path,
-    [StatusCode.OK],
-    putDsmRequestSchema
-)
-export const DeleteDsm = new Endpoint<undefined, typeof path, undefined>(path, [StatusCode.NO_CONTENT])
+    successCodes: [StatusCode.OK],
+    schema: putDsmRequestSchema
+})
+export const DeleteDsm = new Endpoint<undefined, typeof path, undefined>({
+    method: "DELETE",
+    path,
+    successCodes: [StatusCode.NO_CONTENT]
+})

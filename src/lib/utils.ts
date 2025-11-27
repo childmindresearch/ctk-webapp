@@ -155,37 +155,43 @@ export class FetchError extends Error {
     }
 }
 
+type Method = "GET" | "POST" | "PUT" | "PATCH" | "DELETE"
+type ResponseType = "json" | "blob" | "text"
+
 export class Endpoint<
     TResponse,
-    TPattern extends (...args: (string | number)[]) => string = (...args: (string | number)[]) => string,
+    TPath extends (...args: (string | number)[]) => string = (...args: (string | number)[]) => string,
     TSchema extends z.ZodType | undefined = undefined
 > {
-    private pattern: TPattern
+    private method: Method
+    private path: TPath
     private schema: TSchema | undefined
     private successCodes: (typeof StatusCode)[keyof typeof StatusCode][]
-    private method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE"
+    private responseType: ResponseType
 
-    constructor(
-        pattern: TPattern,
-        successCodes: (typeof StatusCode)[keyof typeof StatusCode][],
-        schema: TSchema | undefined = undefined,
-        method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE"
-    ) {
-        this.pattern = pattern
-        this.schema = schema
-        this.successCodes = successCodes
-        this.method = method
+    constructor(options: {
+        method: Method
+        path: TPath
+        successCodes: (typeof StatusCode)[keyof typeof StatusCode][]
+        schema?: TSchema
+        responseType?: ResponseType
+    }) {
+        this.method = options.method
+        this.path = options.path
+        this.successCodes = options.successCodes
+        this.schema = options.schema
+        this.responseType = options.responseType ?? "json"
     }
 
     public async fetch(options: {
         fetchOptions?: RequestInit
-        pathArgs?: Parameters<TPattern>["length"] extends 0 ? never : Parameters<TPattern>
+        pathArgs?: Parameters<TPath>["length"] extends 0 ? never : Parameters<TPath>
         body?: TSchema extends z.ZodType ? z.infer<TSchema> : never
     }): Promise<TResponse | FetchError> {
         const { fetchOptions, pathArgs = [], body } = options
         let path: string
         try {
-            path = this.pattern(...pathArgs)
+            path = this.path(...pathArgs)
         } catch {
             return new FetchError(`Invalid path arguments ${pathArgs.join(", ")}`)
         }
@@ -221,9 +227,12 @@ export class Endpoint<
             return null as TResponse
         }
         try {
-            return (await response.json()) as TResponse
+            if (this.responseType === "json") {
+                return (await response.json()) as TResponse
+            }
+            return (await response.blob()) as TResponse
         } catch {
-            return new FetchError("Failed to parse response JSON", response.status)
+            return new FetchError("Failed to parse response.", response.status)
         }
     }
 }
