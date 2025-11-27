@@ -23,7 +23,7 @@ The component uses a cascading filter approach where filters are applied in sequ
 -->
 
 <script lang="ts">
-    import type { getProviders } from "$api/referrals/crud.js"
+    import type { getProviders } from "$api/v1/referrals/crud.js"
 
     import MultiSelectFilter from "$lib/components/DataTable/MultiSelectFilter.svelte"
     import { isUnique } from "$lib/utils.js"

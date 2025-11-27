@@ -1,7 +1,7 @@
 <script lang="ts">
     import { type FilterSetFormData } from "../utils"
     import type { z } from "zod"
-    import type { PostFilterGroup } from "$api/referrals/filter-groups/schemas"
+    import type { PostFilterGroup } from "$api/v1/referrals/filter-groups/schemas"
     import FilterSetForm from "./FilterSetForm.svelte"
     import FormInput from "$lib/components/FormInput.svelte"
 
