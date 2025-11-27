@@ -3,7 +3,7 @@
     import { isUnique } from "$lib/utils"
     import { toast } from "svelte-sonner"
     import ModalFilterGroupForm from "./ModalFilterGroupForm/ModalFilterGroupForm.svelte"
-    import * as Dialog from "$lib/components/ui/dialog"
+    import * as Dialog from "$lib/shadcn/components/ui/dialog"
     import z from "zod"
     import type { PostFilterGroup } from "$api/v1/referrals/filter-groups/schemas"
     import type { getFilterGroups } from "$api/v1/referrals/crud"

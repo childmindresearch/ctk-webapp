@@ -1,7 +1,7 @@
 <script lang="ts">
     import ModalDsmForm from "./ModalDsmForm.svelte"
-    import * as Dialog from "$lib/components/ui/dialog"
-    import { Button } from "$lib/components/ui/button"
+    import * as Dialog from "$lib/shadcn/components/ui/dialog"
+    import { Button } from "$lib/shadcn/components/ui/button"
 
     type Props = { onCreate: (code: string, label: string) => void }
     let { onCreate }: Props = $props()

@@ -1,8 +1,8 @@
 <script lang="ts">
     import Fuse from "fuse.js"
-    import { Button } from "$lib/components/ui/button"
-    import { Input } from "$lib/components/ui/input"
-    import { Card, CardContent, CardFooter, CardHeader } from "$lib/components/ui/card"
+    import { Button } from "$lib/shadcn/components/ui/button"
+    import { Input } from "$lib/shadcn/components/ui/input"
+    import { Card, CardContent, CardFooter, CardHeader } from "$lib/shadcn/components/ui/card"
     import { Search, X, Plus, ChevronRight, AlertTriangle } from "lucide-svelte"
     import type { DecisionTree } from "../DecisionTree.svelte"
 

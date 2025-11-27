@@ -3,7 +3,7 @@
     import { browser } from "$app/environment"
     import { page } from "$app/stores"
     import Navigation from "$lib/components/Navigation/Navigation.svelte"
-    import { Toaster } from "$lib/components/ui/sonner"
+    import { Toaster } from "$lib/shadcn/components/ui/sonner"
     import "../../app.css"
     import { toast } from "svelte-sonner"
 

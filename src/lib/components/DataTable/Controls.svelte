@@ -1,6 +1,6 @@
 <script lang="ts">
     import { Pencil, Trash } from "lucide-svelte"
-    import { Button } from "$lib/components/ui/button"
+    import { Button } from "$lib/shadcn/components/ui/button"
 
     type Props = {
         onEdit?: () => void

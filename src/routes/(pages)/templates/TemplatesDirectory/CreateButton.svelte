@@ -1,9 +1,9 @@
 <script lang="ts">
     import { PostTemplate } from "$api/v1"
     import CTKEditor from "$lib/components/CTKEditor.svelte"
-    import { Button } from "$lib/components/ui/button"
-    import * as Dialog from "$lib/components/ui/dialog"
-    import Spinner from "$lib/components/ui/spinner/spinner.svelte"
+    import { Button } from "$lib/shadcn/components/ui/button"
+    import * as Dialog from "$lib/shadcn/components/ui/dialog"
+    import Spinner from "$lib/shadcn/components/ui/spinner/spinner.svelte"
     import { FetchError } from "$lib/utils"
     import type { Editor } from "@tiptap/core"
     import { File } from "lucide-svelte"
