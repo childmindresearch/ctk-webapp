@@ -1,6 +1,6 @@
 <script lang="ts">
     import { PostTemplatesDownload } from "$api/v1/templates/download"
-    import commands, { type TemplateName } from "$lib/components/edra/commands/toolbar-commands"
+    import commands, { type TemplateName } from "$lib/shadcn/components/edra/commands/toolbar-commands"
     import { Button } from "$lib/shadcn/components/ui/button"
     import { Card } from "$lib/shadcn/components/ui/card"
     import { Input } from "$lib/shadcn/components/ui/input"

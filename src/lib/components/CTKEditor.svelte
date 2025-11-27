@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { EdraEditor, EdraToolBar } from "$lib/components/edra/shadcn/index.js"
+    import { EdraEditor, EdraToolBar } from "$lib/shadcn/components/edra/shadcn/index.js"
     import type { Editor } from "svelte-tiptap"
 
     type Props = {
