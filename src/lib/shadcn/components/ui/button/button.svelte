@@ -53,6 +53,10 @@
         children,
         ...restProps
     }: ButtonProps = $props()
+
+    // ESLint disable cannot be place in the middle of a Svelte component, so must be placed
+    // here with an ignore for the entire file.
+    /* eslint-disable svelte/no-navigation-without-resolve */
 </script>
 
 {#if href}
