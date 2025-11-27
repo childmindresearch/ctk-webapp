@@ -1,9 +1,9 @@
 <script lang="ts">
-    import { Button } from "$lib/components/ui/button"
-    import { Card, CardContent } from "$lib/components/ui/card"
+    import { Button } from "$lib/shadcn/components/ui/button"
+    import { Card, CardContent } from "$lib/shadcn/components/ui/card"
     import { downloadBlob, FetchError } from "$lib/utils"
     import { toast } from "svelte-sonner"
-    import { Spinner } from "$lib/components/ui/spinner"
+    import { Spinner } from "$lib/shadcn/components/ui/spinner"
     import FormInput from "$lib/components/FormInput.svelte"
     import { GetIntakeDownload } from "$api/v1"
 

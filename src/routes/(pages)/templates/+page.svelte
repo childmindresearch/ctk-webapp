@@ -1,6 +1,6 @@
 <script lang="ts">
-    import * as Tabs from "$lib/components/ui/tabs"
-    import { Badge } from "$lib/components/ui/badge"
+    import * as Tabs from "$lib/shadcn/components/ui/tabs"
+    import { Badge } from "$lib/shadcn/components/ui/badge"
     import Checkout from "./Checkout/Checkout.svelte"
     import { DecisionTree } from "./DecisionTree.svelte"
     import SelectedNodes from "./SelectedNodes.svelte"

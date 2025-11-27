@@ -4,10 +4,10 @@
     import type { DecisionTree } from "./DecisionTree.svelte"
     import { ArrowUp, ArrowDown, FileQuestionMark, Trash, ChevronRight } from "lucide-svelte"
     import { toast } from "svelte-sonner"
-    import { Button } from "$lib/components/ui/button"
-    import { Card } from "$lib/components/ui/card"
-    import * as Table from "$lib/components/ui/table"
-    import { Badge } from "$lib/components/ui/badge"
+    import { Button } from "$lib/shadcn/components/ui/button"
+    import { Card } from "$lib/shadcn/components/ui/card"
+    import * as Table from "$lib/shadcn/components/ui/table"
+    import { Badge } from "$lib/shadcn/components/ui/badge"
     import sanitizeHtml from "sanitize-html"
     export let nodes: DecisionTree[]
 

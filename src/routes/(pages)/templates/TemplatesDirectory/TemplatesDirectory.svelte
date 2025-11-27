@@ -1,8 +1,8 @@
 <script lang="ts">
-    import { Switch } from "$lib/components/ui/switch"
-    import { Label } from "$lib/components/ui/label"
-    import { Button } from "$lib/components/ui/button"
-    import * as Dialog from "$lib/components/ui/dialog"
+    import { Switch } from "$lib/shadcn/components/ui/switch"
+    import { Label } from "$lib/shadcn/components/ui/label"
+    import { Button } from "$lib/shadcn/components/ui/button"
+    import * as Dialog from "$lib/shadcn/components/ui/dialog"
     import { Search } from "lucide-svelte"
     import type { DecisionTree } from "../DecisionTree.svelte"
     import SortableNested from "./SortableNested.svelte"

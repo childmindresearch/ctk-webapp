@@ -1,7 +1,7 @@
 <script lang="ts">
     import { PutTemplate } from "$api/v1/templates/[id]"
-    import * as AlertDialog from "$lib/components/ui/alert-dialog"
-    import { Button } from "$lib/components/ui/button"
+    import * as AlertDialog from "$lib/shadcn/components/ui/alert-dialog"
+    import { Button } from "$lib/shadcn/components/ui/button"
     import { FetchError, shortenText } from "$lib/utils"
     import Sortable, { type SortableEvent } from "sortablejs"
     import type { DecisionTree } from "../DecisionTree.svelte"

@@ -3,7 +3,7 @@
     import { downloadBlob } from "$lib/utils.js"
     import { toast } from "svelte-sonner"
     import { exportProviders } from "./utils"
-    import { Spinner } from "$lib/components/ui/spinner"
+    import { Spinner } from "$lib/shadcn/components/ui/spinner"
 
     type Props = {
         providers: Awaited<ReturnType<typeof getProviders>>
