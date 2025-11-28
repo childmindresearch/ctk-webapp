@@ -94,11 +94,7 @@ export const GetUserPosts = new Endpoint<GetUserPostsResponse, typeof getUserPos
 })
 
 // Endpoint export with POST method (includes request body schema)
-export const PostUserPost = new Endpoint<
-    PostUserPostResponse,
-    typeof getUserPostsPath,
-    typeof postUserPostSchema
->({
+export const PostUserPost = new Endpoint<PostUserPostResponse, typeof getUserPostsPath, typeof postUserPostSchema>({
     method: "POST",
     path: getUserPostsPath,
     successCodes: [StatusCode.CREATED],
@@ -117,7 +113,6 @@ export const GetUserPostDownload = new Endpoint<Blob, typeof downloadPath>({
 })
 ```
 
-
 ## Components
 
 ### Naming & Organization
@@ -132,7 +127,7 @@ Authentication is handled via SSO and falls outside the scope of this guide. Aut
 
 ### The `any` Type
 
-The `any` type is forbidden. Use `unknown` when the type is genuinely unknown, explicit union types when you know the possible types, `never` for impossible cases and generic types for reusable functions
+The `any` type is forbidden unless absolutely necessary. Use `unknown` when the type is genuinely unknown, explicit union types when you know the possible types, `never` for impossible cases and generic types for reusable functions. In the rare case that `any` is required, a comment must be included with the reason for inclusion.
 
 ### Client-Side Requests
 

@@ -13,8 +13,7 @@ export type WithoutChildren<T> = T extends { children?: any } ? Omit<T, "childre
 export type WithoutChildrenOrChild<T> = WithoutChildren<WithoutChild<T>>
 export type WithElementRef<T, U extends HTMLElement = HTMLElement> = T & { ref?: U | null }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function deepEqual(a: any, b: any): boolean {
+function deepEqual(a: unknown, b: unknown): boolean {
     if (a === b) return true
     if (a == null || b == null) return false
     if (typeof a !== typeof b) return false
@@ -24,6 +23,7 @@ function deepEqual(a: any, b: any): boolean {
         const keysB = Object.keys(b)
         if (keysA.length !== keysB.length) return false
 
+        // @ts-expect-error deepEqual accepts any type.
         return keysA.every(key => deepEqual(a[key], b[key]))
     }
 
@@ -178,7 +178,9 @@ type ResponseType = "json" | "blob" | "text"
  */
 export class Endpoint<
     TResponse,
-    TPath extends (...args: (string | number)[]) => string = (...args: (string | number)[]) => string,
+    // Endpoint implementations must specifiy exact types.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    TPath extends (...args: any[]) => string = (...args: (string | number)[]) => string,
     TSchema extends z.ZodType | undefined = undefined
 > {
     private method: Method
