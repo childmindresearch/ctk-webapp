@@ -37,7 +37,7 @@
     ```
 -->
 <script lang="ts">
-    import { Input } from "./ui/input"
+    import { Input } from "$lib/shadcn/components/ui/input"
 
     interface Props {
         label: string

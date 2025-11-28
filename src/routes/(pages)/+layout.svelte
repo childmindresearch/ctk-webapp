@@ -4,9 +4,10 @@
     import { page } from "$app/stores"
     import Navigation from "$lib/components/Navigation/Navigation.svelte"
     import { Toaster } from "$lib/shadcn/components/ui/sonner"
-    import "../../app.css"
     import { toast } from "svelte-sonner"
+    import "../../app.css"
 
+    console.log(`Running Clinician Toolkit version: ${import.meta.env.VITE_APP_VERSION}`)
     let { data, children } = $props()
 
     $effect(() => {
