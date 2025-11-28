@@ -46,17 +46,3 @@ jobs:
             - run: |
                   npm install
                   npm run lint
-
-    dispatch:
-        if: ${{ github.ref_name == 'main' }}
-        needs: [testing, lint]
-        runs-on: ubuntu-latest
-        permissions: {}
-        steps:
-            - name: Dispatch
-              uses: peter-evans/repository-dispatch@v3
-              with:
-                  token: ${{ secrets.CTK_BUILD_PAT }}
-                  repository: childmindresearch/ctk-build
-                  event-type: dependency_updated
-                  client-payload: '{"triggered_by": "${{ github.repository }}, on push event", "commit_sha": "${{ github.sha }}", "branch": "${{ github.ref }}"}'
