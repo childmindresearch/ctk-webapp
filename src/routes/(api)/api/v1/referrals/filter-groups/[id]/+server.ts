@@ -1,9 +1,9 @@
-import { getFilterGroups } from "$api/referrals/crud"
+import { getFilterGroups } from "$api/v1/referrals/crud"
 import { db } from "$lib/server/db"
 import { logger } from "$lib/server/logging"
 import { json } from "@sveltejs/kit"
 import { eq } from "drizzle-orm"
-import { PostFilterGroup } from "$api/referrals/filter-groups/schemas"
+import { PostFilterGroup } from "$api/v1/referrals/filter-groups/schemas"
 import { referralFilterGroups, referralFilterSets } from "$lib/server/db/schema.js"
 import { StatusCode } from "$lib/utils.js"
 

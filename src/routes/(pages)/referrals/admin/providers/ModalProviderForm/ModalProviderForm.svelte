@@ -2,7 +2,7 @@
     import { type ProviderFormData } from "../utils"
     import FormInput from "$lib/components/FormInput.svelte"
     import { slide } from "svelte/transition"
-    import { createProviderSchema } from "$api/referrals/providers/schemas"
+    import { createProviderSchema } from "$api/v1/referrals/providers/schemas"
     import { z } from "zod"
     import Addresses from "./Addresses.svelte"
     import Services from "./Services.svelte"
