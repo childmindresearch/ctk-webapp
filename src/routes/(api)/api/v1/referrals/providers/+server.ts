@@ -1,6 +1,6 @@
 import { logger } from "$lib/server/logging.js"
 import { json } from "@sveltejs/kit"
-import { getProviders } from "$api/referrals/crud.js"
+import { getProviders } from "$api/v1/referrals/crud.js"
 import { z } from "zod"
 import { db } from "$lib/server/db/index.js"
 import { referralProviders, referralAddresses } from "$lib/server/db/schema"

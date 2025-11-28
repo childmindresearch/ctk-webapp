@@ -30,6 +30,9 @@ jobs:
             - name: Run tests
               run: |
                   npm run test:unit
+            - name: Run build
+              run: |
+                  npm run build
 
     lint:
         runs-on: ubuntu-latest
