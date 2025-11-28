@@ -201,7 +201,6 @@ export class Endpoint<
         this.responseType = options.responseType ?? "json"
     }
 
-
     /**
      * Sends an HTTP request using the specified options and returns the parsed response or a `FetchError`.
      *

@@ -9,7 +9,7 @@ const path = () => "/api/v1/health"
  * Use the .fetch() method to run the query.
  */
 export const GetHealth = new Endpoint<undefined, typeof path, undefined>({
-     method: "GET",
-     path,
-     successCodes: [StatusCode.OK]
- })
+    method: "GET",
+    path,
+    successCodes: [StatusCode.OK]
+})
