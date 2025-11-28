@@ -10,6 +10,10 @@ export type PostLlmRequest = z.infer<typeof postLlmRequestSchema>
 export type PostLlmResponse = string
 
 const path = () => "/api/v1/llm"
+/**
+ * Endpoint to generate a response from the LLM using a system and user prompt.
+ * Use the .fetch() method to run the query.
+ */
 export const PostLlm = new Endpoint<PostLlmResponse, typeof path, typeof postLlmRequestSchema>({
     method: "POST",
     path,

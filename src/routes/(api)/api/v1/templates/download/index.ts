@@ -10,6 +10,10 @@ export type PostTemplatesDownloadResponse = Blob
 
 const path = () => "/api/v1/templates/download"
 
+/**
+ * Endpoint to download multiple templates as a DOCX file.
+ * Use the .fetch() method to run the query.
+ */
 export const PostTemplatesDownload = new Endpoint<
     PostTemplatesDownloadResponse,
     typeof path,

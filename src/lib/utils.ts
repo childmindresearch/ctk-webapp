@@ -158,6 +158,24 @@ export class FetchError extends Error {
 type Method = "GET" | "POST" | "PUT" | "PATCH" | "DELETE"
 type ResponseType = "json" | "blob" | "text"
 
+/**
+ * Represents an HTTP endpoint with typed request and response handling.
+ *
+ * @template TResponse - The expected response type returned by the endpoint.
+ * @template TPath - A function type that constructs the endpoint path from arguments.
+ * @template TSchema - An optional Zod schema type used to validate the request body.
+ *
+ * @example
+ * ```typescript
+ * const endpoint = new Endpoint<MyResponseType, typeof myPathFn, typeof mySchema>({
+ *   method: "POST",
+ *   path: myPathFn,
+ *   successCodes: [StatusCode.OK],
+ *   schema: mySchema,
+ *   responseType: "json"
+ * });
+ * ```
+ */
 export class Endpoint<
     TResponse,
     TPath extends (...args: (string | number)[]) => string = (...args: (string | number)[]) => string,
@@ -183,6 +201,20 @@ export class Endpoint<
         this.responseType = options.responseType ?? "json"
     }
 
+
+    /**
+     * Sends an HTTP request using the specified options and returns the parsed response or a `FetchError`.
+     *
+     * @param options - The options for the fetch request.
+     * @param options.fetchOptions - Additional options to pass to the native `fetch` API.
+     * @param options.pathArgs - Arguments to construct the request path. Required if the path function expects parameters.
+     * @param options.body - The request body.
+     * @returns A promise that resolves to the parsed response of type `TResponse`, or a `FetchError` if the request fails or the response is invalid.
+     *
+     * @template TPath - The type of the path function used to construct the request URL.
+     * @template TSchema - The Zod schema type used to validate the request body.
+     * @template TResponse - The expected response type.
+     */
     public async fetch(options: {
         fetchOptions?: RequestInit
         pathArgs?: Parameters<TPath>["length"] extends 0 ? never : Parameters<TPath>

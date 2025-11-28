@@ -20,6 +20,10 @@ export type PutTemplateResponse = typeof templates.$inferSelect
 
 const path = (id: string | number) => `/api/v1/templates/${id}`
 
+/**
+ * Endpoint to create a new template under a given parent node.
+ * Use the .fetch() method to run the query.
+ */
 export const PostTemplate = new Endpoint<PostTemplateResponse, typeof path, typeof postTemplateSchema>({
     method: "POST",
     path,
@@ -27,6 +31,10 @@ export const PostTemplate = new Endpoint<PostTemplateResponse, typeof path, type
     schema: postTemplateSchema
 })
 
+/**
+ * Endpoint to update an existing template's text, parent, or priority.
+ * Use the .fetch() method to run the query.
+ */
 export const PutTemplate = new Endpoint<PutTemplateResponse, typeof path, typeof putTemplateSchema>({
     method: "PUT",
     path,
@@ -34,6 +42,10 @@ export const PutTemplate = new Endpoint<PutTemplateResponse, typeof path, typeof
     schema: putTemplateSchema
 })
 
+/**
+ * Endpoint to delete a template by its ID.
+ * Use the .fetch() method to run the query.
+ */
 export const DeleteTemplate = new Endpoint<undefined, typeof path>({
     method: "DELETE",
     path,
