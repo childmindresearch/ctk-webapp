@@ -42,7 +42,7 @@
         "formsnap": "^2.0.1",
         "fuse.js": "^7.0.0",
         "jsdom": "^24.1.0",
-        "mammoth": "^1.8.0",
+        "mammoth": "^1.11.0",
         "mode-watcher": "^1.1.0",
         "prettier": "^3.3.2",
         "prettier-plugin-svelte": "^3.4.0",
