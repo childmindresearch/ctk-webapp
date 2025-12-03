@@ -1,27 +1,33 @@
-import type { User } from "$lib/types"
 import { DEVELOPMENT_USER } from "$lib/server/environment.js"
-import { pool } from "$lib/server/sql"
 import type { Props } from "$lib/components/Navigation/Navigation.svelte"
 import { StatusCode } from "$lib/utils"
+import { eq } from "drizzle-orm"
+import { db } from "$lib/server/db/index.js"
+import { users } from "$lib/server/db/schema.js"
+import { logger } from "$lib/server/logging.js"
 
 export async function load({ request }) {
     const userEmail = request.headers.get("X-MS-CLIENT-PRINCIPAL-NAME") || DEVELOPMENT_USER
-    const userQuery = {
-        text: "SELECT * FROM users WHERE email = $1",
-        values: [userEmail]
+    let usersFound: (typeof users.$inferSelect)[]
+    try {
+        usersFound = await db.select().from(users).where(eq(users.email, userEmail))
+    } catch (error) {
+        logger.error("Error finding user:", error)
+        return {
+            status: StatusCode.INTERNAL_SERVER_ERROR,
+            error: "Could not fetch user."
+        }
     }
-    const user: User = await pool.connect().then(async client => {
-        const result = await client.query(userQuery)
-        client.release()
-        return result.rows[0]
-    })
-
-    if (!user) {
+    if (usersFound.length > 1) {
+        throw new Error("More than one user found. This should never happen.")
+    }
+    if (usersFound.length == 0) {
         return {
             status: StatusCode.UNAUTHORIZED,
             error: "User not found."
         }
     }
+    const user = usersFound[0]
 
     const pages: Props["pages"] = [
         { name: "DSM Codes", href: "/dsm" },
@@ -31,7 +37,7 @@ export async function load({ request }) {
         { name: "Templates", href: "/templates" }
     ]
 
-    if (user.is_admin) {
+    if (user.isAdmin) {
         pages.push({
             name: "Referrals",
             badge: "Alpha",

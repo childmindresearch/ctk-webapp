@@ -1,8 +1,9 @@
+import { eq } from "drizzle-orm"
 import type { RouteId } from "$app/types"
+import { db } from "$lib/server/db"
+import { users } from "$lib/server/db/schema"
 import { DEVELOPMENT_USER } from "$lib/server/environment"
 import { logger } from "$lib/server/logging"
-import { pool } from "$lib/server/sql"
-import type { User } from "$lib/types"
 import { StatusCode } from "$lib/utils"
 import type { HandleFetch, RequestEvent } from "@sveltejs/kit"
 import { randomUUID } from "crypto"
@@ -132,40 +133,25 @@ export async function handle({ event, resolve }) {
     return response
 }
 
-// Exported for testing purposes.
-export async function getOrInsertUser(email?: string) {
-    if (!email) {
-        return null
+async function getOrInsertUser(email: string): Promise<typeof users.$inferSelect> {
+    const user = await db.select().from(users).where(eq(users.email, email))
+    if (user.length === 1) return user[0]
+    if (user.length > 1) {
+        throw new Error("More than one user found. This should never happen.")
     }
-
-    return await pool.connect().then(async client => {
-        const getUserQuery = {
-            text: "SELECT * FROM users WHERE email = $1",
-            values: [email]
-        }
-        const getResult = await client.query(getUserQuery)
-        if (getResult.rows.length > 0) {
-            client.release()
-            return getResult.rows[0] as User
-        }
-
-        const insertUserQuery = {
-            text: "INSERT INTO users (email) VALUES ($1) RETURNING *",
-            values: [email]
-        }
-        const insertResult = await client.query(insertUserQuery)
-        client.release()
-        return insertResult.rows[0] as User
-    })
+    return (await db.insert(users).values({ email }).returning())[0]
 }
 
-function isUserAuthorized(event: RequestEvent<Partial<Record<string, string>>, RouteId | null>, user: User): boolean {
-    if (!user.is_admin && ADMIN_ENDPOINT_PATHS.some(path => event.request.url.match(path))) {
+function isUserAuthorized(
+    event: RequestEvent<Partial<Record<string, string>>, RouteId | null>,
+    user: typeof users.$inferSelect
+): boolean {
+    if (!user.isAdmin && ADMIN_ENDPOINT_PATHS.some(path => event.request.url.match(path))) {
         return false
     }
 
     for (const endpoint of ADMIN_SPECIFIC_ENDPOINTS) {
-        if (!user.is_admin && event.request.url.match(endpoint.path) && event.request.method === endpoint.method) {
+        if (!user.isAdmin && event.request.url.match(endpoint.path) && event.request.method === endpoint.method) {
             return false
         }
     }

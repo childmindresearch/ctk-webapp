@@ -26,7 +26,7 @@ export async function POST({ request }) {
     }
     try {
         const row = (await db.insert(dsmCodes).values([body]).returning())[0]
-        return json(row as PostDsmResponse)
+        return json(row as PostDsmResponse, { status: StatusCode.CREATED })
     } catch (error) {
         logger.error("Error getting all templates:", error)
         return new Response("Unknown error.", { status: StatusCode.INTERNAL_SERVER_ERROR })

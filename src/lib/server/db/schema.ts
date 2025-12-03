@@ -26,7 +26,7 @@ export const templates = pgTable("html_templates", {
 // Location type enum
 export const locationTypeEnum = pgEnum("location_type", ["unknown", "remote", "in-person", "hybrid"])
 
-// Referral providers table (simplified - service as string, sub_services as array)
+// Referral providers table
 export const referralProviders = pgTable("referral_providers", {
     id: serial("id").primaryKey(),
     name: varchar("name", { length: 500 }).notNull().unique(),

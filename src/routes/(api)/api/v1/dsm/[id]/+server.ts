@@ -23,7 +23,8 @@ export async function PUT({ params, request }) {
     try {
         const row = await db.update(dsmCodes).set(body).where(eq(dsmCodes.id, id)).returning()
         return json(row[0] as PutDsmResponse)
-    } catch {
+    } catch (error) {
+        logger.error("Error during DSM modification: ", error)
         return new Response("Unknown error.", { status: StatusCode.INTERNAL_SERVER_ERROR })
     }
 }
@@ -38,8 +39,9 @@ export async function DELETE({ params }) {
 
     try {
         await db.delete(dsmCodes).where(eq(dsmCodes.id, id))
-        return new Response("")
-    } catch {
+        return new Response(null, { status: StatusCode.NO_CONTENT })
+    } catch (error) {
+        logger.error("Error during DSM deletion: ", error)
         return new Response("Unknown error.", { status: StatusCode.INTERNAL_SERVER_ERROR })
     }
 }
