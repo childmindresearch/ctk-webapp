@@ -11,7 +11,7 @@ export const putDsmRequestSchema = z.object({
 export type PutDsmRequest = z.infer<typeof putDsmRequestSchema>
 export type PutDsmResponse = typeof dsmCodes.$inferSelect
 
-const path = (id: string | number) => `/api/v1/dsm/${id}`
+const path = (id: number) => `/api/v1/dsm/${id}`
 export const PutDsm = new Endpoint<PutDsmResponse, typeof path, typeof putDsmRequestSchema>({
     method: "PUT",
     path,
