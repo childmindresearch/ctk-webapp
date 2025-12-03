@@ -8,6 +8,7 @@ import { StatusCode } from "$lib/utils"
 import type { HandleFetch, RequestEvent } from "@sveltejs/kit"
 import { randomUUID } from "crypto"
 import { performance } from "perf_hooks"
+import { addRootTracingData } from "$lib/telemetry"
 
 type Endpoint = {
     path: string
@@ -82,6 +83,7 @@ export async function handle({ event, resolve }) {
     })
     event.locals.requestId = requestId
     event.locals.user = userEmail
+    event.tracing.root.setAttribute("ctk-user", userEmail)
 
     const user = await getOrInsertUser(userEmail)
     if (!user) {

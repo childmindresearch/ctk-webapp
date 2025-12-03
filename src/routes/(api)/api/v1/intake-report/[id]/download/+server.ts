@@ -1,9 +1,12 @@
 import { logger } from "$lib/server/logging"
 import { AZURE_FUNCTION_PYTHON_URL } from "$lib/server/environment"
+import { getRequestEvent } from "$app/server"
 
 export async function GET({ params, fetch }) {
     const id = params.id
-    logger.info(`Getting intake with id ${id}.`)
+
+    const event = getRequestEvent()
+    event.tracing.current.setAttribute("ctk-id", id)
     return await fetch(`${AZURE_FUNCTION_PYTHON_URL}/intake-report/${id}`)
         .then(async response => {
             if (response.ok && response.body) {

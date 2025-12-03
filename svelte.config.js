@@ -14,6 +14,14 @@ const config = {
         }),
         alias: {
             $api: "src/routes/(api)/api"
+        },
+        experimental: {
+            tracing: {
+                server: true
+            },
+            instrumentation: {
+                server: true
+            }
         }
     },
     compilerOptions: {
