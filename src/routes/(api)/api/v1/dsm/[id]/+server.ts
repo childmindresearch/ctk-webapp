@@ -1,40 +1,45 @@
+import { dsmCodes } from "$lib/server/db/schema.js"
 import { logger } from "$lib/server/logging"
-import { pool, type SqlDsmCodeSchema } from "$lib/server/sql"
+import { StatusCode } from "$lib/utils.js"
+import { json } from "@sveltejs/kit"
+import { putDsmRequestSchema, type PutDsmRequest, type PutDsmResponse } from "./index.js"
+import { db } from "$lib/server/db"
+import { eq } from "drizzle-orm"
 
 export async function PUT({ params, request }) {
-    const id = params.id
-    const { code, label } = await request.json()
-    logger.info("Editing DSM Code")
-    return await pool
-        .connect()
-        .then(async client => {
-            const result = await client.query({
-                text: "UPDATE dsm_codes SET code = $1, label = $2 WHERE id = $3",
-                values: [code, label, id]
-            })
-            client.release()
-            return result.rows as SqlDsmCodeSchema[]
-        })
-        .then(rows => {
-            return new Response(JSON.stringify(rows), { headers: { "Content-Type": "application/json" } })
-        })
-        .catch(error => {
-            logger.error("Error getting all dsm codes:", error)
-            return new Response(null, { status: 500 })
-        })
+    let id: number
+    try {
+        id = Number(params.id)
+    } catch {
+        return new Response("Could not parse ID.", { status: StatusCode.BAD_REQUEST })
+    }
+    let body: PutDsmRequest
+    try {
+        body = putDsmRequestSchema.parse(await request.json())
+    } catch {
+        return new Response("Invalid request body.", { status: StatusCode.BAD_REQUEST })
+    }
+    logger.info("Editing DSM Code.")
+    try {
+        const row = await db.update(dsmCodes).set(body).where(eq(dsmCodes.id, id)).returning()
+        return json(row[0] as PutDsmResponse)
+    } catch {
+        return new Response("Unknown error.", { status: StatusCode.INTERNAL_SERVER_ERROR })
+    }
 }
 
 export async function DELETE({ params }) {
-    return await pool
-        .connect()
-        .then(async client => {
-            await client.query({ text: "DELETE FROM dsm_codes WHERE id = $1", values: [params.id] })
-        })
-        .then(() => {
-            return new Response(null)
-        })
-        .catch(error => {
-            logger.error("Error deleting all dsm code:", error)
-            return new Response(null, { status: 500 })
-        })
+    let id: number
+    try {
+        id = Number(params.id)
+    } catch {
+        return new Response("Could not parse ID.", { status: StatusCode.BAD_REQUEST })
+    }
+
+    try {
+        await db.delete(dsmCodes).where(eq(dsmCodes.id, id))
+        return new Response("")
+    } catch {
+        return new Response("Unknown error.", { status: StatusCode.INTERNAL_SERVER_ERROR })
+    }
 }

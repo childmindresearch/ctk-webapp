@@ -44,7 +44,6 @@
         "jsdom": "^24.1.0",
         "mammoth": "^1.8.0",
         "mode-watcher": "^1.1.0",
-        "pg": "^8.16.2",
         "prettier": "^3.3.2",
         "prettier-plugin-svelte": "^3.4.0",
         "sortablejs": "^1.15.2",

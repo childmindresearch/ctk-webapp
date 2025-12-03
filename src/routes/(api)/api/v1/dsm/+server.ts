@@ -1,24 +1,19 @@
+import { db } from "$lib/server/db"
+import { dsmCodes } from "$lib/server/db/schema.js"
 import { logger } from "$lib/server/logging"
-import { pool, type SqlDsmCodeSchema } from "$lib/server/sql"
 import { StatusCode } from "$lib/utils"
-import { postDsmRequestSchema, type PostDsmRequest } from "./index.js"
+import { json } from "@sveltejs/kit"
+import { postDsmRequestSchema, type GetDsmResponse, type PostDsmRequest, type PostDsmResponse } from "./index.js"
 
 export async function GET() {
     logger.info("Getting all DSM codes")
-    return await pool
-        .connect()
-        .then(async client => {
-            const result = await client.query("SELECT * FROM dsm_codes")
-            client.release()
-            return result.rows as SqlDsmCodeSchema[]
-        })
-        .then(rows => {
-            return new Response(JSON.stringify(rows), { headers: { "Content-Type": "application/json" } })
-        })
-        .catch(error => {
-            logger.error("Error getting all templates:", error)
-            return new Response(null, { status: 500 })
-        })
+    try {
+        const rows = await db.select().from(dsmCodes)
+        return json(rows as GetDsmResponse)
+    } catch (error) {
+        logger.error("Error getting all DSM codes", error)
+        return new Response("Unknown error.", { status: StatusCode.INTERNAL_SERVER_ERROR })
+    }
 }
 
 export async function POST({ request }) {
@@ -29,24 +24,11 @@ export async function POST({ request }) {
     } catch {
         return new Response("Invalid request body.", { status: StatusCode.BAD_REQUEST })
     }
-    return await pool
-        .connect()
-        .then(async client => {
-            const result = await client.query({
-                text: "INSERT INTO dsm_codes (code, label) VALUES ($1, $2) RETURNING id, code, label",
-                values: [body.code, body.label]
-            })
-            client.release()
-            return result.rows as SqlDsmCodeSchema[]
-        })
-        .then(rows => {
-            return new Response(JSON.stringify(rows[0]), {
-                headers: { "Content-Type": "application/json" },
-                status: StatusCode.CREATED
-            })
-        })
-        .catch(error => {
-            logger.error("Error getting all templates:", error)
-            return new Response(null, { status: 500 })
-        })
+    try {
+        const row = (await db.insert(dsmCodes).values([body]).returning())[0]
+        return json(row as PostDsmResponse)
+    } catch (error) {
+        logger.error("Error getting all templates:", error)
+        return new Response("Unknown error.", { status: StatusCode.INTERNAL_SERVER_ERROR })
+    }
 }
