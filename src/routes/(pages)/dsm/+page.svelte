@@ -1,6 +1,4 @@
 <script lang="ts">
-    import type { SqlDsmCodeSchema } from "$lib/server/sql"
-    import type { User } from "$lib/types"
     import { onMount } from "svelte"
     import CreateButton from "./components/CreateButton.svelte"
     import ModalDsmForm from "./components/ModalDsmForm.svelte"
@@ -14,21 +12,21 @@
     import * as Table from "$lib/shadcn/components/ui/table"
     import { DeleteDsm, GetDsm, PostDsm, PutDsm } from "$api/v1"
     import { FetchError } from "$lib/utils"
+    import type { dsmCodes } from "$lib/server/db/schema"
 
-    type Props = { data: { user: User } }
-    let { data }: Props = $props()
+    let { data } = $props()
 
     let searchString = $state("")
-    let selected: SqlDsmCodeSchema[] = $state([])
-    let dsmCodes: SqlDsmCodeSchema[] = $state([])
+    let selected: (typeof dsmCodes.$inferSelect)[] = $state([])
+    let allCodes: (typeof dsmCodes.$inferSelect)[] = $state([])
     let isEditModalOpen = $state(false)
-    let editingItem = $state<SqlDsmCodeSchema | null>(null)
+    let editingItem = $state<typeof dsmCodes.$inferSelect | null>(null)
 
     let autoCompeleteOptions = $derived(
-        dsmCodes.filter(code => (code.code + " " + code.label).toLowerCase().includes(searchString.toLowerCase()))
+        allCodes.filter(code => (code.code + " " + code.label).toLowerCase().includes(searchString.toLowerCase()))
     )
 
-    const isAdmin = data.user?.is_admin
+    const isAdmin = data.user?.isAdmin
 
     onMount(() => {
         GetDsm.fetch({}).then(data => {
@@ -36,7 +34,7 @@
                 toast.error("Could not get DSM codes.")
                 return
             }
-            dsmCodes = data.sort((a, b) => a.label.localeCompare(b.label))
+            allCodes = data.sort((a, b) => a.label.localeCompare(b.label))
         })
     })
 
@@ -75,17 +73,17 @@
                 return
             }
             const index = indexForNewItemInSortedList(
-                dsmCodes.map(d => d.label),
+                allCodes.map(d => d.label),
                 label
             )
-            dsmCodes = [...dsmCodes.slice(0, index), { id: result.id, code, label }, ...dsmCodes.slice(index)]
+            allCodes = [...allCodes.slice(0, index), { id: result.id, code, label }, ...allCodes.slice(index)]
             toast.success("Created the DSM code.")
         })
     }
 
     async function onEdit(code: string, label: string, id?: number) {
         if (!id) return
-        const dsmItems = dsmCodes.filter(code => code.id === id)
+        const dsmItems = allCodes.filter(code => code.id === id)
         if (dsmItems.length !== 1) {
             toast.error("Unexpected error editing the DSM code.")
             return
@@ -103,13 +101,13 @@
         isEditModalOpen = false
     }
 
-    function openEditModal(event: MouseEvent, item: SqlDsmCodeSchema) {
+    function openEditModal(event: MouseEvent, item: typeof dsmCodes.$inferSelect) {
         event.stopPropagation()
         editingItem = item
         isEditModalOpen = true
     }
 
-    function onDelete(event: MouseEvent, item: SqlDsmCodeSchema) {
+    function onDelete(event: MouseEvent, item: typeof dsmCodes.$inferSelect) {
         event.stopPropagation()
         if (!confirm(`Are you sure you want to delete "${item.label}"?`)) {
             return
@@ -120,7 +118,7 @@
                 toast.error(`Failed to delete the DSM code: ${result.message}`)
                 return
             }
-            dsmCodes = dsmCodes.filter(code => code.id !== item.id)
+            allCodes = allCodes.filter(code => code.id !== item.id)
             selected = selected.filter(code => code.id !== item.id)
             toast.success("Deleted the DSM code.")
         })

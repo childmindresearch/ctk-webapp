@@ -39,7 +39,7 @@
     </Tabs.List>
 
     <Tabs.Content value="templates" class="mt-6">
-        <TemplatesDirectory {nodes} {onAddToCart} isAdmin={data.user?.is_admin || false} />
+        <TemplatesDirectory {nodes} {onAddToCart} isAdmin={data.user?.isAdmin || false} />
     </Tabs.Content>
 
     <Tabs.Content value="selection" class="mt-6">
