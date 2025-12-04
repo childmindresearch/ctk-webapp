@@ -103,6 +103,28 @@
             fileInputRef.value = ""
         }
     }
+
+    function downloadSummary() {
+        fetch('/api/v1/summarization')
+            .then(response => {
+                if (!response.ok) throw new Error('Download failed');
+                return response.blob();
+            })
+            .then(blob => {
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'summary-report.docx';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            })
+            .catch(error => {
+                console.error('Download error:', error);
+                alert('Failed to download file');
+            });
+    }
 </script>
 
 <div class="container mx-auto max-w-2xl p-6">
@@ -187,6 +209,10 @@
                             {:else}
                                 Generate Summary
                             {/if}
+                        </Button>
+
+                        <Button type="button" variant="outline" class="ml-4" onclick={async () => downloadSummary()}>
+                            Download
                         </Button>
                     </div>
                 </form>
