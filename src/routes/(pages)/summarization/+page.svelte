@@ -8,8 +8,8 @@
     import { Label } from "$lib/shadcn/components/ui/label"
     import * as Card from "$lib/shadcn/components/ui/card"
     import * as Alert from "$lib/shadcn/components/ui/alert"
-    import { PostLlm } from "$api/v1"
-    import { FetchError } from "$lib/utils"
+    import {downloadBlob} from "$lib/utils"
+  
 
     let file: File | null = $state(null)
     let loading = $state(false)
@@ -34,51 +34,23 @@
             toast.error("Could not find the 'clinical summary and impressions' and 'recommendations' in the document.")
             return
         }
-        const form = new FormData()
-        form.append("userPrompt", userPrompt)
-        form.append("systemPrompt", systemPrompt)
-        loading = true
-        const response = await PostLlm.fetch({ body: { system_prompt: systemPrompt, user_prompt: userPrompt } }).then(
-            result => {
-                if (result instanceof FetchError) {
-                    toast.error(`There was a problem connecting to the server: ${result.message}`)
-                    return
-                }
-                return result
-            }
-        )
-        if (!response) {
-            loading = false
-            return
-        }
-        const formData = new FormData()
-        formData.append("markdown", response)
-        formData.append("formatting", JSON.stringify({}))
-        return await fetch("/api/markdown2docx", {
-            method: "POST",
-            body: formData
+        let child_name = userPrompt.trim().split('\n')[2].split(' ')[0]
+        fetch('/api/v1/summarization', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ patient_name: child_name, text_content: userPrompt })
+        })  
+        .then(response => {
+            if (!response.ok) throw new Error('Download failed');
+            return response.blob();
         })
-            .then(async response => {
-                if (response.ok) {
-                    const blob = await response.blob()
-                    const url = URL.createObjectURL(blob)
-                    const a = document.createElement("a")
-                    a.href = url
-                    a.download = "summary.docx"
-                    a.click()
-                    URL.revokeObjectURL(url)
-                    loading = false
-                    return
-                }
-                toast.error("There was a problem connecting to the server.")
-                loading = false
-                return
-            })
-            .catch(error => {
-                toast.error(`There was a problem interpreting the server response: ${error}.`)
-                loading = false
-                return
-            })
+        .then(blob => downloadBlob(blob, 'summary.docx'))
+        .catch(error => {
+            console.error('Download error:', error);
+            alert('Failed to download file');
+        });
     }
 
     function getTextBetween(text: string, start: RegExp, end: RegExp) {
@@ -104,27 +76,7 @@
         }
     }
 
-    function downloadSummary() {
-        fetch('/api/v1/summarization')
-            .then(response => {
-                if (!response.ok) throw new Error('Download failed');
-                return response.blob();
-            })
-            .then(blob => {
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = 'summary-report.docx';
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                URL.revokeObjectURL(url);
-            })
-            .catch(error => {
-                console.error('Download error:', error);
-                alert('Failed to download file');
-            });
-    }
+
 </script>
 
 <div class="container mx-auto max-w-2xl p-6">
@@ -209,10 +161,6 @@
                             {:else}
                                 Generate Summary
                             {/if}
-                        </Button>
-
-                        <Button type="button" variant="outline" class="ml-4" onclick={async () => downloadSummary()}>
-                            Download
                         </Button>
                     </div>
                 </form>
