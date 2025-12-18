@@ -9,7 +9,7 @@
     import * as Card from "$lib/shadcn/components/ui/card"
     import * as Alert from "$lib/shadcn/components/ui/alert"
     import {downloadBlob} from "$lib/utils"
-  
+
 
     let file: File | null = $state(null)
     let loading = $state(false)
@@ -41,7 +41,7 @@
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({ patient_name: child_name, text_content: userPrompt })
-        })  
+        })
         .then(response => {
             if (!response.ok) throw new Error('Download failed');
             return response.blob();

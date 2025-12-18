@@ -45,7 +45,7 @@ export async function POST({ request }) {
         console.log("Request data:", data);
         const doc = await generateSummaryDoc(data);
         const buffer = await Packer.toBuffer(doc);
-        
+
         return new Response(new Uint8Array(buffer), {
             headers: {
                 'Content-Type': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
