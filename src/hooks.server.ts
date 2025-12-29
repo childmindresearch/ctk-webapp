@@ -1,13 +1,15 @@
 import { eq } from "drizzle-orm"
-import type { RouteId } from "$app/types"
-import { db } from "$lib/server/db"
 import { users } from "$lib/server/db/schema"
-import { DEVELOPMENT_USER } from "$lib/server/environment"
 import { logger } from "$lib/server/logging"
-import { StatusCode } from "$lib/utils"
 import type { HandleFetch, RequestEvent } from "@sveltejs/kit"
 import { randomUUID } from "crypto"
 import { performance } from "perf_hooks"
+import { DEVELOPMENT_USER } from "$lib/server/environment"
+import { StatusCode } from "$lib/utils"
+import type { RouteId } from "$app/types"
+import { migrate } from "drizzle-orm/node-postgres/migrator"
+import { db } from "$lib/server/db"
+import { building } from "$app/environment"
 
 type Endpoint = {
     path: string
@@ -19,6 +21,8 @@ const ADMIN_SPECIFIC_ENDPOINTS: Endpoint[] = [
     { path: "/api/dsm", method: "POST" },
     { path: "/api/dsm", method: "PUT" }
 ]
+
+if (!building) await migrate(db, { migrationsFolder: "drizzle" })
 
 /* Logs outgoing fetches and their responses. */
 export const handleFetch: HandleFetch = async ({ event, request, fetch }) => {
@@ -50,7 +54,11 @@ export const handleFetch: HandleFetch = async ({ event, request, fetch }) => {
     try {
         response = await fetch(request)
     } catch (e) {
-        logger.error({ ...logResponseData, status: 500, error: "Failed to contact server." })
+        logger.error({
+            ...logResponseData,
+            status: 500,
+            error: "Failed to contact server."
+        })
         throw e
     }
 
@@ -92,7 +100,9 @@ export async function handle({ event, resolve }) {
             requestId,
             headers: Object.fromEntries(event.request.headers.entries())
         })
-        return new Response("Could not find user email", { status: StatusCode.INTERNAL_SERVER_ERROR })
+        return new Response("Could not find user email", {
+            status: StatusCode.INTERNAL_SERVER_ERROR
+        })
     }
     if (!isUserAuthorized(event, user)) {
         const endTime = performance.now()

@@ -2,6 +2,17 @@
     "name": "ctk-frontend",
     "version": "dev",
     "private": true,
+    "husky": {
+        "hooks": {
+            "pre-commit": "lint-staged"
+        }
+    },
+    "lint-staged": {
+        "*.{js,jsx,ts,tsx,json,css,scss,md}": [
+            "prettier --write",
+            "eslint --fix"
+        ]
+    },
     "scripts": {
         "dev": "vite dev",
         "build": "vite build",
@@ -12,7 +23,8 @@
         "lint": "prettier --check 'src/**/*.{js,ts,svelte}' && eslint 'src/**/*.{js,ts,svelte}'",
         "prettier-fix": "prettier --check --write 'src/**/*.{js,ts,svelte}'",
         "test:integration": "playwright test",
-        "test:unit": "vitest"
+        "test:unit": "vitest",
+        "prepare": "husky install"
     },
     "devDependencies": {
         "@floating-ui/dom": "^1.6.7",
@@ -41,6 +53,7 @@
         "eslint-plugin-svelte": "^3.12.5",
         "formsnap": "^2.0.1",
         "fuse.js": "^7.0.0",
+        "husky": "^8.0.0",
         "jsdom": "^24.1.0",
         "mammoth": "^1.8.0",
         "mode-watcher": "^1.1.0",

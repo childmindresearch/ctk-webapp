@@ -12,6 +12,7 @@ WORKDIR /app
 
 COPY --from=builder /app/build /app/build
 COPY --from=builder /app/package*.json /app/
+COPY --from=builder /app/drizzle /app/drizzle
 RUN npm ci --omit=dev
 EXPOSE 3000
 
