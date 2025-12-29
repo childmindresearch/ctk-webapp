@@ -24,7 +24,7 @@
         "prettier-fix": "prettier --check --write 'src/**/*.{js,ts,svelte}'",
         "test:integration": "playwright test",
         "test:unit": "vitest",
-        "prepare": "husky install"
+        "prepare": "husky || true # Fail silently during CI/CD."
     },
     "devDependencies": {
         "@floating-ui/dom": "^1.6.7",
@@ -53,7 +53,7 @@
         "eslint-plugin-svelte": "^3.12.5",
         "formsnap": "^2.0.1",
         "fuse.js": "^7.0.0",
-        "husky": "^8.0.0",
+        "husky": "^9.1.7",
         "jsdom": "^24.1.0",
         "mammoth": "^1.8.0",
         "mode-watcher": "^1.1.0",
