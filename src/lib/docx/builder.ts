@@ -36,7 +36,7 @@ type Awaitable<T> =
               T extends Record<string, unknown>
               ? { [K in keyof T]: Awaitable<T[K]> } | Promise<{ [K in keyof T]: Awaitable<T[K]> }>
               : // scalars
-                T | Promise<T>
+                    T | Promise<T>
 
 export type AwaitableProps<T> = {
     [K in keyof T]: T[K] extends Array<infer U>
