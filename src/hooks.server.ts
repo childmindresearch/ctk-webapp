@@ -90,6 +90,7 @@ export async function handle({ event, resolve }) {
     })
     event.locals.requestId = requestId
     event.locals.user = userEmail
+    event.tracing.root.setAttribute("ctk-user", userEmail)
 
     const user = await getOrInsertUser(userEmail)
     if (!user) {

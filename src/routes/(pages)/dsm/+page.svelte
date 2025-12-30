@@ -13,6 +13,7 @@
     import { DeleteDsm, GetDsm, PostDsm, PutDsm } from "$api/v1"
     import { FetchError } from "$lib/utils"
     import type { dsmCodes } from "$lib/server/db/schema"
+    import { PostDsmTelemetry } from "$api/v1/dsm/telemetry"
 
     let { data } = $props()
 
@@ -47,7 +48,7 @@
         searchString = ""
     }
 
-    function exportToClipboard() {
+    async function exportToClipboard() {
         if (selected.length === 0) {
             toast.error("No DSM codes have been selected.")
             return
@@ -62,6 +63,7 @@
         }
         navigator.clipboard.writeText(selected.map(s => itemToString(s)).join("\n") + "\n")
         toast.info("The selected DSM codes have been copied to your clipboard.")
+        await PostDsmTelemetry.fetch({ body: { ids: selected.map(s => s.id) } })
     }
 
     async function onCreate(code: string, label: string) {

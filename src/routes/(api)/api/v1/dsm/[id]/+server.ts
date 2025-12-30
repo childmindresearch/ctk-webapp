@@ -5,6 +5,7 @@ import { json } from "@sveltejs/kit"
 import { putDsmRequestSchema, type PutDsmRequest, type PutDsmResponse } from "./index.js"
 import { db } from "$lib/server/db"
 import { eq } from "drizzle-orm"
+import { getRequestEvent } from "$app/server"
 
 export async function PUT({ params, request }) {
     let id: number
@@ -13,6 +14,8 @@ export async function PUT({ params, request }) {
     } catch {
         return new Response("Could not parse ID.", { status: StatusCode.BAD_REQUEST })
     }
+    const event = getRequestEvent()
+    event.tracing.current.setAttribute("ctk-id", id)
     let body: PutDsmRequest
     try {
         body = putDsmRequestSchema.parse(await request.json())
@@ -37,6 +40,8 @@ export async function DELETE({ params }) {
         return new Response("Could not parse ID.", { status: StatusCode.BAD_REQUEST })
     }
 
+    const event = getRequestEvent()
+    event.tracing.current.setAttribute("ctk-id", id)
     try {
         await db.delete(dsmCodes).where(eq(dsmCodes.id, id))
         return new Response(null, { status: StatusCode.NO_CONTENT })

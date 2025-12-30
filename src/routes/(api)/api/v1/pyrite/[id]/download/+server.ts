@@ -1,8 +1,12 @@
 import { logger } from "$lib/server/logging"
 import { AZURE_FUNCTION_PYTHON_URL } from "$lib/server/environment"
+import { getRequestEvent } from "$app/server"
 
 export async function GET({ params, fetch }) {
     const id = params.id
+
+    const event = getRequestEvent()
+    event.tracing.current.setAttribute("ctk-id", id)
     logger.info(`Getting Pyrite report with id ${id}.`)
     return await fetch(`${AZURE_FUNCTION_PYTHON_URL}/pyrite/${id}`)
         .then(async response => {

@@ -12,6 +12,7 @@ import fs from "fs"
 import { parseHTML } from "linkedom"
 import path from "path"
 import { postTemplateDownloadSchema } from "./index.js"
+import { getRequestEvent } from "$app/server"
 
 const TITLE_LEVEL = 2
 
@@ -32,9 +33,10 @@ type TemplateParagraph = {
 }
 
 export async function POST({ request }) {
-    logger.info("Downloading templates as docx")
     try {
         const body = postTemplateDownloadSchema.parse(await request.json())
+        const event = getRequestEvent()
+        event.tracing.current.setAttribute("ctk-ids", body.templateIds)
         const parent = alias(templates, "parent")
         const rows = await db
             .select({
