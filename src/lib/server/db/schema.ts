@@ -1,21 +1,18 @@
 import { pgTable, serial, varchar, integer, boolean, pgEnum } from "drizzle-orm/pg-core"
 import { relations } from "drizzle-orm"
 
-// Users table
 export const users = pgTable("users", {
     id: serial("id").primaryKey(),
     email: varchar("email", { length: 255 }).notNull(),
     isAdmin: boolean("is_admin")
 })
 
-// DSM codes table
 export const dsmCodes = pgTable("dsm_codes", {
     id: serial("id").primaryKey(),
     code: varchar("code", { length: 255 }).notNull(),
     label: varchar("label", { length: 255 }).notNull()
 })
 
-// Templates table
 export const templates = pgTable("html_templates", {
     id: serial("id").primaryKey(),
     text: varchar("text", { length: 8000 }).notNull(),
@@ -23,10 +20,8 @@ export const templates = pgTable("html_templates", {
     priority: integer("priority").notNull().default(0)
 })
 
-// Location type enum
 export const locationTypeEnum = pgEnum("location_type", ["unknown", "remote", "in-person", "hybrid"])
 
-// Referral providers table
 export const referralProviders = pgTable("referral_providers", {
     id: serial("id").primaryKey(),
     name: varchar("name", { length: 500 }).notNull().unique(),
@@ -39,7 +34,6 @@ export const referralProviders = pgTable("referral_providers", {
     subServices: varchar("sub_services", { length: 255 }).array().notNull().default([])
 })
 
-// Referral addresses table
 export const referralAddresses = pgTable("referral_addresses", {
     id: serial("id").primaryKey(),
     providerId: integer("provider_id")
@@ -55,13 +49,11 @@ export const referralAddresses = pgTable("referral_addresses", {
     contacts: varchar("contacts", { length: 255 }).array().notNull().default([])
 })
 
-// Referral filter groups table
 export const referralFilterGroups = pgTable("referral_filter_groups", {
     id: serial("id").primaryKey(),
     name: varchar("name", { length: 255 }).notNull().unique()
 })
 
-// Referral filter sets table
 export const referralFilterSets = pgTable("referral_filter_sets", {
     id: serial("id").primaryKey(),
     name: varchar("name", { length: 255 }).notNull(),
@@ -72,7 +64,6 @@ export const referralFilterSets = pgTable("referral_filter_sets", {
         .references(() => referralFilterGroups.id, { onDelete: "cascade" })
 })
 
-// Relations
 export const referralProviderRelations = relations(referralProviders, ({ many }) => ({
     addresses: many(referralAddresses)
 }))
