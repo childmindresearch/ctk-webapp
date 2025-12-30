@@ -9,7 +9,7 @@ import { StatusCode } from "$lib/utils"
 import type { RouteId } from "$app/types"
 import { migrate } from "drizzle-orm/node-postgres/migrator"
 import { db } from "$lib/server/db"
-import { building } from "$app/environment"
+import { building, dev } from "$app/environment"
 
 type Endpoint = {
     path: string
@@ -22,7 +22,7 @@ const ADMIN_SPECIFIC_ENDPOINTS: Endpoint[] = [
     { path: "/api/dsm", method: "PUT" }
 ]
 
-if (!building) await migrate(db, { migrationsFolder: "drizzle" })
+if (!building && !dev) await migrate(db, { migrationsFolder: "drizzle" })
 
 /* Logs outgoing fetches and their responses. */
 export const handleFetch: HandleFetch = async ({ event, request, fetch }) => {
