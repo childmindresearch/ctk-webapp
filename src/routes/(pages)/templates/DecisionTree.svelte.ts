@@ -22,7 +22,7 @@ export class DecisionTree {
         this.parent = parent
         this.children = table
             .filter(node => node.parentId === this.id)
-            .sort((a, b) => a.priority - b.priority)
+            .toSorted((a, b) => a.priority - b.priority)
             .map(child => new DecisionTree(table, child.id, this))
         this.recursiveSortChildren()
     }
@@ -110,7 +110,7 @@ export class DecisionTree {
     }
 
     private recursiveSortChildren() {
-        this.children = this.children?.sort((a, b) => a.priority - b.priority)
+        this.children = this.children?.toSorted((a, b) => a.priority - b.priority)
         this.children?.forEach(child => child.recursiveSortChildren())
     }
 }

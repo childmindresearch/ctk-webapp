@@ -40,7 +40,7 @@ describe("DecisionTree", () => {
         const children = tree.getChildrenRecursive()
 
         expect(children.length).toBe(4)
-        expect(children.map(c => c.id).sort()).toEqual([2, 3, 4, 5])
+        expect(children.map(c => c.id).toSorted()).toEqual([2, 3, 4, 5])
     })
 
     it("should filter children by ids", () => {
@@ -48,7 +48,7 @@ describe("DecisionTree", () => {
         const filtered = tree.filterChildrenByIds([3, 4])
 
         expect(filtered.length).toBe(2)
-        expect(filtered.map(c => c.id).sort()).toEqual([3, 4])
+        expect(filtered.map(c => c.id).toSorted()).toEqual([3, 4])
     })
 
     it("should get path correctly", () => {

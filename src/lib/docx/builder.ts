@@ -28,10 +28,10 @@ type Awaitable<T> =
         ? T
         : // mutable arrays
           T extends (infer U)[]
-          ? Awaitable<U | NullComponent>[] | Promise<Awaitable<U | NullComponent>[]>
+          ? Awaitable<U | undefined>[] | Promise<Awaitable<U | undefined>[]>
           : // readonly arrays
             T extends ReadonlyArray<infer U>
-            ? ReadonlyArray<Awaitable<U | NullComponent>> | Promise<ReadonlyArray<Awaitable<U | NullComponent>>>
+            ? ReadonlyArray<Awaitable<U | undefined>> | Promise<ReadonlyArray<Awaitable<U | undefined>>>
             : // plain objects
               T extends Record<string, unknown>
               ? { [K in keyof T]: Awaitable<T[K]> } | Promise<{ [K in keyof T]: Awaitable<T[K]> }>
@@ -39,11 +39,15 @@ type Awaitable<T> =
                     T | Promise<T>
 
 export type AwaitableProps<T> = {
-    [K in keyof T]: T[K] extends Array<infer U>
+    [K in keyof T]: T[K] extends ReadonlyArray<infer U>
         ? Array<Awaitable<U> | Promise<U[]> | Promise<U | null> | null> | Promise<Array<Awaitable<U> | null>>
         : T[K] extends Record<string, unknown>
           ? Awaitable<T[K]>
           : Awaitable<T[K]>
+}
+
+type AwaitablePropsWithoutPredicate<T> = AwaitableProps<T> & {
+    predicate?: never
 }
 
 type AwaitablePropsWithOptionalPredicate<T> = AwaitableProps<T> & {
@@ -65,13 +69,6 @@ function isPlainObject(value: unknown): value is Record<string, unknown> {
 
     const proto = Object.getPrototypeOf(value)
     return proto === Object.prototype
-}
-
-/*
- * Empty component used for filtering components whose predicate evaluates to false.
- */
-export class NullComponent {
-    constructor() {}
 }
 
 /*
@@ -98,7 +95,7 @@ export async function resolveProps<T extends Record<string, unknown>>(
                         return val
                     })
                 )
-                return [k, recursedArray.flat().filter(val => !(val instanceof NullComponent))]
+                return [k, recursedArray.flat().filter(val => val !== undefined)]
             }
             if (isPlainObject(resolvedValue)) {
                 return [k, await resolveProps(resolvedValue as Record<string, unknown>)]
@@ -115,13 +112,12 @@ export async function resolveProps<T extends Record<string, unknown>>(
 function createBaseBuilder<TOptions extends Record<string, unknown>, TComponent>(
     ComponentClass: new (options: TOptions) => TComponent
 ) {
-    async function builder(options: AwaitablePropsWithRequiredPredicate<TOptions>): Promise<TComponent | NullComponent>
-    async function builder(options: AwaitableProps<TOptions>): Promise<TComponent>
-    async function builder(
-        options: AwaitablePropsWithOptionalPredicate<TOptions>
-    ): Promise<TComponent | NullComponent> {
+    async function builder(options: AwaitablePropsWithoutPredicate<TOptions>): Promise<TComponent>
+    async function builder(options: AwaitablePropsWithRequiredPredicate<TOptions>): Promise<TComponent | undefined>
+    async function builder(options: AwaitablePropsWithOptionalPredicate<TOptions>): Promise<TComponent | undefined>
+    async function builder(options: AwaitablePropsWithOptionalPredicate<TOptions>): Promise<TComponent | undefined> {
         const { predicate, ...optionsWithoutPredicate } = options
-        if (predicate && !(await predicate())) return new NullComponent()
+        if (predicate && !(await predicate())) return undefined
         return new ComponentClass(await resolveProps(optionsWithoutPredicate as AwaitableProps<TOptions>))
     }
     return builder
@@ -133,17 +129,21 @@ function createBaseBuilder<TOptions extends Record<string, unknown>, TComponent>
 function createStringBuilder<TOptions extends Record<string, unknown>, TComponent>(
     ComponentClass: new (options: TOptions | string) => TComponent
 ) {
-    async function builder(options: AwaitablePropsWithRequiredPredicate<TOptions>): Promise<TComponent | NullComponent>
-    async function builder(options: AwaitableProps<TOptions> | Awaitable<string>): Promise<TComponent>
+    async function builder(options: Awaitable<string>): Promise<TComponent>
+    async function builder(options: AwaitablePropsWithoutPredicate<TOptions>): Promise<TComponent>
+    async function builder(options: AwaitablePropsWithRequiredPredicate<TOptions>): Promise<TComponent | undefined>
     async function builder(
-        options: AwaitablePropsWithOptionalPredicate<TOptions> | Awaitable<string>
-    ): Promise<TComponent | NullComponent> {
+        options:
+            | AwaitablePropsWithoutPredicate<TOptions>
+            | AwaitablePropsWithRequiredPredicate<TOptions>
+            | Awaitable<string>
+    ): Promise<TComponent | undefined> {
         const resolved = await options
-        if (resolved === null) return new NullComponent()
+        if (resolved === null) return undefined
         if (typeof resolved === "string") {
             return new ComponentClass(resolved)
         }
-        return createBaseBuilder(ComponentClass as new (options: TOptions) => TComponent)(resolved)
+        return createBaseBuilder(ComponentClass as new (options: TOptions) => TComponent | undefined)(resolved)
     }
     return builder
 }
@@ -164,15 +164,13 @@ export class DocxBuilderClient {
     /*
      * Section does not have a constructor in js docx, so we need to build our own.
      */
+    async section(options: AwaitablePropsWithoutPredicate<ISectionOptions>): Promise<ISectionOptions>
+    async section(options: AwaitablePropsWithRequiredPredicate<ISectionOptions>): Promise<ISectionOptions | undefined>
     async section(
-        options: AwaitablePropsWithRequiredPredicate<ISectionOptions>
-    ): Promise<ISectionOptions | NullComponent>
-    async section(options: AwaitableProps<ISectionOptions>): Promise<ISectionOptions>
-    async section(
-        options: AwaitablePropsWithOptionalPredicate<ISectionOptions>
-    ): Promise<ISectionOptions | NullComponent> {
+        options: AwaitablePropsWithoutPredicate<ISectionOptions> | AwaitablePropsWithRequiredPredicate<ISectionOptions>
+    ): Promise<ISectionOptions | undefined> {
         const { predicate, ...otherOptions } = options
-        if (predicate && !(await predicate())) return new NullComponent()
+        if (predicate && !(await predicate())) return undefined
         return await resolveProps(otherOptions as AwaitableProps<ISectionOptions>)
     }
 

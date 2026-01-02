@@ -1,19 +1,19 @@
+import AdmZip from "adm-zip"
 import {
     Paragraph,
     Table,
-    type HeadingLevel,
-    UnderlineType,
-    type ISectionOptions,
-    type IRunStylePropertiesOptions,
-    TextRun,
     TableCell,
-    TableRow
+    TableRow,
+    TextRun,
+    UnderlineType,
+    type HeadingLevel,
+    type IRunStylePropertiesOptions,
+    type ISectionOptions
 } from "docx"
-import { DocxBuilderClient } from "../../docx/builder"
-import { languageTool, type LanguageToolResponseSchema } from "../languageTool"
 import { DOMParser } from "linkedom"
 import type z from "zod"
-import AdmZip from "adm-zip"
+import { DocxBuilderClient } from "../../docx/builder"
+import { languageTool, type LanguageToolResponseSchema } from "../languageTool"
 
 type Mutable<T> = {
     -readonly [P in keyof T]: T[P]
@@ -235,7 +235,7 @@ export class Html2Docx {
                 .slice(4, -1)
                 .split(",")
                 .map(s => Number(s.trim()))
-            return this.rgbToHex(r, g, b).slice(1) // Remove leading #
+            return rgbToHex(r, g, b).slice(1) // Remove leading #
         }
         return undefined
     }
@@ -300,14 +300,6 @@ export class Html2Docx {
         })
 
         return paragraphs
-    }
-
-    private rgbToHex(r: number, g: number, b: number): string {
-        const toHex = (n: number): string => {
-            const hex = Math.round(Math.max(0, Math.min(255, n))).toString(16)
-            return hex.length === 1 ? "0" + hex : hex
-        }
-        return "#" + toHex(r) + toHex(g) + toHex(b)
     }
 
     /*
@@ -394,4 +386,13 @@ class LanguageCorrectionCollector {
         })
         return segments
     }
+}
+
+function rgbToHex(r: number, g: number, b: number): string {
+    return "#" + toHex(r) + toHex(g) + toHex(b)
+}
+
+function toHex(n: number): string {
+    const hex = Math.round(Math.max(0, Math.min(255, n))).toString(16)
+    return hex.length === 1 ? "0" + hex : hex
 }
