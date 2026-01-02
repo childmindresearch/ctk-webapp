@@ -1,19 +1,19 @@
+import AdmZip from "adm-zip"
 import {
     Paragraph,
     Table,
-    type HeadingLevel,
-    UnderlineType,
-    type ISectionOptions,
-    type IRunStylePropertiesOptions,
-    TextRun,
     TableCell,
-    TableRow
+    TableRow,
+    TextRun,
+    UnderlineType,
+    type HeadingLevel,
+    type IRunStylePropertiesOptions,
+    type ISectionOptions
 } from "docx"
-import { DocxBuilderClient } from "../../docx/builder"
-import { languageTool, type LanguageToolResponseSchema } from "../languageTool"
 import { DOMParser } from "linkedom"
 import type z from "zod"
-import AdmZip from "adm-zip"
+import { DocxBuilderClient } from "../../docx/builder"
+import { languageTool, type LanguageToolResponseSchema } from "../languageTool"
 
 type Mutable<T> = {
     -readonly [P in keyof T]: T[P]
@@ -47,7 +47,7 @@ function isTextSegmentArray(arr: object[]): arr is TextSegment[] {
     return arr.every(isTextSegment)
 }
 
-const LANGUAGETOOL_RULES = [
+const LANGUAGETOOL_RULES = new Set([
     "BASE_FORM",
     "CONSECUTIVE_SPACES",
     "PERS_PRONOUN_AGREEMENT",
@@ -55,7 +55,7 @@ const LANGUAGETOOL_RULES = [
     "THE_US",
     "UPPERCASE_SENTENCE_START",
     "WEEK_HYPHEN"
-]
+])
 
 export class Html2Docx {
     private useLanguageTool: boolean
@@ -99,7 +99,9 @@ export class Html2Docx {
      * but Word expects them as separate paragraphs and Paragraphs are the unit where we have to run (async)
      * LanguageTool, this function gets a bit messy.
      */
-    private async processParagraph(docNode: HTMLParagraphElement | HTMLHeadingElement): Promise<(Paragraph | Table)[]> {
+    private async processParagraph(
+        docNode: HTMLParagraphElement | HTMLHeadingElement
+    ): Promise<(Promise<Paragraph> | Paragraph | Table)[]> {
         const nodeName = docNode.nodeName.toLowerCase()
         const heading =
             nodeName !== "p"
@@ -130,9 +132,8 @@ export class Html2Docx {
             [] as (Paragraph[] | Table[] | TextSegment[])[]
         )
 
-        const paragraphs: (Paragraph[] | Table[])[] = []
+        const paragraphs: (Promise<Paragraph> | Paragraph[] | Table[])[] = []
         const builder = new DocxBuilderClient()
-
         for (let index = 0; index < reducedFragments.length; index++) {
             const fragment = reducedFragments[index]
             if (!isTextSegmentArray(fragment)) {
@@ -140,27 +141,29 @@ export class Html2Docx {
                 continue
             }
 
-            let corrected: TextSegment[] = fragment
+            let textRuns: Promise<TextRun[]> | TextRun[]
             if (this.useLanguageTool) {
                 const collector = new LanguageCorrectionCollector()
                 collector.push(...fragment)
-                corrected = await collector.collect()
+                textRuns = collector
+                    .collect()
+                    .then(runs => runs.map(segment => new TextRun({ text: segment.content, ...segment.formatting })))
+            } else {
+                textRuns = fragment.map(
+                    segment =>
+                        new TextRun({
+                            text: (segment as TextSegment).content,
+                            ...(segment as TextSegment).formatting
+                        })
+                )
             }
 
-            const textRuns = corrected.map(
-                segment =>
-                    new TextRun({
-                        text: (segment as TextSegment).content,
-                        ...(segment as TextSegment).formatting
-                    })
-            )
-
-            paragraphs.push([
-                await builder.Paragraph({
+            paragraphs.push(
+                builder.Paragraph({
                     heading,
                     children: textRuns
                 })
-            ])
+            )
         }
 
         return paragraphs.flat()
@@ -235,7 +238,7 @@ export class Html2Docx {
                 .slice(4, -1)
                 .split(",")
                 .map(s => Number(s.trim()))
-            return this.rgbToHex(r, g, b).slice(1) // Remove leading #
+            return rgbToHex(r, g, b).slice(1) // Remove leading #
         }
         return undefined
     }
@@ -302,14 +305,6 @@ export class Html2Docx {
         return paragraphs
     }
 
-    private rgbToHex(r: number, g: number, b: number): string {
-        const toHex = (n: number): string => {
-            const hex = Math.round(Math.max(0, Math.min(255, n))).toString(16)
-            return hex.length === 1 ? "0" + hex : hex
-        }
-        return "#" + toHex(r) + toHex(g) + toHex(b)
-    }
-
     /*
      * Fixes invalid numbering list identifiers in a DOCX document to work around a js-docx patching bug.
      *
@@ -362,7 +357,7 @@ class LanguageCorrectionCollector {
         if (this.segments.length === 0) return []
         const text = this.segments.map(c => c.content).join("")
         const matches = (await languageTool(text)).matches
-        const corrections = matches.filter(match => LANGUAGETOOL_RULES.includes(match.rule.id))
+        const corrections = matches.filter(match => LANGUAGETOOL_RULES.has(match.rule.id))
         return this.applyCorrections(corrections)
     }
 
@@ -394,4 +389,13 @@ class LanguageCorrectionCollector {
         })
         return segments
     }
+}
+
+function rgbToHex(r: number, g: number, b: number): string {
+    return "#" + toHex(r) + toHex(g) + toHex(b)
+}
+
+function toHex(n: number): string {
+    const hex = Math.round(Math.max(0, Math.min(255, n))).toString(16)
+    return hex.length === 1 ? "0" + hex : hex
 }

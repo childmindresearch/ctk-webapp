@@ -244,7 +244,7 @@ export class Endpoint<
                 ...fetchOptions,
                 body: parsedBody !== undefined ? JSON.stringify(parsedBody) : undefined,
                 headers: {
-                    ...(fetchOptions?.headers ?? {})
+                    ...fetchOptions?.headers
                 },
                 method: this.method
             })

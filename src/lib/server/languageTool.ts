@@ -116,6 +116,6 @@ export async function languageTool(
         throw new Error(`LanguageTool API error: ${errorText}`)
     } catch (err) {
         logger.error("Error processing LanguageTool request:", err)
-        throw new Error("Internal server error processing text")
+        throw new Error("Internal server error processing text", { cause: err })
     }
 }

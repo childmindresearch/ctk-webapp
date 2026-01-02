@@ -27,10 +27,11 @@
     let { pages: initialPages, isOpen = $bindable() }: Props = $props()
 
     let pages = $state(
-        initialPages.map(page => ({
-            ...page,
-            isOpen: "subPages" in page ? false : undefined
-        }))
+        initialPages.map(page =>
+            Object.assign({}, page, {
+                isOpen: "subPages" in page ? false : undefined
+            })
+        )
     )
 
     let isPageActive = $derived((href: string) => href === page.url.pathname)

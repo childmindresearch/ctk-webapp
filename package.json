@@ -20,8 +20,8 @@
         "test": "npm run test:unit",
         "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
         "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
-        "lint": "prettier --check 'src/**/*.{js,ts,svelte}' && eslint 'src/**/*.{js,ts,svelte}'",
-        "prettier-fix": "prettier --check --write 'src/**/*.{js,ts,svelte}'",
+        "lint": "prettier --check 'src/**/*.{js,ts,svelte}' && oxlint",
+        "lint:fix": "prettier --check --write 'src/**/*.{js,ts,svelte}' && oxlint --fix",
         "test:integration": "playwright test",
         "test:unit": "vitest",
         "prepare": "husky || true # Fail silently during CI/CD."
@@ -57,6 +57,7 @@
         "jsdom": "^24.1.0",
         "mammoth": "^1.8.0",
         "mode-watcher": "^1.1.0",
+        "oxlint": "^1.36.0",
         "prettier": "^3.3.2",
         "prettier-plugin-svelte": "^3.4.0",
         "sortablejs": "^1.15.2",
@@ -130,10 +131,5 @@
         "tiptap-markdown": "^0.9.0",
         "vite-plugin-devtools-json": "^0.2.0",
         "zod": "^4.1.12"
-    },
-    "overrides": {
-        "svelte-markdown": {
-            "svelte": "^5.0.0"
-        }
     }
 }

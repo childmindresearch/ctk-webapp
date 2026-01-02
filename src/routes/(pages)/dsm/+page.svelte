@@ -27,7 +27,7 @@
         allCodes.filter(code => (code.code + " " + code.label).toLowerCase().includes(searchString.toLowerCase()))
     )
 
-    const isAdmin = data.user?.isAdmin
+    const isAdmin = $derived(data.user?.isAdmin)
 
     onMount(() => {
         GetDsm.fetch({}).then(data => {
@@ -35,7 +35,7 @@
                 toast.error("Could not get DSM codes.")
                 return
             }
-            allCodes = data.sort((a, b) => a.label.localeCompare(b.label))
+            allCodes = data.toSorted((a, b) => a.label.localeCompare(b.label))
         })
     })
 
@@ -53,17 +53,18 @@
             toast.error("No DSM codes have been selected.")
             return
         }
-        function itemToString(item: { label: string; code: string }) {
-            // Different number of tabs depending on the code length in accordance with the HBN Report's styling.
-            if (item.code.length < 13) {
-                return [item.code, item.label].join("\t\t")
-            } else {
-                return [item.code, item.label].join("\t")
-            }
-        }
         navigator.clipboard.writeText(selected.map(s => itemToString(s)).join("\n") + "\n")
         toast.info("The selected DSM codes have been copied to your clipboard.")
         await PostDsmTelemetry.fetch({ body: { ids: selected.map(s => s.id) } })
+    }
+
+    function itemToString(item: { label: string; code: string }) {
+        // Different number of tabs depending on the code length in accordance with the HBN Report's styling.
+        if (item.code.length < 13) {
+            return [item.code, item.label].join("\t\t")
+        } else {
+            return [item.code, item.label].join("\t")
+        }
     }
 
     async function onCreate(code: string, label: string) {

@@ -1,3 +1,5 @@
+/* eslint-disable unicorn/no-empty-file */
+
 /*
  * Test disabled - it runs locally but fails in CI for unknown reason and
  * there is a lack of time to fix this at this moment.
