@@ -50,8 +50,8 @@
         const searchedPaths = searcher.search(searchTerm).map(result => result.item)
         const searchedNodes = allChildNodes.filter(node => searchedPaths.some(path => path.id === node.id))
         const searchedIds = [
-            ...searchedNodes.map(node => [...node.getAncestors(), node]).flat(),
-            ...searchedNodes.map(node => node.getChildrenRecursive()).flat()
+            ...searchedNodes.flatMap(node => [...node.getAncestors(), node]),
+            ...searchedNodes.flatMap(node => node.getChildrenRecursive())
         ]
             .filter((value, index, self) => self.indexOf(value) === index)
             .filter(node => node.children.length === 0)

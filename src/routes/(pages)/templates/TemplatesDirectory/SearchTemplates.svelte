@@ -39,8 +39,8 @@
         const searchedPaths = searcher.search(query).map(result => result.item)
         const searchedNodes = allChildNodes.filter(node => searchedPaths.some(path => path.id === node.id))
         const searchIncludingParentKid = [
-            ...searchedNodes.map(node => [...node.getAncestors(), node]).flat(),
-            ...searchedNodes.map(node => node.getChildrenRecursive()).flat()
+            ...searchedNodes.flatMap(node => [...node.getAncestors(), node]),
+            ...searchedNodes.flatMap(node => node.getChildrenRecursive())
         ].filter((value, index, self) => self.indexOf(value) === index)
         filteredNodes = tree.filterChildrenByIds(searchIncludingParentKid.map(node => node.id))
     }

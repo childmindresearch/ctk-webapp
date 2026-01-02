@@ -46,10 +46,7 @@ The component uses a cascading filter approach where filters are applied in sequ
         participantAge = $bindable()
     }: Props = $props()
 
-    const locations = providers
-        .map(p => p.addresses.map(addr => addr.location))
-        .flat()
-        .filter(isUnique)
+    const locations = $derived(providers.flatMap(p => p.addresses.map(addr => addr.location)).filter(isUnique))
 
     let filteredProviders = $derived(
         providers

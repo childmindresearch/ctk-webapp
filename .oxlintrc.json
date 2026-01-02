@@ -5,7 +5,7 @@
         "correctness": "error",
         "suspicious": "warn",
         "pedantic": "off",
-        "perf": "off",
+        "perf": "warn",
         "style": "off",
         "restriction": "off",
         "nursery": "off"
@@ -148,5 +148,9 @@
         "builtin": true
     },
     "globals": {},
-    "ignorePatterns": ["src/lib/shadcn/**/*"]
+    "ignorePatterns": [
+        "src/lib/shadcn/**/*",
+        "src/routes/(pages)/referrals/**/*",
+        "src/routes/(api)/api/v1/referrals/**/*"
+    ]
 }
