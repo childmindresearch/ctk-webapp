@@ -6,11 +6,11 @@
     import { RadioGroup, RadioGroupItem } from "$lib/shadcn/components/ui/radio-group"
     import * as Command from "$lib/shadcn/components/ui/command"
     import * as Popover from "$lib/shadcn/components/ui/popover"
-    import { cn } from "$lib/utils"
     import { slide } from "svelte/transition"
     import { Check, ChevronsUpDown, Plus, Trash2 } from "lucide-svelte"
-    import type { getProviders } from "$api/referrals/crud"
+    import type { getProviders } from "$api/v1/referrals/crud"
     import { toast } from "svelte-sonner"
+    import { cn } from "$lib/shadcn/utils/utils"
 
     type Props = {
         addresses: Omit<Awaited<ReturnType<typeof getProviders>>[number]["addresses"][number], "id" | "providerId">[]

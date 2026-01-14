@@ -5,10 +5,10 @@
     import { Slider } from "$lib/shadcn/components/ui/slider"
     import * as Command from "$lib/shadcn/components/ui/command"
     import * as Popover from "$lib/shadcn/components/ui/popover"
-    import { cn } from "$lib/utils"
     import { Check, ChevronsUpDown, Plus, Trash2 } from "lucide-svelte"
     import { type ProviderFormData } from "../utils"
     import { isUnique } from "$lib/utils"
+    import { cn } from "$lib/shadcn/utils/utils"
 
     type Props = {
         provider: ProviderFormData
