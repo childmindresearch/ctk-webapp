@@ -3,7 +3,6 @@
     import Sortable, { type SortableEvent } from "sortablejs"
     import { onMount } from "svelte"
     import { Button } from "$lib/shadcn/components/ui/button"
-    import { cn } from "$lib/utils"
     import type { DecisionTree } from "../DecisionTree.svelte"
     import CreateButton from "./CreateButton.svelte"
     import DeleteButton from "./DeleteButton.svelte"
@@ -11,6 +10,7 @@
     import SortableNestedNode from "./SortableNestedNode.svelte"
     import { openNodeIds } from "./store"
     import sanitizeHtml from "sanitize-html"
+    import { cn } from "$lib/shadcn/utils/utils"
 
     type Props = {
         node: DecisionTree

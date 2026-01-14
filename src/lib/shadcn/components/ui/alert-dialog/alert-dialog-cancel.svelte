@@ -1,7 +1,7 @@
 <script lang="ts">
     import { AlertDialog as AlertDialogPrimitive } from "bits-ui"
     import { buttonVariants } from "$lib/shadcn/components/ui/button/index.js"
-    import { cn } from "$lib/utils.js"
+    import { cn } from "$lib/shadcn/utils/utils.js"
 
     let { ref = $bindable(null), class: className, ...restProps }: AlertDialogPrimitive.CancelProps = $props()
 </script>

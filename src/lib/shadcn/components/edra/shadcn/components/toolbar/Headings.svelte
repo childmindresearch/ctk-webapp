@@ -4,7 +4,7 @@
     import Heading from "@lucide/svelte/icons/heading"
     import ChevronDown from "@lucide/svelte/icons/chevron-down"
     import commands from "../../../commands/toolbar-commands.js"
-    import { cn } from "$lib/utils.js"
+    import { cn } from "$lib/shadcn/utils/utils.js"
     import EdraToolTip from "../EdraToolTip.svelte"
     import Paragraph from "@lucide/svelte/icons/pilcrow"
     import { buttonVariants } from "$lib/shadcn/components/ui/button/index.js"

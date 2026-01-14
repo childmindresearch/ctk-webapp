@@ -6,6 +6,8 @@
     import { Toaster } from "$lib/shadcn/components/ui/sonner"
     import { toast } from "svelte-sonner"
     import "../../app.css"
+    import { navigating } from "$app/state"
+    import { Spinner } from "$lib/shadcn/components/ui/spinner"
 
     console.log(`Running Clinician Toolkit version: ${import.meta.env.VITE_APP_VERSION}`)
     let { data, children } = $props()
@@ -50,13 +52,19 @@
 
 <div class="flex h-screen">
     <!-- Left sidebar navigation for medium+ screens -->
-    <div class="hidden md:block md:w-64 h-full z-10 flex-shrink-0">
+    <div class="hidden md:block md:w-64 h-full z-10 shrink-0">
         {#if data.navbarPages}
             <Navigation pages={data.navbarPages} isOpen={true} />
         {/if}
     </div>
 
-    <div class="overflow-y-auto h-full px-10 pt-5 flex-1">
-        {@render children()}
-    </div>
+    {#if navigating.to}
+        <div class="w-max justify-center flex space-y-2">
+            <Spinner />
+        </div>
+    {:else}
+        <div class="overflow-y-auto h-full px-10 pt-5 flex-1">
+            {@render children()}
+        </div>
+    {/if}
 </div>

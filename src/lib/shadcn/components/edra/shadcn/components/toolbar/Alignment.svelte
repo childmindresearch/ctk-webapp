@@ -6,7 +6,7 @@
     import EdraToolTip from "../EdraToolTip.svelte"
     import ChevronDown from "@lucide/svelte/icons/chevron-down"
     import { buttonVariants } from "$lib/shadcn/components/ui/button/index.js"
-    import { cn } from "$lib/utils.js"
+    import { cn } from "$lib/shadcn/utils/utils.js"
 
     interface Props {
         editor: Editor

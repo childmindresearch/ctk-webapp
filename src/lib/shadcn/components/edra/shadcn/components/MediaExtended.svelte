@@ -2,7 +2,7 @@
     import { onDestroy, onMount, type Snippet } from "svelte"
     import { NodeViewWrapper } from "svelte-tiptap"
     import type { NodeViewProps } from "@tiptap/core"
-    import { cn } from "$lib/utils.js"
+    import { cn } from "$lib/shadcn/utils/utils.js"
     import { Button, buttonVariants } from "$lib/shadcn/components/ui/button/index.js"
 
     import AlignCenter from "@lucide/svelte/icons/align-center"
