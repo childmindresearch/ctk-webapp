@@ -1,7 +1,7 @@
 <script lang="ts">
     import type { Separator as SeparatorPrimitive } from "bits-ui"
     import { Separator } from "$lib/shadcn/components/ui/separator/index.js"
-    import { cn } from "$lib/utils.js"
+    import { cn } from "$lib/shadcn/utils/utils.js"
 
     let { ref = $bindable(null), class: className, ...restProps }: SeparatorPrimitive.RootProps = $props()
 </script>

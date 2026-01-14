@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { cn } from "$lib/utils.js"
+    import { cn } from "$lib/shadcn/utils/utils.js"
     import commands from "../commands/toolbar-commands.js"
     import type { EdraToolbarProps } from "../types.js"
     import Alignment from "./components/toolbar/Alignment.svelte"

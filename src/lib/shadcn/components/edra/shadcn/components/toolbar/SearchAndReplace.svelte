@@ -11,7 +11,7 @@
     import CaseSensitive from "@lucide/svelte/icons/case-sensitive"
     import Replace from "@lucide/svelte/icons/replace"
     import ReplaceAll from "@lucide/svelte/icons/replace-all"
-    import { cn } from "$lib/utils.js"
+    import { cn } from "$lib/shadcn/utils/utils.js"
     import { slide } from "svelte/transition"
     import EdraToolTip from "../EdraToolTip.svelte"
 

@@ -3,7 +3,7 @@
     import type { EdraToolBarCommands } from "../../commands/types.js"
     import type { Editor } from "@tiptap/core"
     import EdraToolTip from "./EdraToolTip.svelte"
-    import { cn } from "$lib/utils.js"
+    import { cn } from "$lib/shadcn/utils/utils.js"
 
     interface Props {
         editor: Editor

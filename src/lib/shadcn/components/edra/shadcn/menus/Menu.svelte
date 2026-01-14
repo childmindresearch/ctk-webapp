@@ -3,7 +3,7 @@
     import BubbleMenu from "../../components/BubbleMenu.svelte"
     import type { EdraToolbarProps, ShouldShowProps } from "../../types.js"
 
-    import { cn } from "$lib/utils.js"
+    import { cn } from "$lib/shadcn/utils/utils.js"
     import { isTextSelection } from "@tiptap/core"
     import Alignment from "../components/toolbar/Alignment.svelte"
     import FontSize from "../components/toolbar/FontSize.svelte"

@@ -3,7 +3,7 @@
     import * as Popover from "$lib/shadcn/components/ui/popover/index.js"
     import type { Editor } from "@tiptap/core"
     import ChevronDown from "@lucide/svelte/icons/chevron-down"
-    import { cn } from "$lib/utils.js"
+    import { cn } from "$lib/shadcn/utils/utils.js"
     import EdraToolTip from "../EdraToolTip.svelte"
 
     interface Props {

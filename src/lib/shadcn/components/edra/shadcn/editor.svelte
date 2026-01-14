@@ -3,7 +3,7 @@
     import type { EdraEditorProps } from "../types.js"
     import initEditor from "../editor.js"
     import { focusEditor } from "../utils.js"
-    import { cn } from "$lib/utils.js"
+    import { cn } from "$lib/shadcn/utils/utils.js"
     import "../editor.css"
     import "./style.css"
     import "../onedark.css"
