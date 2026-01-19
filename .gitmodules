@@ -1,0 +1,3 @@
+[submodule "ctk-functions"]
+	path = ctk-functions
+	url = git@github.com:childmindresearch/ctk-functions.git
