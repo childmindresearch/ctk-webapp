@@ -18,6 +18,7 @@ jobs:
               with:
                   submodules: true
             - uses: extractions/setup-just@e33e0265a09d6d736e2ee1e0eb685ef1de4669ff
+            - uses: astral-sh/setup-uv@61cb8a9741eeb8a550a1b8544337180c0fc8476b
             - name: Install dependencies
               run: |
                   just build-api
