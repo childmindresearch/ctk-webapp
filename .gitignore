@@ -1,3 +1,4 @@
+src/lib/server/ctk_functions/types.d.ts
 hbn.psql
 postgres-data
 ./**/.env*

@@ -1,0 +1,58 @@
+name: Create and publish a Docker image to ACR.
+
+on:
+    release:
+        types: [created]
+
+env:
+    REGISTRY: acrctkshared.azurecr.io
+    IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+    build-and-push-image:
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Check out the repo
+              uses: actions/checkout@v6
+              with:
+                  submodules: true
+            - uses: extractions/setup-just@e33e0265a09d6d736e2ee1e0eb685ef1de4669ff
+            - uses: astral-sh/setup-uv@61cb8a9741eeb8a550a1b8544337180c0fc8476b
+            - name: Install dependencies
+              run: |
+                  just build-api
+
+            - name: Log in to the Container registry
+              uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0ef # v3.6.0
+              with:
+                  registry: ${{ env.REGISTRY }}
+                  username: ${{ secrets.CTK_ACR_USERNAME }}
+                  password: ${{ secrets.CTK_ACR_PASSWORD }}
+
+            - name: Update package.json version with release tag
+              run: |
+                  RELEASE_TAG="${GITHUB_REF#refs/tags/}"
+                  jq --arg version "$RELEASE_TAG" '.version = $version' package.json > package.json.tmp && mv package.json.tmp package.json
+              shell: bash
+              env:
+                  GITHUB_REF: ${{ github.ref }}
+
+            - name: Extract metadata (tags, labels) for Docker
+              id: meta
+              uses: docker/metadata-action@c299e40c65443455700f0fdfc63efafe5b349051 # v5.10.0
+              with:
+                  images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+                  tags: |
+                      type=ref,event=tag
+                      type=raw,value=latest
+
+            - name: Build and push Docker image
+              uses: docker/build-push-action@v6.18.0
+              with:
+                  platforms: linux/amd64
+                  context: .
+                  file: ./Dockerfile
+                  push: true
+                  tags: ${{ steps.meta.outputs.tags }}
+                  labels: ${{ steps.meta.outputs.labels }}

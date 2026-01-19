@@ -37,6 +37,8 @@
     ```
 -->
 <script lang="ts">
+    import { Input } from "$lib/shadcn/components/ui/input"
+
     interface Props {
         label: string
         required?: boolean
@@ -50,7 +52,7 @@
         maxlength?: number
         minlength?: number
         pattern?: string
-        [key: string]: any
+        [key: string]: unknown
     }
 
     let {
@@ -71,13 +73,13 @@
 </script>
 
 <label class="label {labelClass}">
-    <span class="text-sm font-semibold text-surface-700-200-token {spanClass}">
+    <span class="text-sm font-semibold text-muted-foreground {spanClass}">
         {label}
         {#if required}
-            <span class="text-error-500">*</span>
+            <span class="text-destructive">*</span>
         {/if}
     </span>
-    <input
+    <Input
         class="input mt-2 {inputClass}"
         {required}
         {disabled}

@@ -14,7 +14,7 @@ CREATE TABLE dsm_codes (
     label VARCHAR(255) NOT NULL
 );
 
-CREATE TABLE templates (
+CREATE TABLE html_templates (
     id SERIAL PRIMARY KEY,
     text VARCHAR(8000) NOT NULL,
     parent_id INTEGER,
@@ -40,7 +40,7 @@ RETURNS TRIGGER AS $$
 BEGIN
     -- Only set priority if it's NULL
     IF NEW.priority IS NULL THEN
-        NEW.priority := COALESCE((SELECT MAX(priority) FROM templates), 0) + 1;
+        NEW.priority := COALESCE((SELECT MAX(priority) FROM html_templates), 0) + 1;
     END IF;
     RETURN NEW;
 END;
@@ -48,7 +48,7 @@ $$ LANGUAGE plpgsql;
 
 -- Create trigger
 CREATE TRIGGER trigger_set_template_priority
-    BEFORE INSERT ON templates
+    BEFORE INSERT ON html_templates
     FOR EACH ROW
     EXECUTE FUNCTION set_template_priority();
 
@@ -99,7 +99,7 @@ INSERT INTO dsm_codes (code, label) VALUES
     ('301.83/F60.3', 'Borderline Personality Disorder');
 
 -- Insert templates (simplified structure)
-INSERT INTO templates (text, parent_id, priority) VALUES
+INSERT INTO html_templates (text, parent_id, priority) VALUES
     ('Clinical Templates', NULL, 1),
     ('Assessment Templates', 1, 2),
     ('Progress Notes', 1, 3),

@@ -18,45 +18,39 @@ jobs:
             contents: read
             pull-requests: write
         steps:
-            - uses: actions/checkout@v5
-            - uses: actions/setup-node@v4
+            - uses: actions/checkout@v6
+              with:
+                  submodules: true
+            - uses: extractions/setup-just@e33e0265a09d6d736e2ee1e0eb685ef1de4669ff
+            - uses: astral-sh/setup-uv@61cb8a9741eeb8a550a1b8544337180c0fc8476b
+            - uses: actions/setup-node@v6
               with:
                   node-version: 22.4.x
                   cache: npm
                   cache-dependency-path: package-lock.json
             - name: Install dependencies
               run: |
-                  npm install --legacy-peer-deps
+                  npm install
+                  just build-api
             - name: Run tests
               run: |
                   npm run test:unit
+            - name: Run build
+              run: |
+                  npm run build
 
     lint:
         runs-on: ubuntu-latest
         permissions:
             contents: read
         steps:
-            - uses: actions/checkout@v5
+            - uses: actions/checkout@v6
             - name: Use Node.js
-              uses: actions/setup-node@v4
+              uses: actions/setup-node@v6
               with:
                   node-version: 22.4.x
                   cache: npm
                   cache-dependency-path: package-lock.json
             - run: |
-                  npm install --legacy-peer-deps
+                  npm install
                   npm run lint
-
-    dispatch:
-        if: ${{ github.ref_name == 'main' }}
-        needs: [testing, lint]
-        runs-on: ubuntu-latest
-        permissions: {}
-        steps:
-            - name: Dispatch
-              uses: peter-evans/repository-dispatch@v3
-              with:
-                  token: ${{ secrets.CTK_BUILD_PAT }}
-                  repository: childmindresearch/ctk-build
-                  event-type: dependency_updated
-                  client-payload: '{"triggered_by": "${{ github.repository }}, on push event", "commit_sha": "${{ github.sha }}", "branch": "${{ github.ref }}"}'

@@ -1,22 +1,28 @@
+import { eq } from "drizzle-orm"
+import { users } from "$lib/server/db/schema"
 import { logger } from "$lib/server/logging"
+import type { HandleFetch, RequestEvent } from "@sveltejs/kit"
 import { randomUUID } from "crypto"
 import { performance } from "perf_hooks"
-import { pool } from "$lib/server/sql"
 import { DEVELOPMENT_USER } from "$lib/server/environment"
-import type { User } from "$lib/types"
-import type { HandleFetch, RequestEvent } from "@sveltejs/kit"
 import { StatusCode } from "$lib/utils"
+import type { RouteId } from "$app/types"
+import { migrate } from "drizzle-orm/node-postgres/migrator"
+import { db } from "$lib/server/db"
+import { building, dev } from "$app/environment"
 
 type Endpoint = {
     path: string
     method: "GET" | "PATCH" | "POST" | "PUT" | "DELETE"
 }
 
-const ADMIN_ENDPOINT_PATHS = ["/api/templates/.*?", "/api/dsm/.*?", ".*?/admin/.*?"]
+const ADMIN_ENDPOINT_PATHS = ["/api/templates/(?!download).*?", "/api/dsm/.*?", ".*?/admin/.*?"]
 const ADMIN_SPECIFIC_ENDPOINTS: Endpoint[] = [
     { path: "/api/dsm", method: "POST" },
     { path: "/api/dsm", method: "PUT" }
 ]
+
+if (!building && !dev) await migrate(db, { migrationsFolder: "drizzle" })
 
 /* Logs outgoing fetches and their responses. */
 export const handleFetch: HandleFetch = async ({ event, request, fetch }) => {
@@ -48,7 +54,11 @@ export const handleFetch: HandleFetch = async ({ event, request, fetch }) => {
     try {
         response = await fetch(request)
     } catch (e) {
-        logger.error({ ...logResponseData, status: 500, error: "Failed to contact server." })
+        logger.error({
+            ...logResponseData,
+            status: 500,
+            error: "Failed to contact server."
+        })
         throw e
     }
 
@@ -57,6 +67,7 @@ export const handleFetch: HandleFetch = async ({ event, request, fetch }) => {
         try {
             logResponseData.error = await response.clone().text()
         } catch (e) {
+            logger.error(e)
             logResponseData.error = "Could not parse error response."
         }
     }
@@ -79,6 +90,7 @@ export async function handle({ event, resolve }) {
     })
     event.locals.requestId = requestId
     event.locals.user = userEmail
+    event.tracing.root.setAttribute("ctk-user", userEmail)
 
     const user = await getOrInsertUser(userEmail)
     if (!user) {
@@ -89,7 +101,9 @@ export async function handle({ event, resolve }) {
             requestId,
             headers: Object.fromEntries(event.request.headers.entries())
         })
-        return new Response("Could not find user email", { status: StatusCode.INTERNAL_SERVER_ERROR })
+        return new Response("Could not find user email", {
+            status: StatusCode.INTERNAL_SERVER_ERROR
+        })
     }
     if (!isUserAuthorized(event, user)) {
         const endTime = performance.now()
@@ -130,40 +144,25 @@ export async function handle({ event, resolve }) {
     return response
 }
 
-// Exported for testing purposes.
-export async function getOrInsertUser(email?: string) {
-    if (!email) {
-        return null
+async function getOrInsertUser(email: string): Promise<typeof users.$inferSelect> {
+    const user = await db.select().from(users).where(eq(users.email, email))
+    if (user.length === 1) return user[0]
+    if (user.length > 1) {
+        throw new Error("More than one user found. This should never happen.")
     }
-
-    return await pool.connect().then(async client => {
-        const getUserQuery = {
-            text: "SELECT * FROM users WHERE email = $1",
-            values: [email]
-        }
-        const getResult = await client.query(getUserQuery)
-        if (getResult.rows.length > 0) {
-            client.release()
-            return getResult.rows[0] as User
-        }
-
-        const insertUserQuery = {
-            text: "INSERT INTO users (email) VALUES ($1) RETURNING *",
-            values: [email]
-        }
-        const insertResult = await client.query(insertUserQuery)
-        client.release()
-        return insertResult.rows[0] as User
-    })
+    return (await db.insert(users).values({ email }).returning())[0]
 }
 
-function isUserAuthorized(event: RequestEvent<Partial<Record<string, string>>, string | null>, user: User) {
-    if (!user.is_admin && ADMIN_ENDPOINT_PATHS.some(path => event.request.url.match(path))) {
+function isUserAuthorized(
+    event: RequestEvent<Partial<Record<string, string>>, RouteId | null>,
+    user: typeof users.$inferSelect
+): boolean {
+    if (!user.isAdmin && ADMIN_ENDPOINT_PATHS.some(path => event.request.url.match(path))) {
         return false
     }
 
     for (const endpoint of ADMIN_SPECIFIC_ENDPOINTS) {
-        if (!user.is_admin && event.request.url.match(endpoint.path) && event.request.method === endpoint.method) {
+        if (!user.isAdmin && event.request.url.match(endpoint.path) && event.request.method === endpoint.method) {
             return false
         }
     }
