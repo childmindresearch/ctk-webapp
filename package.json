@@ -33,7 +33,7 @@
         "@lucide/svelte": "^0.544.0",
         "@playwright/test": "^1.45.1",
         "@sveltejs/adapter-node": "^5.2.0",
-        "@sveltejs/kit": "^2.38.0",
+        "@sveltejs/kit": "^2.50.0",
         "@tailwindcss/forms": "^0.5.7",
         "@tanstack/table-core": "^8.21.3",
         "@testing-library/jest-dom": "^6.4.6",
