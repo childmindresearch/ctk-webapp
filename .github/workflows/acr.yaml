@@ -4,10 +4,12 @@ on:
     release:
         types: [created]
 
+permissions:
+    contents: read
+
 env:
     REGISTRY: acrctkshared.azurecr.io
     IMAGE_NAME: ${{ github.repository }}
-
 jobs:
     build-and-push-image:
         runs-on: ubuntu-latest
