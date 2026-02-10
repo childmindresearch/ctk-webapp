@@ -83,8 +83,8 @@ const NUMBERING_STYLE: INumberingOptions["config"][number] = {
         },
         {
             level: 3,
-            format: LevelFormat.BULLET,
-            text: "%4",
+            format: LevelFormat.LOWER_LETTER, // format ignored as text makes no reference to it.
+            text: "-",
             alignment: AlignmentType.START,
             style: {
                 paragraph: {
