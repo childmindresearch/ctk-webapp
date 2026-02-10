@@ -1,0 +1,157 @@
+CREATE DATABASE ctk;
+\c ctk;
+
+-- Templates and DSM codes
+CREATE TABLE users (
+    id SERIAL PRIMARY KEY,
+    email VARCHAR(255) NOT NULL,
+    is_admin BOOLEAN
+);
+
+CREATE TABLE dsm_codes (
+    id SERIAL PRIMARY KEY,
+    code VARCHAR(255) NOT NULL,
+    label VARCHAR(255) NOT NULL
+);
+
+CREATE TABLE html_templates (
+    id SERIAL PRIMARY KEY,
+    text VARCHAR(8000) NOT NULL,
+    parent_id INTEGER,
+    priority INTEGER NOT NULL
+);
+
+-- Referral network tables
+CREATE TABLE referral_providers (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(500) NOT NULL UNIQUE,
+    accepts_insurance BOOLEAN NOT NULL,
+    insurance_details VARCHAR(1024) NOT NULL,
+    min_age INTEGER DEFAULT 0 NOT NULL,
+    max_age INTEGER DEFAULT 120 NOT NULL,
+    notes VARCHAR(1023) DEFAULT '' NOT NULL,
+    service VARCHAR(255) NOT NULL,
+    sub_services VARCHAR(255)[]
+);
+
+-- Create function to set priority
+CREATE OR REPLACE FUNCTION set_template_priority()
+RETURNS TRIGGER AS $$
+BEGIN
+    -- Only set priority if it's NULL
+    IF NEW.priority IS NULL THEN
+        NEW.priority := COALESCE((SELECT MAX(priority) FROM html_templates), 0) + 1;
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Create trigger
+CREATE TRIGGER trigger_set_template_priority
+    BEFORE INSERT ON html_templates
+    FOR EACH ROW
+    EXECUTE FUNCTION set_template_priority();
+
+CREATE TYPE location_type AS ENUM ('unknown', 'remote', 'in-person', 'hybrid');
+
+-- Updated addresses table to reference providers
+CREATE TABLE referral_addresses (
+    id SERIAL PRIMARY KEY,
+    provider_id INTEGER NOT NULL REFERENCES referral_providers(id) ON DELETE CASCADE,
+    location VARCHAR(255) NOT NULL,
+    location_type location_type NOT NULL DEFAULT 'unknown',
+    address_line1 VARCHAR(255),
+    address_line2 VARCHAR(255),
+    city VARCHAR(100),
+    state VARCHAR(50),
+    zip_code VARCHAR(20),
+    contacts VARCHAR(255)[]
+);
+
+CREATE TABLE referral_filter_groups (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL UNIQUE
+);
+
+CREATE TABLE referral_filter_sets (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    locations VARCHAR(255)[] DEFAULT '{}'::VARCHAR[],
+    services VARCHAR(255)[] DEFAULT '{}'::VARCHAR[],
+    group_id INTEGER NOT NULL REFERENCES referral_filter_groups(id) ON DELETE CASCADE
+);
+
+-- Insert initial data
+INSERT INTO users (email, is_admin) VALUES
+    ('development.user.admin@example.com', true);
+
+-- Insert DSM codes (top 10 most common)
+INSERT INTO dsm_codes (code, label) VALUES
+    ('314.01/F90.2', 'ADHD, Combined presentation'),
+    ('296.23/F32.2', 'Major Depressive Disorder'),
+    ('300.02/F41.1', 'Generalized Anxiety Disorder'),
+    ('300.23/F40.10', 'Social Anxiety Disorder'),
+    ('309.81/F43.10', 'Posttraumatic Stress Disorder'),
+    ('296.43/F31.13', 'Bipolar I Disorder'),
+    ('300.3/F42.2', 'Obsessive-Compulsive Disorder'),
+    ('305.00/F10.10', 'Alcohol Use Disorder'),
+    ('299.00/F84.0', 'Autism Spectrum Disorder'),
+    ('301.83/F60.3', 'Borderline Personality Disorder');
+
+-- Insert templates (simplified structure)
+INSERT INTO html_templates (text, parent_id, priority) VALUES
+    ('Clinical Templates', NULL, 1),
+    ('Assessment Templates', 1, 2),
+    ('Progress Notes', 1, 3),
+    ('Treatment Plans', 1, 4),
+    ('Initial Assessment: Chief complaint and current symptoms. Include digital wellness concerns.', 2, 5),
+    ('Mental Status Exam: Appearance, mood, thought process, and reality testing.', 2, 6),
+    ('Individual Progress: Session engagement, interventions used, client response.', 3, 7),
+    ('Group Progress: Group dynamics, participation, and therapeutic progress.', 3, 8),
+    ('Individual Plan: Goals, objectives, and specific interventions for treatment.', 4, 9),
+    ('Family Plan: Communication, boundaries, and family system interventions.', 4, 10);
+
+-- Insert providers with service and sub_services as properties
+INSERT INTO referral_providers (name, accepts_insurance, insurance_details, min_age, max_age, notes, service, sub_services) VALUES
+    ('CrossWorlds Guild Counseling', TRUE, 'CrossWorlds Health Alliance', 13, 120, 'Specializes in cross-dimensional trauma recovery. Guild-certified therapists available for element-based anxiety disorders. Circuit breaker integration for tech-related stress.', 'Mental Health', ARRAY['Individual Therapy', 'Group Therapy', 'Psychiatric Evaluation', 'Crisis Intervention', 'Anxiety Treatment', 'Depression Treatment', 'Telehealth Services']),
+    ('Rookie Harbor Youth Center', TRUE, 'CrossWorlds Health Alliance', 5, 18, 'Training-focused therapeutic approach. Experienced with aspiring Seekers experiencing performance anxiety. Offers specialized support for first-time dungeon exploration stress.', 'Family Therapy', ARRAY['Individual Therapy', 'Group Therapy', 'Family Systems Therapy', 'Parent-Child Therapy', 'Adolescent Family Therapy']),
+    ('Bergen Village Healing', FALSE, '', 18, 65, 'Nature-based therapy in tranquil forest setting. Treatment rooms equipped with ambient tree energy. Known for excellent results with tree-climbing phobias and botanical allergies.', 'Mental Health', ARRAY['Individual Therapy', 'Anxiety Treatment', 'Depression Treatment']),
+    ('Digital Wellness Group', TRUE, 'Tech Worker Benefits', 16, 35, 'Cutting-edge VR therapy modules. Specializes in circuit overload syndrome and data stream addiction. Virtual reality detox programs with real-world grounding techniques.', 'Specialized Therapy', ARRAY['Digital Wellness Coaching', 'Technology Addiction']),
+    ('Desert Recovery Centers', TRUE, 'CrossWorlds Health Alliance', 21, 120, 'Oasis-based recovery sanctuary. 12-step program adapted for interdimensional travelers. Sand meditation therapy and mirage addiction treatment available.', 'Substance Abuse', ARRAY['Detoxification', 'Inpatient Treatment', 'Outpatient Treatment', 'Relapse Prevention', 'Dual Diagnosis']),
+    ('Telehealth Services Hub', TRUE, 'Virtual Care Network', 12, 120, 'Quantum-encrypted telehealth platform. Cross-dimensional connectivity for remote regions. Emergency portal access for crisis interventions across all realms.', 'Specialized Therapy', ARRAY['Telehealth Services', 'Individual Therapy', 'Group Therapy', 'Specialized Assessments']),
+    ('Combat Trauma Specialists', TRUE, 'Veterans Benefits', 18, 65, 'Former military personnel specializing in battle-related PTSD. Expertise in weapon-induced anxiety and post-mission adjustment disorders. Group therapy for retired warriors.', 'Mental Health', ARRAY['PTSD Treatment', 'Individual Therapy', 'Group Therapy', 'Crisis Intervention']),
+    ('Tech Addiction Center', TRUE, 'Digital Health Solutions', 14, 40, 'Specialized detox facility for technology dependencies. Circuit-free environment with analog therapy methods. Recovery programs for social media and gaming addictions.', 'Substance Abuse', ARRAY['Technology Addiction', 'Outpatient Treatment', 'Relapse Prevention', 'Dual Diagnosis']);
+
+-- Insert addresses (1-2 per provider)
+INSERT INTO referral_addresses (provider_id, location, location_type, address_line1, city, state, zip_code, contacts) VALUES
+    (1, 'Rookie Harbor', 'hybrid', '1 Guild Plaza', 'Rookie Harbor', 'CW', '00001', ARRAY['+1-555-GUILD', 'contact@guild.cw']),
+    (1, 'Remote', 'hybrid', NULL, NULL, NULL, NULL, ARRAY['telehealth@guild.cw']),
+    (2, 'Rookie Harbor', 'remote', '15 Training Way', 'Rookie Harbor', 'CW', '00015', ARRAY['+1-555-YOUTH', 'youth@rookie.cw']),
+    (3, 'Bergen Village', 'in-person', '23 Tree Lane', 'Bergen Village', 'CW', '10023', ARRAY['+1-555-BERGEN', 'healing@bergen.cw']),
+    (4, 'Autumn Rise', 'in-person', '99 Summit Drive', 'Autumn Rise', 'CW', '20099', ARRAY['+1-555-DIGITAL', 'wellness@digital.cw']),
+    (4, 'Remote', 'in-person', NULL, NULL, NULL, NULL, ARRAY['online@digital.cw']),
+    (5, 'Ba''kii Kum', 'in-person', '77 Oasis Road', 'Ba kii Kum', 'CW', '30077', ARRAY['+1-555-RECOVERY', 'help@recovery.cw']),
+    (6, 'Remote', 'in-person', NULL, NULL, NULL, NULL, ARRAY['portal@telehealth.cw']),
+    (7, 'Basin Keep', 'in-person', '200 Veterans Drive', 'Basin Keep', 'CW', '50200', ARRAY['+1-555-TRAUMA', 'support@trauma.cw']),
+    (8, 'Rhombus Square', 'in-person', '404 Detox Lane', 'Rhombus Square', 'CW', '70404', ARRAY['+1-555-TECH', 'detox@tech.cw']);
+
+-- Insert filter groups
+INSERT INTO referral_filter_groups (name) VALUES
+    ('Age-Based Networks'),
+    ('Specialty Care'),
+    ('Geographic Regions'),
+    ('Treatment Modalities'),
+    ('Insurance Networks');
+
+-- Insert filter sets with proper group references and services
+INSERT INTO referral_filter_sets (name, locations, services, group_id) VALUES
+    ('Youth Network', ARRAY['Rookie Harbor'], ARRAY['Mental Health', 'Family Therapy'], 1),
+    ('Adult Services', ARRAY['Bergen Village', 'Basin Keep', 'Autumn Rise'], ARRAY['Mental Health', 'Substance Abuse', 'Specialized Therapy'], 1),
+    ('Addiction Recovery', ARRAY['Ba''kii Kum', 'Rhombus Square'], ARRAY['Substance Abuse'], 2),
+    ('Trauma Specialists', ARRAY['Basin Keep'], ARRAY['Mental Health'], 2),
+    ('Digital Wellness', ARRAY['Autumn Rise', 'Remote'], ARRAY['Substance Abuse', 'Specialized Therapy'], 2),
+    ('Northern Region', ARRAY['Rookie Harbor', 'Bergen Village'], ARRAY['Mental Health', 'Family Therapy'], 3),
+    ('Southern Region', ARRAY['Ba''kii Kum', 'Basin Keep'], ARRAY['Mental Health', 'Substance Abuse'], 3),
+    ('Remote Services', ARRAY['Remote'], ARRAY['Mental Health', 'Specialized Therapy'], 4),
+    ('In-Person Only', ARRAY['Bergen Village', 'Basin Keep', 'Rhombus Square'], ARRAY['Mental Health', 'Substance Abuse'], 4),
+    ('CrossWorlds Alliance', ARRAY['Rookie Harbor', 'Ba''kii Kum'], ARRAY['Mental Health', 'Substance Abuse', 'Family Therapy'], 5);
