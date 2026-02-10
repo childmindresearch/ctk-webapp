@@ -1,23 +1,6 @@
 services:
-    node:
-        build:
-            context: .
-            dockerfile: Dockerfile
-        develop:
-            watch:
-                - action: rebuild
-                  path: ./src
-        ports:
-            - 3000:3000
-        env_file:
-            - .env
-        depends_on:
-            - postgres
-        networks:
-            - default
-
     api:
-        image: cliniciantoolkit.azurecr.io/ctk-functions:main
+        image: cliniciantoolkit.azurecr.io/ctk-functions:latest
         platform: linux/amd64
         ports:
             - "8000:8000"
@@ -26,34 +9,22 @@ services:
         depends_on:
             - postgres
             - languagetool
-        networks:
-            - default
 
     postgres:
         image: postgres:16
         platform: linux/amd64
         ports:
             - 5432:5432
-        environment:
-            POSTGRES_USER: postgres
-            POSTGRES_PASSWORD: password
         env_file:
             - .env
         volumes:
             - ./postgresql:/var/lib/postgresql/data
             - ./init.psql:/docker-entrypoint-initdb.d/init.sql
-        networks:
-            - default
 
     languagetool:
         image: erikvl87/languagetool
         ports:
             - "8010:8010"
-        networks:
-            - default
-
-networks:
-    default:
 
 volumes:
     postgres_data:
