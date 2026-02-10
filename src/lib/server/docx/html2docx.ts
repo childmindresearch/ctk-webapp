@@ -1,4 +1,3 @@
-import AdmZip from "adm-zip"
 import {
     Paragraph,
     Table,
@@ -13,16 +12,16 @@ import {
 import { DOMParser } from "linkedom"
 import type z from "zod"
 import { DocxBuilderClient } from "../../docx/builder"
-import { languageTool, type LanguageToolResponseSchema } from "../languageTool"
+import { languageTool, type LanguageToolResponseSchema } from "$lib/server/languageTool"
 
 type Mutable<T> = {
     -readonly [P in keyof T]: T[P]
 }
 
 type Html2DocxOptions = {
-    useLanguageTool: boolean
+    languageToolRules: Set<string>
 }
-type TextSegment = { content: string; formatting: TextRunFormatting }
+export type TextSegment = { content: string; formatting: TextRunFormatting }
 type TextRunFormatting = {
     bold?: boolean
     italics?: boolean
@@ -33,9 +32,9 @@ type TextRunFormatting = {
     color?: string
 }
 
-const NUMBERED_LIST_STYLE_REFERENCE = "custom-list"
+export const NUMBERED_STYLE_BASE_REFERENCE = "custom-list"
 
-function isTextSegment(obj: object): obj is TextSegment {
+export function isTextSegment(obj: object): obj is TextSegment {
     try {
         return Object.hasOwn(obj, "content") && Object.hasOwn(obj, "formatting")
     } catch {
@@ -43,27 +42,17 @@ function isTextSegment(obj: object): obj is TextSegment {
     }
 }
 
-function isTextSegmentArray(arr: object[]): arr is TextSegment[] {
+export function isTextSegmentArray(arr: object[]): arr is TextSegment[] {
     return arr.every(isTextSegment)
 }
 
-const LANGUAGETOOL_RULES = new Set([
-    "BASE_FORM",
-    "CONSECUTIVE_SPACES",
-    "PERS_PRONOUN_AGREEMENT",
-    "NON3PRS_VERB",
-    "THE_US",
-    "UPPERCASE_SENTENCE_START",
-    "WEEK_HYPHEN"
-])
-
 export class Html2Docx {
-    private useLanguageTool: boolean
-    private listCounter: number
+    private languageToolRules: Set<string> | undefined
+    public listCounter: number
 
     constructor(options: Html2DocxOptions) {
-        this.useLanguageTool = options.useLanguageTool
-        this.listCounter = 1
+        this.languageToolRules = options.languageToolRules
+        this.listCounter = 0
     }
 
     public toSection(html: string): Promise<ISectionOptions> {
@@ -99,9 +88,7 @@ export class Html2Docx {
      * but Word expects them as separate paragraphs and Paragraphs are the unit where we have to run (async)
      * LanguageTool, this function gets a bit messy.
      */
-    private async processParagraph(
-        docNode: HTMLParagraphElement | HTMLHeadingElement
-    ): Promise<(Promise<Paragraph> | Paragraph | Table)[]> {
+    private async processParagraph(docNode: HTMLParagraphElement | HTMLHeadingElement): Promise<(Paragraph | Table)[]> {
         const nodeName = docNode.nodeName.toLowerCase()
         const heading =
             nodeName !== "p"
@@ -132,7 +119,7 @@ export class Html2Docx {
             [] as (Paragraph[] | Table[] | TextSegment[])[]
         )
 
-        const paragraphs: (Promise<Paragraph> | Paragraph[] | Table[])[] = []
+        const paragraphs: (Paragraph[] | Table[])[] = []
         const builder = new DocxBuilderClient()
         for (let index = 0; index < reducedFragments.length; index++) {
             const fragment = reducedFragments[index]
@@ -142,8 +129,8 @@ export class Html2Docx {
             }
 
             let textRuns: Promise<TextRun[]> | TextRun[]
-            if (this.useLanguageTool) {
-                const collector = new LanguageCorrectionCollector()
+            if (this.languageToolRules !== undefined) {
+                const collector = new LanguageCorrectionCollector(this.languageToolRules)
                 collector.push(...fragment)
                 textRuns = collector
                     .collect()
@@ -158,12 +145,12 @@ export class Html2Docx {
                 )
             }
 
-            paragraphs.push(
-                builder.Paragraph({
+            paragraphs.push([
+                await builder.Paragraph({
                     heading,
                     children: textRuns
                 })
-            )
+            ])
         }
 
         return paragraphs.flat()
@@ -292,7 +279,7 @@ export class Html2Docx {
             new Paragraph({
                 bullet: isOrdered ? undefined : { level },
                 numbering: isOrdered
-                    ? { reference: `${NUMBERED_LIST_STYLE_REFERENCE}-${this.listCounter}`, level }
+                    ? { reference: `${NUMBERED_STYLE_BASE_REFERENCE}-${this.listCounter}`, level }
                     : undefined,
                 children: textRuns
             })
@@ -304,50 +291,15 @@ export class Html2Docx {
 
         return paragraphs
     }
-
-    /*
-     * Fixes invalid numbering list identifiers in a DOCX document to work around a js-docx patching bug.
-     *
-     * **Problem:** js-docx has a known issue when patching documents into which we've inserted numbered lists,
-     * where it inserts invalid numId values in the format `{STYLE_REF-0}` instead of plain
-     * numeric IDs. These invalid values cause Word to fail rendering the numbered lists correctly.
-     *
-     * **Solution:** This function extracts the document XML, finds all malformed numbered list
-     * references that match our custom style pattern, extracts the numeric portion, and ensures the
-     * new reference is unique.
-     *
-     * @see {@link https://github.com/dolanmiu/docx/issues/2088}
-     *
-     * @param arrayBuffer - The raw binary data of the .docx file to be modified
-     *
-     * @returns A new ArrayBufferLike containing the modified .docx file with valid numId values.
-     */
-    public static fixNumericListNumId(arrayBuffer: ArrayBuffer): ArrayBufferLike {
-        const zip = new AdmZip(Buffer.from(arrayBuffer))
-        const numberingXml = zip.readAsText("word/numbering.xml")
-        let documentXml = zip.readAsText("word/document.xml")
-
-        const numIdPattern = /<w:num w:numId="(\d+)"/g
-        let maxNumId = 0
-        let match
-
-        while ((match = numIdPattern.exec(numberingXml)) !== null) {
-            maxNumId = Math.max(maxNumId, parseInt(match[1]))
-        }
-
-        const pattern = new RegExp(`<w:numId w:val="\\{${NUMBERED_LIST_STYLE_REFERENCE}-(\\d+)-0\\}"\\/>`, "g")
-        documentXml = documentXml.replace(pattern, (_, num) => {
-            const newNumId = maxNumId + parseInt(num)
-            return `<w:numId w:val="${newNumId}"/>`
-        })
-
-        zip.updateFile("word/document.xml", Buffer.from(documentXml, "utf8"))
-        return zip.toBuffer().buffer
-    }
 }
 
-class LanguageCorrectionCollector {
+export class LanguageCorrectionCollector {
     private segments: TextSegment[] = []
+    readonly rules: Set<string>
+
+    constructor(rules: Set<string>) {
+        this.rules = rules
+    }
 
     public push(...segments: TextSegment[]): void {
         this.segments.push(...segments)
@@ -357,7 +309,8 @@ class LanguageCorrectionCollector {
         if (this.segments.length === 0) return []
         const text = this.segments.map(c => c.content).join("")
         const matches = (await languageTool(text)).matches
-        const corrections = matches.filter(match => LANGUAGETOOL_RULES.has(match.rule.id))
+        const corrections = matches.filter(match => this.rules.has(match.rule.id))
+        console.log(corrections)
         return this.applyCorrections(corrections)
     }
 
@@ -391,11 +344,11 @@ class LanguageCorrectionCollector {
     }
 }
 
-function rgbToHex(r: number, g: number, b: number): string {
+export function rgbToHex(r: number, g: number, b: number): string {
     return "#" + toHex(r) + toHex(g) + toHex(b)
 }
 
-function toHex(n: number): string {
+export function toHex(n: number): string {
     const hex = Math.round(Math.max(0, Math.min(255, n))).toString(16)
     return hex.length === 1 ? "0" + hex : hex
 }
