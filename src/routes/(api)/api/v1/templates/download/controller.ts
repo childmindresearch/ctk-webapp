@@ -4,6 +4,7 @@ import {
     convertInchesToTwip,
     LevelFormat,
     Packer,
+    SectionType,
     UnderlineType,
     type INumberingOptions,
     type IParagraphStyleOptions
@@ -117,14 +118,14 @@ export async function exportTemplates(
     const processedHtmls = htmls.map(html => replaceTemplates(html, replacements))
     const builder = new DocxBuilderClient()
     const convertor = new Html2Docx({ languageToolRules: LANGUAGETOOL_RULES })
-    const sections = processedHtmls.map(html => convertor.toSection(html))
+    const sections = processedHtmls.map(html => convertor.toSection(html, { type: SectionType.CONTINUOUS }))
     const numbering = convertor.createNumberingStyles(NUMBERING_STYLE)
     const doc = builder.document({
         sections,
+        numbering,
         styles: {
             paragraphStyles: PARAGRAPH_STYLES
-        },
-        numbering
+        }
     })
     return Packer.toArrayBuffer(await doc)
 }

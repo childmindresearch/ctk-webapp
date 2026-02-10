@@ -74,11 +74,14 @@ export class Html2Docx {
         return { config }
     }
 
-    public toSection(html: string): Promise<ISectionOptions> {
+    public toSection(
+        html: string,
+        properties: ISectionOptions["properties"] | undefined = undefined
+    ): Promise<ISectionOptions> {
         const builder = new DocxBuilderClient()
         const parser = new DOMParser()
         const doc = parser.parseFromString(html, "text/html")
-        return builder.section({ children: [...doc.childNodes].flatMap(child => this.toElements(child)) })
+        return builder.section({ properties, children: [...doc.childNodes].flatMap(child => this.toElements(child)) })
     }
 
     public async toElements(docNode: ChildNode): Promise<(Paragraph | Table)[]> {
