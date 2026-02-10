@@ -96,22 +96,19 @@ const NUMBERING_STYLE: INumberingOptions["config"][number] = {
 }
 
 /**
- * Creates the js-docx numbering styles.
- * We need a separate reference for each list.
+ * Dataclass for the title and content of a template paragraph.
  **/
-function createNumberingStyles(nStyles: number): INumberingOptions {
-    const config = Array.from({ length: nStyles + 1 }, (_, index) => ({
-        ...NUMBERING_STYLE,
-        reference: `${NUMBERING_STYLE.reference}-${index}`
-    }))
-    return { config }
-}
-
 export type TemplateParagraph = {
     title: string
     content: string
 }
 
+/**
+ * Exports templates to a .docx file.
+ * @param paragraphs - The paragraphs to add to the Word document.
+ * @param replacements - Replacements of variable values (e.g. pronouns).
+ * @returns The .docx file.
+ **/
 export async function exportTemplates(
     paragraphs: TemplateParagraph[],
     replacements: Record<string, string> = {}
@@ -120,8 +117,8 @@ export async function exportTemplates(
     const processedHtmls = htmls.map(html => replaceTemplates(html, replacements))
     const builder = new DocxBuilderClient()
     const convertor = new Html2Docx({ languageToolRules: LANGUAGETOOL_RULES })
-    const numbering = createNumberingStyles(convertor.listCounter)
     const sections = processedHtmls.map(html => convertor.toSection(html))
+    const numbering = convertor.createNumberingStyles(NUMBERING_STYLE)
     const doc = builder.document({
         sections,
         styles: {
@@ -132,6 +129,15 @@ export async function exportTemplates(
     return Packer.toArrayBuffer(await doc)
 }
 
+/**
+ * Replaces template values with their string replacements.
+ * The template texts contain spans for e.g. pronouns. This function is what does the actual
+ * replacement. Target spans will have properties data-extension-type="template" and a
+ * "data-name" indicating the name of the value to replace it with.
+ * @param html - The HTML to replace templates in.
+ * @param replacements - Record of the name (key) to replace with the value.
+ * @returns HTML with templates replaced.
+ **/
 export function replaceTemplates(html: string, replacements: Record<string, string>): string {
     const { document } = parseHTML(html)
     const templateSpans = document.querySelectorAll('span[data-extension-type="template"]')

@@ -6,6 +6,7 @@ import {
     TextRun,
     UnderlineType,
     type HeadingLevel,
+    type INumberingOptions,
     type IRunStylePropertiesOptions,
     type ISectionOptions
 } from "docx"
@@ -48,11 +49,29 @@ export function isTextSegmentArray(arr: object[]): arr is TextSegment[] {
 
 export class Html2Docx {
     private languageToolRules: Set<string> | undefined
-    public listCounter: number
+    private listCounter: number
 
+    /**
+     * Constructs the HTML2Docx object.
+     * Be aware that this object is stateful; i.e. a new one should be
+     * constructed for each document.
+     **/
     constructor(options: Html2DocxOptions) {
         this.languageToolRules = options.languageToolRules
         this.listCounter = 0
+    }
+    /**
+     * Creates the js-docx numbering styles.
+     * We need a separate reference for each list, otherwise
+     * lists will continue from the prior list's number.
+     * @param style - The style to apply to all numbered lists.
+     **/
+    public createNumberingStyles(style: INumberingOptions["config"][number]): INumberingOptions {
+        const config = Array.from({ length: this.listCounter + 1 }, (_, index) => ({
+            ...style,
+            reference: `${NUMBERED_STYLE_BASE_REFERENCE}-${index}`
+        }))
+        return { config }
     }
 
     public toSection(html: string): Promise<ISectionOptions> {
