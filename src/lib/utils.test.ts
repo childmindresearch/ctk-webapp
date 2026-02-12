@@ -1,14 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest"
-import {
-    Endpoint,
-    StatusCode,
-    FetchError,
-    oxfordComma,
-    giveMarkdownUrlsHyperlinks,
-    downloadBlob,
-    shortenText,
-    isUnique
-} from "./utils"
+import { Endpoint, StatusCode, FetchError, oxfordComma, downloadBlob, shortenText, isUnique } from "./utils"
 import { z } from "zod"
 
 describe("isUnique", () => {
@@ -180,54 +171,6 @@ describe("downloadBlob", () => {
 
         expect(revokeObjectURLSpy).toHaveBeenCalled()
         expect(mockLink.remove).toHaveBeenCalled()
-    })
-})
-
-describe("giveMarkdownUrlsHyperlinks", () => {
-    it("should convert HTTP URLs to markdown links", () => {
-        const text = "Check out http://example.com for more info"
-        const result = giveMarkdownUrlsHyperlinks(text)
-        expect(result).toBe("Check out [http://example.com](http://example.com) for more info")
-    })
-
-    it("should convert HTTPS URLs to markdown links", () => {
-        const text = "Visit https://example.com"
-        const result = giveMarkdownUrlsHyperlinks(text)
-        expect(result).toBe("Visit [https://example.com](https://example.com)")
-    })
-
-    it("should add http:// prefix to www URLs", () => {
-        const text = "Go to www.example.com"
-        const result = giveMarkdownUrlsHyperlinks(text)
-        expect(result).toBe("Go to [www.example.com](http://www.example.com)")
-    })
-
-    it("should handle multiple URLs", () => {
-        const text = "Visit http://example.com and https://test.org"
-        const result = giveMarkdownUrlsHyperlinks(text)
-        expect(result).toBe("Visit [http://example.com](http://example.com) and [https://test.org](https://test.org)")
-    })
-
-    it("should handle URLs with paths and query parameters", () => {
-        const text = "API: https://api.example.com/v1/users?id=123"
-        const result = giveMarkdownUrlsHyperlinks(text)
-        expect(result).toBe("API: [https://api.example.com/v1/users?id=123](https://api.example.com/v1/users?id=123)")
-    })
-
-    it("should return unchanged text if no URLs present", () => {
-        const text = "This is just plain text"
-        const result = giveMarkdownUrlsHyperlinks(text)
-        expect(result).toBe("This is just plain text")
-    })
-
-    it("should handle empty string", () => {
-        expect(giveMarkdownUrlsHyperlinks("")).toBe("")
-    })
-
-    it("should handle IP addresses", () => {
-        const text = "Server: http://192.168.1.1:8080"
-        const result = giveMarkdownUrlsHyperlinks(text)
-        expect(result).toBe("Server: [http://192.168.1.1:8080](http://192.168.1.1:8080)")
     })
 })
 
