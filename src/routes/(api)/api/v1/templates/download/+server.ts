@@ -47,13 +47,17 @@ export async function POST({ request }) {
             .from(templates)
             .leftJoin(parent, eq(templates.parentId, parent.id))
             .where(inArray(templates.id, body.templateIds))
-        if (rows.length != body.templateIds.length) {
+        const orderedRows = body.templateIds
+            .map(id => rows.find(row => row.id === id))
+            .filter(row => row !== undefined)
+        
+        if (orderedRows.length != body.templateIds.length) {
             return error(StatusCode.NOT_FOUND, "Not all templates found.")
         }
-        if (rows.some(row => row.title === null)) {
+        if (orderedRows.some(row => row.title === null)) {
             return error(StatusCode.BAD_REQUEST, "Cannot process root nodes.")
         }
-        const file = await exportTemplates(rows as TemplateParagraph[], body.replacements)
+        const file = await exportTemplates(orderedRows as TemplateParagraph[], body.replacements)
         return new Response(file as ArrayBuffer)
     } catch (e) {
         logger.error(e)
