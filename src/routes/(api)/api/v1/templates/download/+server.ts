@@ -47,10 +47,7 @@ export async function POST({ request }) {
             .from(templates)
             .leftJoin(parent, eq(templates.parentId, parent.id))
             .where(inArray(templates.id, body.templateIds))
-        const orderedRows = body.templateIds
-            .map(id => rows.find(row => row.id === id))
-            .filter(row => row !== undefined)
-        
+        const orderedRows = body.templateIds.map(id => rows.find(row => row.id === id)).filter(row => row !== undefined)
         if (orderedRows.length != body.templateIds.length) {
             return error(StatusCode.NOT_FOUND, "Not all templates found.")
         }
