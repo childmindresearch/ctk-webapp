@@ -149,8 +149,10 @@ function createStringBuilder<TOptions extends Record<string, unknown>, TComponen
 }
 
 /**
- * See also https://docx.js.org/#/ for the source method.
-**/
+ * See also https://docx.js.org/#/ for the wrapped methods.
+ * Other than section() and document(), all methods are
+ * asynchronous versions of their counterparts in JS DOCX.
+ **/
 export class DocxBuilderClient {
     Paragraph = createStringBuilder<IParagraphOptions, Paragraph>(Paragraph)
     TextRun = createStringBuilder<IRunOptions, TextRun>(TextRun)
