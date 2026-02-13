@@ -53,7 +53,8 @@ export async function POST({ request }) {
         if (rows.some(row => row.title === null)) {
             return error(StatusCode.BAD_REQUEST, "Cannot process root nodes.")
         }
-        const file = await exportTemplates(rows as TemplateParagraph[], body.replacements)
+        const orderedRows = body.templateIds.map(id => rows.find(row => row.id === id)).filter(row => row !== undefined)
+        const file = await exportTemplates(orderedRows as TemplateParagraph[], body.replacements)
         return new Response(file as ArrayBuffer)
     } catch (e) {
         logger.error(e)
