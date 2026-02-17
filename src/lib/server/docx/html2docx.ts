@@ -84,7 +84,7 @@ export class Html2Docx {
         return builder.section({ properties, children: [...doc.childNodes].flatMap(child => this.toElements(child)) })
     }
 
-    public async toElements(docNode: ChildNode): Promise<(Paragraph | Table)[]> {
+    private async toElements(docNode: ChildNode): Promise<(Paragraph | Table)[]> {
         const nodeName = docNode.nodeName.toLowerCase()
         switch (nodeName) {
             case "p":
