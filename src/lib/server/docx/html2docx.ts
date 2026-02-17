@@ -331,7 +331,6 @@ export class LanguageCorrectionCollector {
         const text = this.segments.map(c => c.content).join("")
         const matches = (await languageTool(text)).matches
         const corrections = matches.filter(match => this.rules.has(match.rule.id))
-        console.log(corrections)
         return this.applyCorrections(corrections)
     }
 
