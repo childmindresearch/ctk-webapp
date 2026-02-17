@@ -270,9 +270,8 @@ export class Html2Docx {
         return new Table({ rows })
     }
 
-    private processList(node: HTMLUListElement | HTMLOListElement, level: number = 0): Paragraph[] {
+    private processList(node: HTMLUListElement | HTMLOListElement, level: number = 1): Paragraph[] {
         const isOrdered = node.nodeName.toLowerCase() === "ol"
-        if (level === 0) this.listCounter++
         return [...node.children].flatMap(li => {
             if (li.nodeName.toLowerCase() === "li") {
                 return this.processListItem(li as HTMLLIElement, level, isOrdered)
