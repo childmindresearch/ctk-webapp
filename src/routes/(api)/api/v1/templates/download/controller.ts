@@ -1,4 +1,4 @@
-import { Html2Docx, NUMBERED_STYLE_BASE_REFERENCE } from "$lib/server/docx/html2docx"
+import { BULLET_STYLE_BASE_REFERENCE, Html2Docx, NUMBERED_STYLE_BASE_REFERENCE } from "$lib/server/docx/html2docx"
 import {
     AlignmentType,
     convertInchesToTwip,
@@ -46,7 +46,9 @@ const PARAGRAPH_STYLES: IParagraphStyleOptions[] = [
         }
     }
 ]
-const NUMBERING_STYLE: INumberingOptions["config"][number] = {
+const LIST_LEFT = 0.25
+const LIST_HANGING = 0.25
+const NUMBERED_LIST_STYLES: INumberingOptions["config"][number] = {
     reference: NUMBERED_STYLE_BASE_REFERENCE,
     levels: [
         {
@@ -56,7 +58,7 @@ const NUMBERING_STYLE: INumberingOptions["config"][number] = {
             alignment: AlignmentType.START,
             style: {
                 paragraph: {
-                    indent: { left: convertInchesToTwip(0.25), hanging: convertInchesToTwip(0.25) }
+                    indent: { left: convertInchesToTwip(LIST_LEFT), hanging: convertInchesToTwip(LIST_HANGING) }
                 }
             }
         },
@@ -67,7 +69,7 @@ const NUMBERING_STYLE: INumberingOptions["config"][number] = {
             alignment: AlignmentType.START,
             style: {
                 paragraph: {
-                    indent: { left: convertInchesToTwip(0.5), hanging: convertInchesToTwip(0.25) }
+                    indent: { left: convertInchesToTwip(LIST_LEFT * 2), hanging: convertInchesToTwip(LIST_HANGING) }
                 }
             }
         },
@@ -78,7 +80,7 @@ const NUMBERING_STYLE: INumberingOptions["config"][number] = {
             alignment: AlignmentType.START,
             style: {
                 paragraph: {
-                    indent: { left: convertInchesToTwip(0.75), hanging: convertInchesToTwip(0.25) }
+                    indent: { left: convertInchesToTwip(LIST_LEFT * 3), hanging: convertInchesToTwip(LIST_HANGING) }
                 }
             }
         },
@@ -89,7 +91,56 @@ const NUMBERING_STYLE: INumberingOptions["config"][number] = {
             alignment: AlignmentType.START,
             style: {
                 paragraph: {
-                    indent: { left: convertInchesToTwip(1), hanging: convertInchesToTwip(0.25) }
+                    indent: { left: convertInchesToTwip(LIST_LEFT * 4), hanging: convertInchesToTwip(LIST_HANGING) }
+                }
+            }
+        }
+    ]
+}
+const BULLET_LIST_STYLES: INumberingOptions["config"][number] = {
+    reference: BULLET_STYLE_BASE_REFERENCE,
+    levels: [
+        {
+            level: 0,
+            format: LevelFormat.BULLET,
+            text: "\u2022", // bullet
+            alignment: AlignmentType.START,
+            style: {
+                paragraph: {
+                    indent: { left: convertInchesToTwip(LIST_LEFT), hanging: convertInchesToTwip(LIST_HANGING) }
+                }
+            }
+        },
+        {
+            level: 1,
+            format: LevelFormat.BULLET,
+            text: "\u25E6", // hollow bullet
+            alignment: AlignmentType.START,
+            style: {
+                paragraph: {
+                    indent: { left: convertInchesToTwip(LIST_LEFT * 2), hanging: convertInchesToTwip(LIST_HANGING) }
+                }
+            }
+        },
+        {
+            level: 2,
+            format: LevelFormat.BULLET,
+            text: "\u2023", // triangular bullet
+            alignment: AlignmentType.START,
+            style: {
+                paragraph: {
+                    indent: { left: convertInchesToTwip(LIST_LEFT * 3), hanging: convertInchesToTwip(LIST_HANGING) }
+                }
+            }
+        },
+        {
+            level: 3,
+            format: LevelFormat.BULLET,
+            text: "\u2043", // hyphen bullet
+            alignment: AlignmentType.START,
+            style: {
+                paragraph: {
+                    indent: { left: convertInchesToTwip(LIST_LEFT * 4), hanging: convertInchesToTwip(LIST_HANGING) }
                 }
             }
         }
@@ -119,7 +170,7 @@ export async function exportTemplates(
     const builder = new DocxBuilderClient()
     const convertor = new Html2Docx({ languageToolRules: LANGUAGETOOL_RULES })
     const sections = processedHtmls.map(html => convertor.toSection(html, { type: SectionType.CONTINUOUS }))
-    const numbering = convertor.createNumberingStyles(NUMBERING_STYLE)
+    const numbering = convertor.createListStyles(NUMBERED_LIST_STYLES, BULLET_LIST_STYLES)
     const doc = builder.document({
         sections,
         numbering,

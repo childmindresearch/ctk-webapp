@@ -33,7 +33,8 @@ type TextRunFormatting = {
     color?: string
 }
 
-export const NUMBERED_STYLE_BASE_REFERENCE = "custom-list"
+export const NUMBERED_STYLE_BASE_REFERENCE = "custom-numbered-list"
+export const BULLET_STYLE_BASE_REFERENCE = "custom-bullet-list"
 
 export function isTextSegment(obj: object): obj is TextSegment {
     try {
@@ -49,7 +50,8 @@ export function isTextSegmentArray(arr: object[]): arr is TextSegment[] {
 
 export class Html2Docx {
     private languageToolRules: Set<string> | undefined
-    private listCounter: number
+    private numberedListCounter: number
+    private bulletListCounter: number
 
     /**
      * Constructs the HTML2Docx object.
@@ -58,7 +60,8 @@ export class Html2Docx {
      **/
     constructor(options: Html2DocxOptions) {
         this.languageToolRules = options.languageToolRules
-        this.listCounter = 0
+        this.numberedListCounter = 0
+        this.bulletListCounter = 0
     }
     /**
      * Creates the js-docx numbering styles.
@@ -66,12 +69,19 @@ export class Html2Docx {
      * lists will continue from the prior list's number.
      * @param style - The style to apply to all numbered lists.
      **/
-    public createNumberingStyles(style: INumberingOptions["config"][number]): INumberingOptions {
-        const config = Array.from({ length: this.listCounter + 1 }, (_, index) => ({
-            ...style,
+    public createListStyles(
+        numberedStyle: INumberingOptions["config"][number],
+        bulletStyle: INumberingOptions["config"][number]
+    ): INumberingOptions {
+        const numberedConfig = Array.from({ length: this.numberedListCounter + 1 }, (_, index) => ({
+            ...numberedStyle,
             reference: `${NUMBERED_STYLE_BASE_REFERENCE}-${index}`
         }))
-        return { config }
+        const bulletConfig = Array.from({ length: this.bulletListCounter + 1 }, (_, index) => ({
+            ...bulletStyle,
+            reference: `${BULLET_STYLE_BASE_REFERENCE}-${index}`
+        }))
+        return { config: [...numberedConfig, ...bulletConfig] }
     }
 
     public toSection(
@@ -270,17 +280,38 @@ export class Html2Docx {
         return new Table({ rows })
     }
 
-    private processList(node: HTMLUListElement | HTMLOListElement, level: number): Paragraph[] {
+    private processList(
+        node: HTMLUListElement | HTMLOListElement,
+        level: number,
+        parentList: HTMLUListElement | HTMLOListElement | undefined = undefined
+    ): Paragraph[] {
         const isOrdered = node.nodeName.toLowerCase() === "ol"
+        if (level === 0 && isOrdered) this.numberedListCounter++
+        if (level === 0 && !isOrdered) this.bulletListCounter++
+
+        if (parentList !== undefined && parentList.nodeName.toLowerCase() !== node.nodeName.toLowerCase()) {
+            // If list type changes mid-list, increment counter.
+            if (isOrdered) {
+                this.numberedListCounter++
+            } else {
+                this.bulletListCounter++
+            }
+        }
+
         return [...node.children].flatMap(li => {
             if (li.nodeName.toLowerCase() === "li") {
-                return this.processListItem(li as HTMLLIElement, level, isOrdered)
+                return this.processListItem(node, li as HTMLLIElement, level, isOrdered)
             }
             return []
         })
     }
 
-    private processListItem(li: HTMLLIElement, level: number, isOrdered: boolean): Paragraph[] {
+    private processListItem(
+        node: HTMLUListElement | HTMLOListElement,
+        li: HTMLLIElement,
+        level: number,
+        isOrdered: boolean
+    ): Paragraph[] {
         const paragraphs: Paragraph[] = []
         const contentNodes: ChildNode[] = []
         const nestedLists: (HTMLUListElement | HTMLOListElement)[] = []
@@ -298,16 +329,15 @@ export class Html2Docx {
         const textRuns = segments.map(segment => new TextRun({ text: segment.content, ...segment.formatting }))
         paragraphs.push(
             new Paragraph({
-                bullet: isOrdered ? undefined : { level },
                 numbering: isOrdered
-                    ? { reference: `${NUMBERED_STYLE_BASE_REFERENCE}-${this.listCounter}`, level }
-                    : undefined,
+                    ? { reference: `${NUMBERED_STYLE_BASE_REFERENCE}-${this.numberedListCounter}`, level }
+                    : { reference: `${BULLET_STYLE_BASE_REFERENCE}-${this.bulletListCounter}`, level },
                 children: textRuns
             })
         )
 
         nestedLists.forEach(nestedList => {
-            paragraphs.push(...this.processList(nestedList, level + 1))
+            paragraphs.push(...this.processList(nestedList, level + 1, node))
         })
 
         return paragraphs
