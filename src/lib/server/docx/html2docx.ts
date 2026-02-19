@@ -99,7 +99,7 @@ export class Html2Docx {
                 return [this.processTable(docNode as HTMLTableElement)]
             case "ul":
             case "ol":
-                return this.processList(docNode as HTMLUListElement | HTMLOListElement)
+                return this.processList(docNode as HTMLUListElement | HTMLOListElement, 0)
             default:
                 return (await Promise.all([...docNode.childNodes].map(child => this.toElements(child)))).flat()
         }
@@ -270,7 +270,7 @@ export class Html2Docx {
         return new Table({ rows })
     }
 
-    private processList(node: HTMLUListElement | HTMLOListElement, level: number = 1): Paragraph[] {
+    private processList(node: HTMLUListElement | HTMLOListElement, level: number): Paragraph[] {
         const isOrdered = node.nodeName.toLowerCase() === "ol"
         return [...node.children].flatMap(li => {
             if (li.nodeName.toLowerCase() === "li") {
