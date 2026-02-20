@@ -84,14 +84,11 @@ export class Html2Docx {
         return { config: [...numberedConfig, ...bulletConfig] }
     }
 
-    public toSection(
-        html: string,
-        properties: ISectionOptions["properties"] | undefined = undefined
-    ): Promise<ISectionOptions> {
-        const builder = new DocxBuilderClient()
+    public async toParagraphs(html: string): Promise<(Paragraph | Table)[]> {
         const parser = new DOMParser()
         const doc = parser.parseFromString(html, "text/html")
-        return builder.section({ properties, children: [...doc.childNodes].flatMap(child => this.toElements(child)) })
+        const paragraphs = await Promise.all([...doc.childNodes].flatMap(child => this.toElements(child)))
+        return paragraphs.flat()
     }
 
     private async toElements(docNode: ChildNode): Promise<(Paragraph | Table)[]> {
@@ -110,6 +107,8 @@ export class Html2Docx {
             case "ul":
             case "ol":
                 return this.processList(docNode as HTMLUListElement | HTMLOListElement, 0)
+            case "br":
+                return [await new DocxBuilderClient().Paragraph("")]
             default:
                 return (await Promise.all([...docNode.childNodes].map(child => this.toElements(child)))).flat()
         }

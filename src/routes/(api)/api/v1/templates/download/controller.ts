@@ -4,7 +4,6 @@ import {
     convertInchesToTwip,
     LevelFormat,
     Packer,
-    SectionType,
     UnderlineType,
     type INumberingOptions,
     type IParagraphStyleOptions
@@ -165,14 +164,18 @@ export async function exportTemplates(
     paragraphs: TemplateParagraph[],
     replacements: Record<string, string> = {}
 ): Promise<ArrayBuffer> {
-    const htmls = paragraphs.map(n => `<h${TITLE_LEVEL}>${n.title}</h${TITLE_LEVEL}><p>${n.content}</p>`)
+    const htmls = paragraphs.map(n => `<h${TITLE_LEVEL}>${n.title}</h${TITLE_LEVEL}><p>${n.content}</p><br/>`)
     const processedHtmls = htmls.map(html => replaceTemplates(html, replacements))
     const builder = new DocxBuilderClient()
     const convertor = new Html2Docx({ languageToolRules: LANGUAGETOOL_RULES })
-    const sections = processedHtmls.map(html => convertor.toSection(html, { type: SectionType.CONTINUOUS }))
+    const docxParagraphs = processedHtmls.map(html => convertor.toParagraphs(html))
     const numbering = convertor.createListStyles(NUMBERED_LIST_STYLES, BULLET_LIST_STYLES)
     const doc = builder.document({
-        sections,
+        sections: [
+            builder.section({
+                children: docxParagraphs
+            })
+        ],
         numbering,
         styles: {
             paragraphStyles: PARAGRAPH_STYLES
