@@ -164,7 +164,7 @@ export async function exportTemplates(
     paragraphs: TemplateParagraph[],
     replacements: Record<string, string> = {}
 ): Promise<ArrayBuffer> {
-    const htmls = paragraphs.map(n => `<h${TITLE_LEVEL}>${n.title}</h${TITLE_LEVEL}><p>${n.content}</p>`)
+    const htmls = paragraphs.map(n => `<h${TITLE_LEVEL}>${n.title}</h${TITLE_LEVEL}><p>${n.content}</p><br/>`)
     const processedHtmls = htmls.map(html => replaceTemplates(html, replacements))
     const builder = new DocxBuilderClient()
     const convertor = new Html2Docx({ languageToolRules: LANGUAGETOOL_RULES })

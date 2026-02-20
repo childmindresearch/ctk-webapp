@@ -107,6 +107,8 @@ export class Html2Docx {
             case "ul":
             case "ol":
                 return this.processList(docNode as HTMLUListElement | HTMLOListElement, 0)
+            case "br":
+                return [await new DocxBuilderClient().Paragraph("")]
             default:
                 return (await Promise.all([...docNode.childNodes].map(child => this.toElements(child)))).flat()
         }
