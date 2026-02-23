@@ -16,19 +16,22 @@
             return
         }
         isLoading = true
-        GetPyriteDownload.fetch({ pathArgs: [mrn] })
+        await GetPyriteDownload.fetch({ pathArgs: [mrn] })
             .then(result => {
                 if (result instanceof FetchError) {
                     toast.error(`"Could not get Pyrite Report: ${result.message}`)
                     return
                 }
                 const filename = `${mrn}_Pyrite_CTK.docx`
+                isLoading = false
                 downloadBlob(result, filename)
             })
             .catch(() => {
                 toast.error("Could not download report.")
             })
-        isLoading = false
+            .finally(() => {
+                isLoading = false
+            })
     }
 </script>
 
@@ -44,7 +47,7 @@
     <Card>
         <CardContent class="pt-6">
             {#if isLoading}
-                <div class="flex flex-col items-center space-y-4">
+                <div class="flex flex-col items-center space-y-4" data-testid="div-spinner">
                     <Spinner />
                 </div>
             {:else}
