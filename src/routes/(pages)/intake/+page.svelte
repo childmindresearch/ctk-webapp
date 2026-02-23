@@ -10,13 +10,13 @@
     let redcapSurveyId = $state("")
     let isLoading = $state(false)
 
-    function onSubmit() {
+    async function onSubmit() {
         if (redcapSurveyId === "") {
             toast.error("Please enter an MRN.")
             return
         }
         isLoading = true
-        GetIntakeDownload.fetch({ pathArgs: [redcapSurveyId] })
+        await GetIntakeDownload.fetch({ pathArgs: [redcapSurveyId] })
             .then(result => {
                 if (result instanceof FetchError) {
                     toast.error(`Could not download intake report: ${result.message}.`)
@@ -25,6 +25,9 @@
 
                 const filename = `${redcapSurveyId}_V0_CTK.docx`
                 downloadBlob(result, filename)
+            })
+            .catch(() => {
+                toast.error("Could not download report.")
             })
             .finally(() => {
                 isLoading = false
@@ -44,7 +47,7 @@
     <Card>
         <CardContent class="pt-6">
             {#if isLoading}
-                <div class="flex flex-col items-center space-y-4">
+                <div class="flex flex-col items-center space-y-4" data-testid="div-spinner">
                     <Spinner />
                 </div>
             {:else}
