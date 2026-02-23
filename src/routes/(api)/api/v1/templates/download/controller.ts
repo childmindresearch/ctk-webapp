@@ -21,7 +21,6 @@ const LANGUAGETOOL_RULES = new Set([
     "WEEK_HYPHEN"
 ])
 
-const TITLE_LEVEL = 2
 const PARAGRAPH_STYLES: IParagraphStyleOptions[] = [
     {
         id: "Normal",
@@ -30,18 +29,6 @@ const PARAGRAPH_STYLES: IParagraphStyleOptions[] = [
         run: {
             font: "Cambria",
             size: 24 // Font size in Word seems to be size/2.
-        }
-    },
-    {
-        id: "Heading2",
-        name: "Heading 2",
-        basedOn: "Normal",
-        next: "Normal",
-        quickFormat: true,
-        run: {
-            underline: {
-                type: UnderlineType.SINGLE
-            }
         }
     }
 ]
@@ -164,7 +151,7 @@ export async function exportTemplates(
     paragraphs: TemplateParagraph[],
     replacements: Record<string, string> = {}
 ): Promise<ArrayBuffer> {
-    const htmls = paragraphs.map(n => `<h${TITLE_LEVEL}>${n.title}</h${TITLE_LEVEL}><p>${n.content}</p><br/>`)
+    const htmls = paragraphs.map(n => `<p><u>${n.title}</u></p><p>${n.content}</p><br/>`)
     const processedHtmls = htmls.map(html => replaceTemplates(html, replacements))
     const builder = new DocxBuilderClient()
     const convertor = new Html2Docx({ languageToolRules: LANGUAGETOOL_RULES })
