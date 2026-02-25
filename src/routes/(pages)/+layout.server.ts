@@ -34,7 +34,8 @@ export async function load({ request }) {
         { name: "Intake", href: "/intake" },
         { name: "Pyrite Reports", href: "/pyrite", badge: "Alpha" },
         { name: "Summarization", href: "/summarization" },
-        { name: "Templates", href: "/templates" }
+        { name: "Templates", href: "/templates" },
+        { name: "Behavioral Checklist", href: "/behavior", badge: "Alpha" }
     ]
 
     if (user.isAdmin) {

@@ -10,7 +10,7 @@
     import { Spinner } from "$lib/shadcn/components/ui/spinner"
 
     let isLoading = $state(false)
-    let formData = $state({
+    let submittedFormData = $state({
         // 1. Appearance
         appearance: {
             casualDress: false,
@@ -29,14 +29,14 @@
 
         // Simulate API call
         setTimeout(() => {
-            console.log("Form data:", formData)
+            console.log("Form data:", submittedFormData)
             toast.success("Mental Health & Behavior section saved successfully!")
             isLoading = false
         }, 1500)
     }
 
     function resetForm() {
-        formData = {
+        submittedFormData = {
             appearance: {
                 casualDress: false,
                 poorHygiene: false,
@@ -77,13 +77,13 @@
                         <Label class="text-base font-semibold">1. Appearance</Label>
                         <div class="space-y-2 ml-4">
                             <div class="flex items-center space-x-2">
-                                <Checkbox id="appearance-casual" bind:checked={formData.appearance.casualDress} />
+                                <Checkbox id="appearance-casual" bind:checked={submittedFormData.appearance.casualDress} />
                                 <Label for="appearance-casual" class="font-normal">
                                     Casual dress, normal grooming and hygiene
                                 </Label>
                             </div>
                             <div class="flex items-center space-x-2">
-                                <Checkbox id="appearance-poor" bind:checked={formData.appearance.poorHygiene} />
+                                <Checkbox id="appearance-poor" bind:checked={submittedFormData.appearance.poorHygiene} />
                                 <Label for="appearance-poor" class="font-normal">Poor hygiene and/or grooming</Label>
                             </div>
                         </div>
@@ -91,7 +91,7 @@
                             <Label for="appearance-ll">L&L Additional comments:</Label>
                             <Textarea
                                 id="appearance-ll"
-                                bind:value={formData.appearance.llComments}
+                                bind:value={submittedFormData.appearance.llComments}
                                 placeholder="Enter additional comments..."
                             />
                         </div>
@@ -99,7 +99,7 @@
                             <Label for="appearance-cog">Cog Additional comments:</Label>
                             <Textarea
                                 id="appearance-cog"
-                                bind:value={formData.appearance.cogComments}
+                                bind:value={submittedFormData.appearance.cogComments}
                                 placeholder="Enter additional comments..."
                             />
                         </div>
@@ -109,7 +109,7 @@
                     <!-- 2. Eye Contact -->
                     <div class="space-y-3">
                         <Label class="text-base font-semibold">2. Eye Contact</Label>
-                        <RadioGroup bind:value={formData.eyeContact}>
+                        <RadioGroup bind:value={submittedFormData.eyeContact}>
                             <div class="flex items-center space-x-2">
                                 <RadioGroupItem value="good" id="eye-good" />
                                 <Label for="eye-good" class="font-normal">Good</Label>
@@ -135,7 +135,7 @@
                             <Label for="eyecontact-ll">L&L Additional comments:</Label>
                             <Textarea
                                 id="eyecontact-ll"
-                                bind:value={formData.eyeContactLLComments}
+                                bind:value={submittedFormData.eyeContactLLComments}
                                 placeholder="Enter additional comments..."
                             />
                         </div>
@@ -143,7 +143,7 @@
                             <Label for="eyecontact-cog">Cog Additional comments:</Label>
                             <Textarea
                                 id="eyecontact-cog"
-                                bind:value={formData.eyeContactCogComments}
+                                bind:value={submittedFormData.eyeContactCogComments}
                                 placeholder="Enter additional comments..."
                             />
                         </div>
