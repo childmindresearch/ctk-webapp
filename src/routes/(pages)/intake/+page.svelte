@@ -47,7 +47,7 @@
     <Card>
         <CardContent class="pt-6">
             {#if isLoading}
-                <div hidden={!isLoading} class="flex flex-col items-center space-y-4" data-testid="div-spinner">
+                <div class="flex flex-col items-center space-y-4" data-testid="div-spinner">
                     <Spinner />
                 </div>
             {:else}
