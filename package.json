@@ -16,7 +16,6 @@
     "scripts": {
         "dev": "vite dev",
         "build": "vite build",
-        "build-api": "",
         "preview": "vite preview",
         "test": "npm run test:unit",
         "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
