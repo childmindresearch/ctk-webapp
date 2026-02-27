@@ -15,7 +15,7 @@
     },
     "scripts": {
         "dev": "vite dev",
-        "build": "vite build",
+        "build": "just build-api && vite build",
         "build-api": "",
         "preview": "vite preview",
         "test": "npm run test:unit",
