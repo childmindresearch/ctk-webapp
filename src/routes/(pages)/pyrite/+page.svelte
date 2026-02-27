@@ -51,7 +51,12 @@
                     <Spinner />
                 </div>
             {:else}
-                <form onsubmit={onSubmit}>
+                <form
+                    onsubmit={e => {
+                        e.preventDefault()
+                        onSubmit()
+                    }}
+                >
                     <FormInput
                         label="MRN"
                         id="mrn"

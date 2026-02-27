@@ -47,11 +47,16 @@
     <Card>
         <CardContent class="pt-6">
             {#if isLoading}
-                <div class="flex flex-col items-center space-y-4" data-testid="div-spinner">
+                <div hidden={!isLoading} class="flex flex-col items-center space-y-4" data-testid="div-spinner">
                     <Spinner />
                 </div>
             {:else}
-                <form onsubmit={onSubmit}>
+                <form
+                    onsubmit={e => {
+                        e.preventDefault()
+                        onSubmit()
+                    }}
+                >
                     <FormInput
                         label="MRN"
                         id="mrn"
