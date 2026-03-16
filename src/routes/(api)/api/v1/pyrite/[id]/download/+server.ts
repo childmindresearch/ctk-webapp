@@ -9,11 +9,11 @@ export async function GET({ params }) {
     const { data, error } = await ctkFunctionsClient.GET("/pyrite/{mrn}", {
         params: {
             path: { mrn }
-        }
+        },
+        parseAs: "blob"
     })
     if (error === undefined) {
-        // OpenAPI does not correctly infer the response type for files.
-        return new Response(data as ArrayBuffer)
+        return new Response(data)
     }
     return new Response("Could not fetch the intake report.", { status: StatusCode.INTERNAL_SERVER_ERROR })
 }
