@@ -20,6 +20,7 @@ jobs:
         steps:
             - uses: actions/checkout@v6
               with:
+                  token: ${{ secrets.CTK_FUNCTIONS_PAT }}
                   submodules: true
             - uses: extractions/setup-just@e33e0265a09d6d736e2ee1e0eb685ef1de4669ff
             - uses: astral-sh/setup-uv@803947b9bd8e9f986429fa0c5a41c367cd732b41
