@@ -1,6 +1,6 @@
 services:
     api:
-        image: cliniciantoolkit.azurecr.io/ctk-functions:latest
+        image: acrctkshared.azurecr.io/childmindresearch/ctk-functions:latest
         platform: linux/amd64
         ports:
             - "8000:8000"
